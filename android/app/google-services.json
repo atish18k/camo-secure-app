@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "224858679064",
+    "project_id": "camo-b3cab",
+    "storage_bucket": "camo-b3cab.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:224858679064:android:33fd2511500ea0f50d206d",
+        "android_client_info": {
+          "package_name": "com.atish.camo"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCDsGwq6daNZv0ispDse9yEfJvD2cl_vv4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
