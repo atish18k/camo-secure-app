@@ -13,11 +13,7 @@ abstract class Failure {
   final String? code;
   final Object? cause;
 
-  const Failure({
-    required this.message,
-    this.code,
-    this.cause,
-  });
+  const Failure({required this.message, this.code, this.cause});
 
   @override
   String toString() {

@@ -9,10 +9,7 @@ abstract class AppException implements Exception {
   final String message;
   final String? code;
 
-  const AppException({
-    required this.message,
-    this.code,
-  });
+  const AppException({required this.message, this.code});
 
   @override
   String toString() {
@@ -35,17 +32,11 @@ class FirebaseException extends AppException {
 }
 
 class AuthException extends AppException {
-  const AuthException({
-    super.message = 'Authentication failed.',
-    super.code,
-  });
+  const AuthException({super.message = 'Authentication failed.', super.code});
 }
 
 class ValidationException extends AppException {
-  const ValidationException({
-    super.message = 'Validation failed.',
-    super.code,
-  });
+  const ValidationException({super.message = 'Validation failed.', super.code});
 }
 
 class CryptoException extends AppException {
