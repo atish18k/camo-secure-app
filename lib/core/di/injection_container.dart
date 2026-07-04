@@ -14,6 +14,12 @@ import '../../features/profile/domain/repositories/profile_repository.dart';
 import '../../features/profile/domain/usecases/create_user_profile_usecase.dart';
 import '../../features/profile/domain/usecases/get_user_profile_usecase.dart';
 
+import '../../features/pairing/data/datasources/pairing_remote_datasource.dart';
+import '../../features/pairing/data/repositories/pairing_repository_impl.dart';
+import '../../features/pairing/domain/repositories/pairing_repository.dart';
+import '../../features/pairing/domain/usecases/create_pairing_usecase.dart';
+import '../../features/pairing/domain/usecases/get_pairing_usecase.dart';
+
 final sl = GetIt.instance;
 
 Future<void> initDependencies() async {
@@ -41,6 +47,10 @@ Future<void> initDependencies() async {
     () => FirebaseProfileRemoteDataSource(sl()),
   );
 
+  sl.registerLazySingleton<PairingRemoteDataSource>(
+    () => FirebasePairingRemoteDataSource(sl()),
+  );
+
   // ---------------------------------------------------------------------------
   // Repositories
   // ---------------------------------------------------------------------------
@@ -51,6 +61,10 @@ Future<void> initDependencies() async {
 
   sl.registerLazySingleton<ProfileRepository>(
     () => ProfileRepositoryImpl(sl()),
+  );
+
+  sl.registerLazySingleton<PairingRepository>(
+    () => PairingRepositoryImpl(sl()),
   );
 
   // ---------------------------------------------------------------------------
@@ -75,5 +89,17 @@ Future<void> initDependencies() async {
 
   sl.registerLazySingleton<GetUserProfileUseCase>(
     () => GetUserProfileUseCase(sl()),
+  );
+
+  // ---------------------------------------------------------------------------
+  // Pairing Use Cases
+  // ---------------------------------------------------------------------------
+
+  sl.registerLazySingleton<CreatePairingUseCase>(
+    () => CreatePairingUseCase(sl()),
+  );
+
+  sl.registerLazySingleton<GetPairingUseCase>(
+    () => GetPairingUseCase(sl()),
   );
 }
