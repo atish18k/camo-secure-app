@@ -1,24 +1,29 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get_it/get_it.dart';
-
+import '../../features/pairing/domain/usecases/watch_incoming_pair_requests_usecase.dart';
 import '../../features/auth/data/datasources/auth_remote_datasource.dart';
 import '../../features/auth/data/repositories/auth_repository_impl.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
 import '../../features/auth/domain/usecases/check_auth_status_usecase.dart';
 import '../../features/auth/domain/usecases/login_usecase.dart';
-
+import '../../features/pairing/data/datasources/pair_request_remote_datasource.dart';
+import '../../features/pairing/data/datasources/pairing_remote_datasource.dart';
+import '../../features/pairing/data/repositories/pair_request_repository_impl.dart';
+import '../../features/pairing/data/repositories/pairing_repository_impl.dart';
+import '../../features/pairing/domain/repositories/pair_request_repository.dart';
+import '../../features/pairing/domain/repositories/pairing_repository.dart';
+import '../../features/pairing/domain/usecases/create_pairing_usecase.dart';
+import '../../features/pairing/domain/usecases/get_pair_request_usecase.dart';
+import '../../features/pairing/domain/usecases/get_pairing_usecase.dart';
+import '../../features/pairing/domain/usecases/send_pair_request_usecase.dart';
 import '../../features/profile/data/datasources/profile_remote_datasource.dart';
 import '../../features/profile/data/repositories/profile_repository_impl.dart';
 import '../../features/profile/domain/repositories/profile_repository.dart';
 import '../../features/profile/domain/usecases/create_user_profile_usecase.dart';
+import '../../features/profile/domain/usecases/get_user_by_camo_id_usecase.dart';
 import '../../features/profile/domain/usecases/get_user_profile_usecase.dart';
-
-import '../../features/pairing/data/datasources/pairing_remote_datasource.dart';
-import '../../features/pairing/data/repositories/pairing_repository_impl.dart';
-import '../../features/pairing/domain/repositories/pairing_repository.dart';
-import '../../features/pairing/domain/usecases/create_pairing_usecase.dart';
-import '../../features/pairing/domain/usecases/get_pairing_usecase.dart';
+import '../../services/identity/camo_id_generator.dart';
 
 final sl = GetIt.instance;
 
@@ -33,6 +38,14 @@ Future<void> initDependencies() async {
 
   sl.registerLazySingleton<FirebaseFirestore>(
     () => FirebaseFirestore.instance,
+  );
+
+  // ---------------------------------------------------------------------------
+  // Services
+  // ---------------------------------------------------------------------------
+
+  sl.registerLazySingleton<CamoIdGenerator>(
+    () =>  CamoIdGenerator(),
   );
 
   // ---------------------------------------------------------------------------
@@ -51,6 +64,10 @@ Future<void> initDependencies() async {
     () => FirebasePairingRemoteDataSource(sl()),
   );
 
+  sl.registerLazySingleton<PairRequestRemoteDataSource>(
+    () => FirebasePairRequestRemoteDataSource(sl()),
+  );
+
   // ---------------------------------------------------------------------------
   // Repositories
   // ---------------------------------------------------------------------------
@@ -65,6 +82,10 @@ Future<void> initDependencies() async {
 
   sl.registerLazySingleton<PairingRepository>(
     () => PairingRepositoryImpl(sl()),
+  );
+
+  sl.registerLazySingleton<PairRequestRepository>(
+    () => PairRequestRepositoryImpl(sl()),
   );
 
   // ---------------------------------------------------------------------------
@@ -84,22 +105,40 @@ Future<void> initDependencies() async {
   // ---------------------------------------------------------------------------
 
   sl.registerLazySingleton<CreateUserProfileUseCase>(
-    () => CreateUserProfileUseCase(sl()),
+    () => CreateUserProfileUseCase(
+      sl(),
+      sl(),
+    ),
   );
 
   sl.registerLazySingleton<GetUserProfileUseCase>(
     () => GetUserProfileUseCase(sl()),
   );
 
+  sl.registerLazySingleton<GetUserByCamoIdUseCase>(
+    () => GetUserByCamoIdUseCase(sl()),
+  );
+
   // ---------------------------------------------------------------------------
   // Pairing Use Cases
   // ---------------------------------------------------------------------------
 
+  sl.registerLazySingleton<WatchIncomingPairRequestsUseCase>(
+  () => WatchIncomingPairRequestsUseCase(sl()),
+);
   sl.registerLazySingleton<CreatePairingUseCase>(
     () => CreatePairingUseCase(sl()),
   );
 
   sl.registerLazySingleton<GetPairingUseCase>(
     () => GetPairingUseCase(sl()),
+  );
+
+  sl.registerLazySingleton<SendPairRequestUseCase>(
+    () => SendPairRequestUseCase(sl()),
+  );
+
+  sl.registerLazySingleton<GetPairRequestUseCase>(
+    () => GetPairRequestUseCase(sl()),
   );
 }

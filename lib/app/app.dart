@@ -11,7 +11,11 @@ class CamoApp extends StatelessWidget {
     return MaterialApp(
       title: 'CAMO',
       debugShowCheckedModeBanner: false,
+
       theme: CamoTheme.lightTheme,
+      darkTheme: CamoTheme.darkTheme,
+      themeMode: ThemeMode.dark,
+
       initialRoute: AppRoutes.splash,
       routes: AppRoutes.routes,
     );

@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../../../../core/constants/firestore_paths.dart';
 import '../models/pairing_model.dart';
 
 abstract class PairingRemoteDataSource {
@@ -17,7 +18,7 @@ class FirebasePairingRemoteDataSource
   @override
   Future<void> savePairing(PairingModel pairing) async {
     await _firestore
-        .collection('pairings')
+        .collection(FirestorePaths.pairings)
         .doc(pairing.id)
         .set(
           pairing.toMap(),
@@ -28,7 +29,7 @@ class FirebasePairingRemoteDataSource
   @override
   Future<PairingModel?> getPairing(String id) async {
     final snapshot = await _firestore
-        .collection('pairings')
+        .collection(FirestorePaths.pairings)
         .doc(id)
         .get();
 

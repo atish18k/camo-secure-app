@@ -51,12 +51,13 @@ class AuthController extends Notifier<AuthState> {
           try {
             await createUserProfileUseCase(
               UserEntity(
-                uid: user.uid,
-                email: user.email ?? email,
-                displayName: user.displayName,
-                photoUrl: user.photoURL,
-                createdAt: DateTime.now(),
-              ),
+  uid: user.uid,
+  camoId: '',
+  email: user.email ?? email,
+  displayName: user.displayName,
+  photoUrl: user.photoURL,
+  createdAt: DateTime.now(),
+),
             );
           } catch (e, stackTrace) {
             debugPrint('PROFILE: Sync exception -> $e');

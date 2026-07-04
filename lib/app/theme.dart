@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 
+import '../core/theme/camo_theme.dart' as core_theme;
+
 class CamoTheme {
-  static ThemeData get lightTheme {
-    return ThemeData(
-      useMaterial3: true,
-      brightness: Brightness.light,
-      colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF111827)),
-      scaffoldBackgroundColor: const Color(0xFFF8FAFC),
-      appBarTheme: const AppBarTheme(centerTitle: true, elevation: 0),
-    );
-  }
+  const CamoTheme._();
+
+  static ThemeData get darkTheme =>
+      core_theme.CamoTheme.darkTheme;
+
+  static ThemeData get lightTheme =>
+      core_theme.CamoTheme.lightTheme;
 }

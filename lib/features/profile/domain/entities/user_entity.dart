@@ -1,5 +1,6 @@
 class UserEntity {
   final String uid;
+  final String camoId;
   final String email;
   final String? displayName;
   final String? photoUrl;
@@ -7,6 +8,7 @@ class UserEntity {
 
   const UserEntity({
     required this.uid,
+    required this.camoId,
     required this.email,
     this.displayName,
     this.photoUrl,
@@ -15,6 +17,7 @@ class UserEntity {
 
   UserEntity copyWith({
     String? uid,
+    String? camoId,
     String? email,
     String? displayName,
     String? photoUrl,
@@ -22,6 +25,7 @@ class UserEntity {
   }) {
     return UserEntity(
       uid: uid ?? this.uid,
+      camoId: camoId ?? this.camoId,
       email: email ?? this.email,
       displayName: displayName ?? this.displayName,
       photoUrl: photoUrl ?? this.photoUrl,
@@ -35,6 +39,7 @@ class UserEntity {
         other is UserEntity &&
             runtimeType == other.runtimeType &&
             uid == other.uid &&
+            camoId == other.camoId &&
             email == other.email &&
             displayName == other.displayName &&
             photoUrl == other.photoUrl &&
@@ -44,6 +49,7 @@ class UserEntity {
   @override
   int get hashCode => Object.hash(
         uid,
+        camoId,
         email,
         displayName,
         photoUrl,

@@ -19,4 +19,9 @@ class ProfileRepositoryImpl implements ProfileRepository {
   Future<UserEntity?> getUser(String uid) {
     return _remoteDataSource.getUser(uid);
   }
+
+  @override
+  Future<UserEntity?> getUserByCamoId(String camoId) {
+    return _remoteDataSource.getUserByCamoId(camoId);
+  }
 }
