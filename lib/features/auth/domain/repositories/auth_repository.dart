@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../core/errors/result.dart';
 
 abstract class AuthRepository {
@@ -9,4 +10,5 @@ abstract class AuthRepository {
   Future<Result<void>> signOut();
 
   bool get isSignedIn;
+  User? get currentUser;
 }

@@ -4,6 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/di/injection_container.dart';
 import '../../../../core/errors/failure.dart';
 import '../../../../core/errors/result.dart' as app_result;
+import '../../../profile/domain/entities/user_entity.dart';
+import '../../../profile/domain/usecases/create_user_profile_usecase.dart';
+import '../../domain/repositories/auth_repository.dart';
 import '../../domain/usecases/login_usecase.dart';
 import 'auth_state.dart';
 
@@ -24,8 +27,8 @@ class AuthController extends Notifier<AuthState> {
 
     try {
       final loginUseCase = sl<LoginUseCase>();
-
-      debugPrint('AUTH: Login started');
+      final authRepository = sl<AuthRepository>();
+      final createUserProfileUseCase = sl<CreateUserProfileUseCase>();
 
       final result = await loginUseCase(
         email: email,
@@ -34,19 +37,50 @@ class AuthController extends Notifier<AuthState> {
 
       switch (result) {
         case app_result.Success<void>():
-          debugPrint('AUTH: Login successful');
+          final user = authRepository.currentUser;
+
+          if (user == null) {
+            state = const AuthState.failure(
+              AuthFailure(
+                message: 'Login succeeded but user data was not found.',
+              ),
+            );
+            return;
+          }
+
+          try {
+            await createUserProfileUseCase(
+              UserEntity(
+                uid: user.uid,
+                email: user.email ?? email,
+                displayName: user.displayName,
+                photoUrl: user.photoURL,
+                createdAt: DateTime.now(),
+              ),
+            );
+          } catch (e, stackTrace) {
+            debugPrint('PROFILE: Sync exception -> $e');
+            debugPrintStack(stackTrace: stackTrace);
+
+            state = const AuthState.failure(
+              AuthFailure(
+                message: 'Profile sync failed. Check Firestore database/rules.',
+              ),
+            );
+            return;
+          }
+
           state = const AuthState.authenticated();
 
         case app_result.Error<void>(failure: final failure):
-          debugPrint('AUTH: Login failed -> ${failure.message}');
           state = AuthState.failure(failure);
       }
     } catch (e, stackTrace) {
       debugPrint('AUTH: Exception -> $e');
       debugPrintStack(stackTrace: stackTrace);
 
-      state = AuthState.failure(
-        const AuthFailure(
+      state = const AuthState.failure(
+        AuthFailure(
           message: 'Authentication failed. Please check your email and password.',
         ),
       );

@@ -10,6 +10,9 @@ class LoginUseCase {
     required String email,
     required String password,
   }) {
-    return _repository.signIn(email: email, password: password);
+    return _repository.signIn(
+      email: email,
+      password: password,
+    );
   }
 }
