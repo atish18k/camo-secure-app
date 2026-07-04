@@ -1,6 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get_it/get_it.dart';
-
+import '../../features/auth/domain/usecases/check_auth_status_usecase.dart';
 import '../../features/auth/data/datasources/auth_remote_datasource.dart';
 import '../../features/auth/data/repositories/auth_repository_impl.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
@@ -22,4 +22,7 @@ Future<void> initDependencies() async {
 
   // Use case
   sl.registerLazySingleton<LoginUseCase>(() => LoginUseCase(sl()));
+  sl.registerLazySingleton<CheckAuthStatusUseCase>(
+  () => CheckAuthStatusUseCase(sl()),
+);
 }

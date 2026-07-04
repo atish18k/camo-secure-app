@@ -12,7 +12,7 @@ class CamoApp extends StatelessWidget {
       title: 'CAMO',
       debugShowCheckedModeBanner: false,
       theme: CamoTheme.lightTheme,
-      initialRoute: AppRoutes.login,
+      initialRoute: AppRoutes.splash,
       routes: AppRoutes.routes,
     );
   }

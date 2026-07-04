@@ -10,8 +10,7 @@ void main() {
       ),
     );
 
-    await tester.pump();
-
+    
     expect(find.text('CAMO'), findsOneWidget);
   });
 }
