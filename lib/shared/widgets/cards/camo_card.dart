@@ -6,25 +6,39 @@ import '../../../core/theme/camo_shadows.dart';
 import '../../../core/theme/camo_spacing.dart';
 
 class CamoCard extends StatelessWidget {
-  final Widget child;
-  final EdgeInsetsGeometry? padding;
-  final VoidCallback? onTap;
-
   const CamoCard({
     super.key,
     required this.child,
     this.padding,
+    this.margin,
+    this.width,
+    this.height,
+    this.backgroundColor,
+    this.border,
     this.onTap,
   });
 
+  final Widget child;
+  final EdgeInsetsGeometry? padding;
+  final EdgeInsetsGeometry? margin;
+  final double? width;
+  final double? height;
+  final Color? backgroundColor;
+  final BoxBorder? border;
+  final VoidCallback? onTap;
+
   @override
   Widget build(BuildContext context) {
-    final card = Container(
+    final widget = AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
+      width: width,
+      height: height,
+      margin: margin,
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: CamoColors.card,
-        borderRadius: BorderRadius.circular(
-          CamoRadius.lg,
-        ),
+        color: backgroundColor ?? CamoColors.card,
+        borderRadius: BorderRadius.circular(CamoRadius.lg),
+        border: border,
         boxShadow: CamoShadows.card,
       ),
       child: Padding(
@@ -37,17 +51,15 @@ class CamoCard extends StatelessWidget {
     );
 
     if (onTap == null) {
-      return card;
+      return widget;
     }
 
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(
-          CamoRadius.lg,
-        ),
+        borderRadius: BorderRadius.circular(CamoRadius.lg),
         onTap: onTap,
-        child: card,
+        child: widget,
       ),
     );
   }
