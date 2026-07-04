@@ -57,7 +57,6 @@ class DefaultFirebaseOptions {
     projectId: 'camo-b3cab',
     storageBucket: 'camo-b3cab.firebasestorage.app',
   );
-
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyAkZ5xCmFPmD7flvQ_KP4EvPnSiUMKssXE',
     appId: '1:224858679064:ios:31d70ca6d9a8ae3e0d206d',
@@ -66,7 +65,6 @@ class DefaultFirebaseOptions {
     storageBucket: 'camo-b3cab.firebasestorage.app',
     iosBundleId: 'com.example.camo',
   );
-
   static const FirebaseOptions macos = FirebaseOptions(
     apiKey: 'AIzaSyAkZ5xCmFPmD7flvQ_KP4EvPnSiUMKssXE',
     appId: '1:224858679064:ios:31d70ca6d9a8ae3e0d206d',
