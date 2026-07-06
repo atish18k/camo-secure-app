@@ -10,12 +10,17 @@ import '../../../../shared/widgets/avatar/camo_avatar.dart';
 import '../../../../shared/widgets/badge/camo_badge.dart';
 import '../../../../shared/widgets/cards/camo_card.dart';
 import '../providers/identity_card_controller.dart';
+import 'identity_qr_dialog.dart';
 
 // ---------------------------------------------------------------------------
 // Class
 // ---------------------------------------------------------------------------
 
 class IdentityCard extends StatelessWidget {
+  // ---------------------------------------------------------------------------
+  // Constructor
+  // ---------------------------------------------------------------------------
+
   const IdentityCard({
     super.key,
     required this.displayName,
@@ -23,11 +28,19 @@ class IdentityCard extends StatelessWidget {
     this.isPaired = false,
   });
 
+  // ---------------------------------------------------------------------------
+  // Properties
+  // ---------------------------------------------------------------------------
+
   final String displayName;
   final String camoId;
   final bool isPaired;
 
   static const Duration _animationDuration = Duration(milliseconds: 250);
+
+  // ---------------------------------------------------------------------------
+  // Build
+  // ---------------------------------------------------------------------------
 
   @override
   Widget build(BuildContext context) {
@@ -59,6 +72,10 @@ class IdentityCard extends StatelessWidget {
       ),
     );
   }
+
+  // ---------------------------------------------------------------------------
+  // Widgets
+  // ---------------------------------------------------------------------------
 
   Widget _buildHeader({
     required BuildContext context,
@@ -204,6 +221,10 @@ class IdentityCard extends StatelessWidget {
     );
   }
 
+  // ---------------------------------------------------------------------------
+  // Actions
+  // ---------------------------------------------------------------------------
+
   Future<void> _copyCamoId({
     required BuildContext context,
     required IdentityCardController controller,
@@ -224,16 +245,28 @@ class IdentityCard extends StatelessWidget {
     required BuildContext context,
     required IdentityCardController controller,
   }) {
-    final String message = controller.hasValidCamoId
-        ? 'QR Code coming next.'
-        : 'CAMO ID is not available yet.';
+    if (!controller.hasValidCamoId) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('CAMO ID is not available yet.'),
+        ),
+      );
+      return;
+    }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-      ),
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return IdentityQrDialog(
+          camoId: controller.camoId,
+        );
+      },
     );
   }
+
+  // ---------------------------------------------------------------------------
+  // Helpers
+  // ---------------------------------------------------------------------------
 
   String get _initials {
     final String trimmedName = displayName.trim();
@@ -253,17 +286,29 @@ class IdentityCard extends StatelessWidget {
 // ---------------------------------------------------------------------------
 
 class _IdentityActionButton extends StatelessWidget {
+  // ---------------------------------------------------------------------------
+  // Constructor
+  // ---------------------------------------------------------------------------
+
   const _IdentityActionButton({
     required this.icon,
     required this.label,
     required this.onTap,
   });
 
+  // ---------------------------------------------------------------------------
+  // Properties
+  // ---------------------------------------------------------------------------
+
   final IconData icon;
   final String label;
   final VoidCallback onTap;
 
   static const Duration _animationDuration = Duration(milliseconds: 250);
+
+  // ---------------------------------------------------------------------------
+  // Build
+  // ---------------------------------------------------------------------------
 
   @override
   Widget build(BuildContext context) {
