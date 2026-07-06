@@ -46,6 +46,10 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   bool get isSignedIn => _remoteDataSource.currentUser != null;
+
   @override
   User? get currentUser => _remoteDataSource.currentUser;
+
+  @override
+  String? get currentUserId => _remoteDataSource.currentUser?.uid;
 }

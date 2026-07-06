@@ -4,13 +4,25 @@ import '../datasources/pairing_remote_datasource.dart';
 import '../models/pairing_model.dart';
 
 class PairingRepositoryImpl implements PairingRepository {
-  final PairingRemoteDataSource _remoteDataSource;
+  // ---------------------------------------------------------------------------
+  // Constructor
+  // ---------------------------------------------------------------------------
 
   const PairingRepositoryImpl(this._remoteDataSource);
 
+  // ---------------------------------------------------------------------------
+  // Dependencies
+  // ---------------------------------------------------------------------------
+
+  final PairingRemoteDataSource _remoteDataSource;
+
+  // ---------------------------------------------------------------------------
+  // Repository Methods
+  // ---------------------------------------------------------------------------
+
   @override
   Future<void> savePairing(PairingEntity pairing) async {
-    final model = PairingModel.fromEntity(pairing);
+    final PairingModel model = PairingModel.fromEntity(pairing);
 
     await _remoteDataSource.savePairing(model);
   }

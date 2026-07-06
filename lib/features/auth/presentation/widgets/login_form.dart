@@ -11,15 +11,27 @@ import 'password_field.dart';
 class LoginForm extends ConsumerStatefulWidget {
   const LoginForm({super.key});
 
+  // ---------------------------------------------------------------------------
+  // Create State
+  // ---------------------------------------------------------------------------
+
   @override
   ConsumerState<LoginForm> createState() => _LoginFormState();
 }
 
 class _LoginFormState extends ConsumerState<LoginForm> {
-  final _formKey = GlobalKey<FormState>();
+  // ---------------------------------------------------------------------------
+  // Properties
+  // ---------------------------------------------------------------------------
 
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
+  // ---------------------------------------------------------------------------
+  // Lifecycle
+  // ---------------------------------------------------------------------------
 
   @override
   void dispose() {
@@ -28,44 +40,19 @@ class _LoginFormState extends ConsumerState<LoginForm> {
     super.dispose();
   }
 
-  Future<void> _login() async {
-    debugPrint('UI: Login tapped');
-
-    if (!_formKey.currentState!.validate()) {
-      debugPrint('UI: Form validation failed');
-      return;
-    }
-
-    debugPrint('UI: Calling AuthController');
-
-    await ref.read(authControllerProvider.notifier).login(
-          email: _emailController.text.trim(),
-          password: _passwordController.text.trim(),
-        );
-
-    debugPrint('UI: AuthController completed');
-  }
+  // ---------------------------------------------------------------------------
+  // Build
+  // ---------------------------------------------------------------------------
 
   @override
   Widget build(BuildContext context) {
-    final authState = ref.watch(authControllerProvider);
-    final isLoading = authState.status == AuthStatus.loading;
+    final AuthState authState = ref.watch(authControllerProvider);
+    final bool isLoading = authState.status == AuthStatus.loading;
 
-    ref.listen<AuthState>(authControllerProvider, (previous, next) {
-      debugPrint('UI: Auth status changed -> ${next.status}');
-
-      if (next.status == AuthStatus.authenticated) {
-        Navigator.of(context).pushReplacementNamed(AppRoutes.home);
-      }
-
-      if (next.status == AuthStatus.failure) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(next.failure?.message ?? 'Login failed'),
-          ),
-        );
-      }
-    });
+    ref.listen<AuthState>(
+      authControllerProvider,
+      _handleAuthStateChange,
+    );
 
     return Form(
       key: _formKey,
@@ -76,19 +63,86 @@ class _LoginFormState extends ConsumerState<LoginForm> {
           const SizedBox(height: 16),
           PasswordField(controller: _passwordController),
           const SizedBox(height: 8),
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton(
-              onPressed: isLoading ? null : () {},
-              child: const Text('Forgot Password?'),
-            ),
-          ),
+          _buildForgotPasswordButton(isLoading),
           const SizedBox(height: 16),
           LoginButton(
             isLoading: isLoading,
             onPressed: isLoading ? null : _login,
           ),
         ],
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Widgets
+  // ---------------------------------------------------------------------------
+
+  Widget _buildForgotPasswordButton(bool isLoading) {
+    return Align(
+      alignment: Alignment.centerRight,
+      child: TextButton(
+        onPressed: isLoading ? null : _onForgotPassword,
+        child: const Text('Forgot Password?'),
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Auth Listener
+  // ---------------------------------------------------------------------------
+
+  void _handleAuthStateChange(
+    AuthState? previous,
+    AuthState next,
+  ) {
+    if (!mounted) return;
+
+    switch (next.status) {
+      case AuthStatus.initial:
+      case AuthStatus.loading:
+      case AuthStatus.unauthenticated:
+        return;
+
+      case AuthStatus.authenticated:
+        Navigator.of(context).pushReplacementNamed(
+          AppRoutes.dashboard,
+        );
+        return;
+
+      case AuthStatus.failure:
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              next.failure?.message ?? 'Login failed.',
+            ),
+          ),
+        );
+        return;
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Actions
+  // ---------------------------------------------------------------------------
+
+  Future<void> _login() async {
+    final FormState? form = _formKey.currentState;
+
+    if (form == null || !form.validate()) {
+      return;
+    }
+
+    await ref.read(authControllerProvider.notifier).login(
+          email: _emailController.text.trim(),
+          password: _passwordController.text.trim(),
+        );
+  }
+
+  void _onForgotPassword() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Forgot password will be available soon.'),
       ),
     );
   }

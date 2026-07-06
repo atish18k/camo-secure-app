@@ -7,6 +7,7 @@ import '../../features/auth/data/repositories/auth_repository_impl.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
 import '../../features/auth/domain/usecases/check_auth_status_usecase.dart';
 import '../../features/auth/domain/usecases/login_usecase.dart';
+import '../../features/auth/domain/usecases/get_current_user_id_usecase.dart';
 import '../../features/pairing/data/datasources/pair_request_remote_datasource.dart';
 import '../../features/pairing/data/datasources/pairing_remote_datasource.dart';
 import '../../features/pairing/data/repositories/pair_request_repository_impl.dart';
@@ -99,6 +100,10 @@ Future<void> initDependencies() async {
   sl.registerLazySingleton<CheckAuthStatusUseCase>(
     () => CheckAuthStatusUseCase(sl()),
   );
+
+  sl.registerLazySingleton<GetCurrentUserIdUseCase>(
+  () => GetCurrentUserIdUseCase(sl()),
+);
 
   // ---------------------------------------------------------------------------
   // Profile Use Cases

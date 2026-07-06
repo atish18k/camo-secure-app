@@ -14,10 +14,18 @@ final authControllerProvider =
     NotifierProvider<AuthController, AuthState>(AuthController.new);
 
 class AuthController extends Notifier<AuthState> {
+  // ---------------------------------------------------------------------------
+  // Build
+  // ---------------------------------------------------------------------------
+
   @override
   AuthState build() {
     return const AuthState.initial();
   }
+
+  // ---------------------------------------------------------------------------
+  // Public Methods
+  // ---------------------------------------------------------------------------
 
   Future<void> login({
     required String email,
@@ -26,63 +34,79 @@ class AuthController extends Notifier<AuthState> {
     state = const AuthState.loading();
 
     try {
-      final loginUseCase = sl<LoginUseCase>();
-      final authRepository = sl<AuthRepository>();
-      final createUserProfileUseCase = sl<CreateUserProfileUseCase>();
+      final LoginUseCase loginUseCase = sl<LoginUseCase>();
+      final AuthRepository authRepository = sl<AuthRepository>();
+      final CreateUserProfileUseCase createUserProfileUseCase =
+          sl<CreateUserProfileUseCase>();
 
-      final result = await loginUseCase(
+      final app_result.Result<void> result = await loginUseCase(
         email: email,
         password: password,
       );
 
       switch (result) {
         case app_result.Success<void>():
-          final user = authRepository.currentUser;
+          await _syncUserProfile(
+            authRepository: authRepository,
+            createUserProfileUseCase: createUserProfileUseCase,
+            fallbackEmail: email,
+          );
 
-          if (user == null) {
-            state = const AuthState.failure(
-              AuthFailure(
-                message: 'Login succeeded but user data was not found.',
-              ),
-            );
-            return;
-          }
-
-          try {
-            await createUserProfileUseCase(
-              UserEntity(
-  uid: user.uid,
-  camoId: '',
-  email: user.email ?? email,
-  displayName: user.displayName,
-  photoUrl: user.photoURL,
-  createdAt: DateTime.now(),
-),
-            );
-          } catch (e, stackTrace) {
-            debugPrint('PROFILE: Sync exception -> $e');
-            debugPrintStack(stackTrace: stackTrace);
-
-            state = const AuthState.failure(
-              AuthFailure(
-                message: 'Profile sync failed. Check Firestore database/rules.',
-              ),
-            );
-            return;
-          }
-
-          state = const AuthState.authenticated();
-
-        case app_result.Error<void>(failure: final failure):
+        case app_result.Error<void>(failure: final Failure failure):
           state = AuthState.failure(failure);
       }
-    } catch (e, stackTrace) {
-      debugPrint('AUTH: Exception -> $e');
+    } catch (error, stackTrace) {
+      debugPrint('AUTH: Exception -> $error');
       debugPrintStack(stackTrace: stackTrace);
 
       state = const AuthState.failure(
         AuthFailure(
           message: 'Authentication failed. Please check your email and password.',
+        ),
+      );
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Private Methods
+  // ---------------------------------------------------------------------------
+
+  Future<void> _syncUserProfile({
+    required AuthRepository authRepository,
+    required CreateUserProfileUseCase createUserProfileUseCase,
+    required String fallbackEmail,
+  }) async {
+    final user = authRepository.currentUser;
+
+    if (user == null) {
+      state = const AuthState.failure(
+        AuthFailure(
+          message: 'Login succeeded but user data was not found.',
+        ),
+      );
+      return;
+    }
+
+    try {
+      await createUserProfileUseCase(
+        UserEntity(
+          uid: user.uid,
+          camoId: '',
+          email: user.email ?? fallbackEmail,
+          displayName: user.displayName ?? 'CAMO User',
+          photoUrl: user.photoURL,
+          createdAt: DateTime.now(),
+        ),
+      );
+
+      state = const AuthState.authenticated();
+    } catch (error, stackTrace) {
+      debugPrint('PROFILE: Sync exception -> $error');
+      debugPrintStack(stackTrace: stackTrace);
+
+      state = const AuthState.failure(
+        AuthFailure(
+          message: 'Profile sync failed. Check Firestore database/rules.',
         ),
       );
     }

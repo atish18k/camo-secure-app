@@ -1,6 +1,18 @@
+// ---------------------------------------------------------------------------
+// Imports
+// ---------------------------------------------------------------------------
+
 import '../../domain/entities/user_entity.dart';
 
+// ---------------------------------------------------------------------------
+// Class
+// ---------------------------------------------------------------------------
+
 class UserProfileModel extends UserEntity {
+  // ---------------------------------------------------------------------------
+  // Constructor
+  // ---------------------------------------------------------------------------
+
   const UserProfileModel({
     required super.uid,
     required super.camoId,
@@ -10,26 +22,22 @@ class UserProfileModel extends UserEntity {
     required super.createdAt,
   });
 
+  // ---------------------------------------------------------------------------
+  // Factories
+  // ---------------------------------------------------------------------------
+
   factory UserProfileModel.fromMap(Map<String, dynamic> map) {
     return UserProfileModel(
-      uid: map['uid'] as String,
-      camoId: map['camoId'] as String,
-      email: map['email'] as String,
+      uid: map['uid'] as String? ?? '',
+      camoId: map['camoId'] as String? ?? '',
+      email: map['email'] as String? ?? '',
       displayName: map['displayName'] as String?,
       photoUrl: map['photoUrl'] as String?,
-      createdAt: DateTime.parse(map['createdAt'] as String),
+      createdAt: DateTime.tryParse(
+            map['createdAt'] as String? ?? '',
+          ) ??
+          DateTime.now(),
     );
-  }
-
-  Map<String, dynamic> toMap() {
-    return {
-      'uid': uid,
-      'camoId': camoId,
-      'email': email,
-      'displayName': displayName,
-      'photoUrl': photoUrl,
-      'createdAt': createdAt.toIso8601String(),
-    };
   }
 
   factory UserProfileModel.fromEntity(UserEntity entity) {
@@ -41,5 +49,20 @@ class UserProfileModel extends UserEntity {
       photoUrl: entity.photoUrl,
       createdAt: entity.createdAt,
     );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Mapping
+  // ---------------------------------------------------------------------------
+
+  Map<String, dynamic> toMap() {
+    return {
+      'uid': uid,
+      'camoId': camoId,
+      'email': email,
+      'displayName': displayName,
+      'photoUrl': photoUrl,
+      'createdAt': createdAt.toIso8601String(),
+    };
   }
 }

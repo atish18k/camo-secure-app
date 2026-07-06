@@ -9,12 +9,24 @@ import '../../../auth/domain/usecases/check_auth_status_usecase.dart';
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
+  // ---------------------------------------------------------------------------
+  // Create State
+  // ---------------------------------------------------------------------------
+
   @override
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+  // ---------------------------------------------------------------------------
+  // Properties
+  // ---------------------------------------------------------------------------
+
   Timer? _sessionTimer;
+
+  // ---------------------------------------------------------------------------
+  // Lifecycle
+  // ---------------------------------------------------------------------------
 
   @override
   void initState() {
@@ -26,22 +38,30 @@ class _SplashScreenState extends State<SplashScreen> {
     );
   }
 
-  void _checkSession() {
-    final isSignedIn = sl<CheckAuthStatusUseCase>()();
-
-    if (!mounted) return;
-
-    Navigator.pushReplacementNamed(
-      context,
-      isSignedIn ? AppRoutes.home : AppRoutes.login,
-    );
-  }
-
   @override
   void dispose() {
     _sessionTimer?.cancel();
     super.dispose();
   }
+
+  // ---------------------------------------------------------------------------
+  // Session
+  // ---------------------------------------------------------------------------
+
+  void _checkSession() {
+    final bool isSignedIn = sl<CheckAuthStatusUseCase>()();
+
+    if (!mounted) return;
+
+    Navigator.pushReplacementNamed(
+      context,
+      isSignedIn ? AppRoutes.dashboard : AppRoutes.login,
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Build
+  // ---------------------------------------------------------------------------
 
   @override
   Widget build(BuildContext context) {

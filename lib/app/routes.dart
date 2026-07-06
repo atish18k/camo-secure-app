@@ -2,33 +2,46 @@ import 'package:flutter/material.dart';
 
 import '../features/auth/presentation/screens/home_screen.dart';
 import '../features/auth/presentation/screens/login_screen.dart';
+import '../features/dashboard/presentation/screens/dashboard_screen.dart';
 import '../features/pairing/presentation/screens/incoming_pair_requests_screen.dart';
 import '../features/pairing/presentation/screens/pair_request_screen.dart';
 import '../features/pairing/presentation/screens/pairing_hub_screen.dart';
 import '../features/splash/presentation/screens/splash_screen.dart';
 
 class AppRoutes {
+  const AppRoutes._();
+
+  // ---------------------------------------------------------------------------
+  // Core Routes
+  // ---------------------------------------------------------------------------
+
   static const String splash = '/';
   static const String login = '/login';
   static const String home = '/home';
+  static const String dashboard = '/dashboard';
 
-  // Pairing
+  // ---------------------------------------------------------------------------
+  // Pairing Routes
+  // ---------------------------------------------------------------------------
+
   static const String pairingHub = '/pairing';
   static const String pairRequest = '/pair-request';
-  static const String incomingPairRequests =
-      '/incoming-pair-requests';
+  static const String incomingPairRequests = '/incoming-pair-requests';
+
+  // ---------------------------------------------------------------------------
+  // Route Map
+  // ---------------------------------------------------------------------------
 
   static Map<String, WidgetBuilder> get routes {
     return {
       splash: (context) => const SplashScreen(),
       login: (context) => const LoginScreen(),
       home: (context) => const HomeScreen(),
+      dashboard: (context) => const DashboardScreen(),
 
-      // Pairing
       pairingHub: (context) => const PairingHubScreen(),
       pairRequest: (context) => const PairRequestScreen(),
-      incomingPairRequests: (context) =>
-          const IncomingPairRequestsScreen(),
+      incomingPairRequests: (context) => const IncomingPairRequestsScreen(),
     };
   }
 }

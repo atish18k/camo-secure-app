@@ -5,6 +5,10 @@ import '../widgets/login_form.dart';
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
 
+  // ---------------------------------------------------------------------------
+  // Build
+  // ---------------------------------------------------------------------------
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -13,45 +17,74 @@ class LoginScreen extends StatelessWidget {
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 420),
+              constraints: const BoxConstraints(
+                maxWidth: 420,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Icon(Icons.security, size: 72),
-
+                  _buildLogo(),
                   const SizedBox(height: 24),
-
-                  Text(
-                    'CAMO',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.headlineMedium,
-                  ),
-
+                  _buildTitle(context),
                   const SizedBox(height: 8),
-
-                  Text(
-                    'Privacy Beyond Encryption',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-
+                  _buildSubtitle(context),
                   const SizedBox(height: 40),
-
                   const LoginForm(),
-
                   const SizedBox(height: 24),
-
-                  Text(
-                    'Version 0.4.0',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
+                  _buildVersion(context),
                 ],
               ),
             ),
           ),
         ),
       ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Logo
+  // ---------------------------------------------------------------------------
+
+  Widget _buildLogo() {
+    return const Icon(
+      Icons.security,
+      size: 72,
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Title
+  // ---------------------------------------------------------------------------
+
+  Widget _buildTitle(BuildContext context) {
+    return Text(
+      'CAMO',
+      textAlign: TextAlign.center,
+      style: Theme.of(context).textTheme.headlineMedium,
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Subtitle
+  // ---------------------------------------------------------------------------
+
+  Widget _buildSubtitle(BuildContext context) {
+    return Text(
+      'Privacy Beyond Encryption',
+      textAlign: TextAlign.center,
+      style: Theme.of(context).textTheme.bodyMedium,
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Version
+  // ---------------------------------------------------------------------------
+
+  Widget _buildVersion(BuildContext context) {
+    return Text(
+      'Version 0.4.0',
+      textAlign: TextAlign.center,
+      style: Theme.of(context).textTheme.bodySmall,
     );
   }
 }
