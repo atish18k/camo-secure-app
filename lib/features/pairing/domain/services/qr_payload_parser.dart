@@ -1,20 +1,18 @@
 // ---------------------------------------------------------------------------
+// Imports
+// ---------------------------------------------------------------------------
+
+import 'dart:convert';
+
+// ---------------------------------------------------------------------------
 // QR Payload
 // ---------------------------------------------------------------------------
 
 class QrPayload {
-  // ---------------------------------------------------------------------------
-  // Constructor
-  // ---------------------------------------------------------------------------
-
   const QrPayload({
     required this.version,
     required this.camoId,
   });
-
-  // ---------------------------------------------------------------------------
-  // Properties
-  // ---------------------------------------------------------------------------
 
   final String version;
   final String camoId;
@@ -25,41 +23,35 @@ class QrPayload {
 // ---------------------------------------------------------------------------
 
 class QrPayloadParser {
-  // ---------------------------------------------------------------------------
-  // Constants
-  // ---------------------------------------------------------------------------
-
-  static const String _prefix = 'CAMO://PAIR';
-
-  // ---------------------------------------------------------------------------
-  // Parse
-  // ---------------------------------------------------------------------------
-
   QrPayload parse(String payload) {
-    final Uri? uri = Uri.tryParse(payload);
+    try {
+      final Map<String, dynamic> data =
+          jsonDecode(payload) as Map<String, dynamic>;
 
-    if (uri == null) {
+      final Object? version = data['v'] ?? data['version'];
+      final Object? type = data['t'] ?? data['type'];
+      final Object? identity = data['id'] ?? data['identity'];
+
+      if (version.toString() != '1') {
+        throw const FormatException('Unsupported QR version.');
+      }
+
+      if (type != 'identity') {
+        throw const FormatException('Invalid CAMO QR type.');
+      }
+
+      if (identity is! String || identity.trim().isEmpty) {
+        throw const FormatException('Missing CAMO ID.');
+      }
+
+      return QrPayload(
+        version: version.toString(),
+        camoId: identity.trim().toUpperCase(),
+      );
+    } on FormatException {
+      rethrow;
+    } catch (_) {
       throw const FormatException('Invalid QR payload.');
     }
-
-    if (!payload.startsWith(_prefix)) {
-      throw const FormatException('Invalid CAMO QR.');
-    }
-
-    final String? version = uri.queryParameters['version'];
-    final String? camoId = uri.queryParameters['id'];
-
-    if (version == null || version != '1') {
-      throw const FormatException('Unsupported QR version.');
-    }
-
-    if (camoId == null || camoId.isEmpty) {
-      throw const FormatException('Missing CAMO ID.');
-    }
-
-    return QrPayload(
-      version: version,
-      camoId: camoId,
-    );
   }
 }

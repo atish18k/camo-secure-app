@@ -7,23 +7,15 @@ import 'dart:convert';
 import '../../domain/entities/qr_payload.dart';
 
 // ---------------------------------------------------------------------------
-// Class
+// Model
 // ---------------------------------------------------------------------------
 
 class QrPayloadModel extends QrPayload {
-  // ---------------------------------------------------------------------------
-  // Constructor
-  // ---------------------------------------------------------------------------
-
   const QrPayloadModel({
     required super.version,
     required super.type,
     required super.identity,
   });
-
-  // ---------------------------------------------------------------------------
-  // Factory
-  // ---------------------------------------------------------------------------
 
   factory QrPayloadModel.identity({
     required String camoId,
@@ -34,10 +26,6 @@ class QrPayloadModel extends QrPayload {
       identity: camoId,
     );
   }
-
-  // ---------------------------------------------------------------------------
-  // Public Methods
-  // ---------------------------------------------------------------------------
 
   String toQrString() {
     return jsonEncode(toJson());

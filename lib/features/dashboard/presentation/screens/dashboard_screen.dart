@@ -8,6 +8,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../app/routes.dart';
 import '../../../../core/theme/camo_spacing.dart';
 import '../../../../shared/layouts/responsive_container.dart';
+import '../../../pairing/domain/services/qr_payload_parser.dart';
+import '../../../pairing/presentation/providers/pair_request_provider.dart';
+import '../../../pairing/presentation/providers/pair_request_state.dart';
 import '../providers/dashboard_provider.dart';
 import '../providers/dashboard_state.dart';
 import '../widgets/identity_card.dart';
@@ -26,10 +29,39 @@ class DashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final DashboardState state = ref.watch(dashboardProvider);
 
+    ref.listen<PairRequestState>(
+      pairRequestProvider,
+      (previous, next) {
+        switch (next.status) {
+          case PairRequestUiStatus.sent:
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Pair request sent successfully.'),
+              ),
+            );
+            break;
+
+          case PairRequestUiStatus.failure:
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  next.failure?.message ?? 'Unable to send pair request.',
+                ),
+              ),
+            );
+            break;
+
+          default:
+            break;
+        }
+      },
+    );
+
     return Scaffold(
       appBar: _buildAppBar(),
       body: _buildBody(
         context: context,
+        ref: ref,
         state: state,
       ),
     );
@@ -44,6 +76,7 @@ class DashboardScreen extends ConsumerWidget {
 
   Widget _buildBody({
     required BuildContext context,
+    required WidgetRef ref,
     required DashboardState state,
   }) {
     return SafeArea(
@@ -57,7 +90,10 @@ class DashboardScreen extends ConsumerWidget {
               const SizedBox(height: CamoSpacing.lg),
               const SecurityCenterCard(),
               const SizedBox(height: CamoSpacing.lg),
-              _buildQuickActions(context),
+              _buildQuickActions(
+                context: context,
+                ref: ref,
+              ),
               const SizedBox(height: CamoSpacing.lg),
               _buildRecentActivity(),
             ],
@@ -75,7 +111,10 @@ class DashboardScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildQuickActions(BuildContext context) {
+  Widget _buildQuickActions({
+    required BuildContext context,
+    required WidgetRef ref,
+  }) {
     return GridView.count(
       crossAxisCount: 2,
       crossAxisSpacing: CamoSpacing.md,
@@ -115,10 +154,20 @@ class DashboardScreen extends ConsumerWidget {
           title: 'Scan QR',
           subtitle: 'Scan CAMO QR',
           icon: Icons.qr_code_scanner,
-          onTap: () => Navigator.pushNamed(
-            context,
-            AppRoutes.qrScanner,
-          ),
+          onTap: () async {
+            final Object? result = await Navigator.pushNamed(
+              context,
+              AppRoutes.qrScanner,
+            );
+
+            if (result is! QrPayload) {
+              return;
+            }
+
+            ref
+                .read(pairRequestProvider.notifier)
+                .createPairRequestByCamoId(result.camoId);
+          },
         ),
       ],
     );
