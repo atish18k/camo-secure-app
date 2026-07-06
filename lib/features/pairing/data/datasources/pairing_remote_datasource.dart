@@ -25,6 +25,15 @@ abstract class PairingRemoteDataSource {
 
   Future<PairingModel?> getPairing(String id);
 
+  Future<PairingModel?> getPairingBetweenUsers({
+    required String requesterUid,
+    required String receiverUid,
+  });
+
+  Stream<List<PairingModel>> watchPendingRequests(String receiverUid);
+
+  Stream<List<PairingModel>> watchAcceptedPairings(String userUid);
+
   // ---------------------------------------------------------------------------
   // Update
   // ---------------------------------------------------------------------------
@@ -46,15 +55,7 @@ abstract class PairingRemoteDataSource {
 // ---------------------------------------------------------------------------
 
 class FirebasePairingRemoteDataSource implements PairingRemoteDataSource {
-  // ---------------------------------------------------------------------------
-  // Constructor
-  // ---------------------------------------------------------------------------
-
   const FirebasePairingRemoteDataSource(this._firestore);
-
-  // ---------------------------------------------------------------------------
-  // Dependencies
-  // ---------------------------------------------------------------------------
 
   final FirebaseFirestore _firestore;
 
@@ -64,10 +65,19 @@ class FirebasePairingRemoteDataSource implements PairingRemoteDataSource {
 
   @override
   Future<void> savePairing(PairingModel pairing) async {
-    await _firestore.collection(FirestorePaths.pairings).doc(pairing.id).set(
-          pairing.toMap(),
-          SetOptions(merge: true),
-        );
+    final DocumentReference<Map<String, dynamic>> pairingRef =
+        _firestore.collection(FirestorePaths.pairings).doc(pairing.id);
+
+    await _firestore.runTransaction<void>((transaction) async {
+      final DocumentSnapshot<Map<String, dynamic>> snapshot =
+          await transaction.get(pairingRef);
+
+      if (snapshot.exists) {
+        throw const FormatException('Pairing request already exists.');
+      }
+
+      transaction.set(pairingRef, pairing.toMap());
+    });
   }
 
   // ---------------------------------------------------------------------------
@@ -79,20 +89,75 @@ class FirebasePairingRemoteDataSource implements PairingRemoteDataSource {
     final DocumentSnapshot<Map<String, dynamic>> snapshot =
         await _firestore.collection(FirestorePaths.pairings).doc(id).get();
 
-    if (!snapshot.exists) {
-      return null;
-    }
+    if (!snapshot.exists) return null;
 
     final Map<String, dynamic>? data = snapshot.data();
+    if (data == null) return null;
 
-    if (data == null) {
-      return null;
-    }
+    return PairingModel.fromMap(data, id: snapshot.id);
+  }
 
-    return PairingModel.fromMap(
-      data,
-      id: snapshot.id,
-    );
+  @override
+  Future<PairingModel?> getPairingBetweenUsers({
+    required String requesterUid,
+    required String receiverUid,
+  }) async {
+    final QuerySnapshot<Map<String, dynamic>> snapshot = await _firestore
+        .collection(FirestorePaths.pairings)
+        .where('requesterUid', isEqualTo: requesterUid)
+        .where('receiverUid', isEqualTo: receiverUid)
+        .limit(1)
+        .get();
+
+    if (snapshot.docs.isEmpty) return null;
+
+    final QueryDocumentSnapshot<Map<String, dynamic>> document =
+        snapshot.docs.first;
+
+    return PairingModel.fromMap(document.data(), id: document.id);
+  }
+
+  @override
+  Stream<List<PairingModel>> watchPendingRequests(String receiverUid) {
+    return _firestore
+        .collection(FirestorePaths.pairings)
+        .where('receiverUid', isEqualTo: receiverUid)
+        .where('status', isEqualTo: PairingStatus.pending.name)
+        .snapshots()
+        .map(
+          (snapshot) => snapshot.docs
+              .map(
+                (document) => PairingModel.fromMap(
+                  document.data(),
+                  id: document.id,
+                ),
+              )
+              .toList(),
+        );
+  }
+
+  @override
+  Stream<List<PairingModel>> watchAcceptedPairings(String userUid) {
+    return _firestore
+        .collection(FirestorePaths.pairings)
+        .where('status', isEqualTo: PairingStatus.accepted.name)
+        .where(
+          Filter.or(
+            Filter('requesterUid', isEqualTo: userUid),
+            Filter('receiverUid', isEqualTo: userUid),
+          ),
+        )
+        .snapshots()
+        .map(
+          (snapshot) => snapshot.docs
+              .map(
+                (document) => PairingModel.fromMap(
+                  document.data(),
+                  id: document.id,
+                ),
+              )
+              .toList(),
+        );
   }
 
   // ---------------------------------------------------------------------------

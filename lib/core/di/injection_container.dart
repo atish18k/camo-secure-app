@@ -5,6 +5,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get_it/get_it.dart';
+
 import '../../features/auth/data/datasources/auth_remote_datasource.dart';
 import '../../features/auth/data/repositories/auth_repository_impl.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
@@ -14,9 +15,15 @@ import '../../features/auth/domain/usecases/login_usecase.dart';
 import '../../features/pairing/data/datasources/pairing_remote_datasource.dart';
 import '../../features/pairing/data/repositories/pairing_repository_impl.dart';
 import '../../features/pairing/domain/repositories/pairing_repository.dart';
+import '../../features/pairing/domain/usecases/accept_pair_request_usecase.dart';
 import '../../features/pairing/domain/usecases/create_pairing_usecase.dart';
+import '../../features/pairing/domain/usecases/delete_pairing_usecase.dart';
 import '../../features/pairing/domain/usecases/find_pairing_user_usecase.dart';
+import '../../features/pairing/domain/usecases/get_pairing_between_users_usecase.dart';
 import '../../features/pairing/domain/usecases/get_pairing_usecase.dart';
+import '../../features/pairing/domain/usecases/reject_pair_request_usecase.dart';
+import '../../features/pairing/domain/usecases/watch_accepted_pairings_usecase.dart';
+import '../../features/pairing/domain/usecases/watch_pending_pair_requests_usecase.dart';
 import '../../features/profile/data/datasources/profile_remote_datasource.dart';
 import '../../features/profile/data/repositories/profile_repository_impl.dart';
 import '../../features/profile/domain/repositories/profile_repository.dart';
@@ -24,9 +31,6 @@ import '../../features/profile/domain/usecases/create_user_profile_usecase.dart'
 import '../../features/profile/domain/usecases/get_user_by_camo_id_usecase.dart';
 import '../../features/profile/domain/usecases/get_user_profile_usecase.dart';
 import '../../services/identity/camo_id_generator.dart';
-import '../../features/pairing/domain/usecases/accept_pair_request_usecase.dart';
-import '../../features/pairing/domain/usecases/delete_pairing_usecase.dart';
-import '../../features/pairing/domain/usecases/reject_pair_request_usecase.dart';
 
 // ---------------------------------------------------------------------------
 // Service Locator
@@ -132,12 +136,24 @@ Future<void> initDependencies() async {
   // Pairing Use Cases
   // ---------------------------------------------------------------------------
 
-   sl.registerLazySingleton<CreatePairingUseCase>(
+  sl.registerLazySingleton<CreatePairingUseCase>(
     () => CreatePairingUseCase(sl()),
   );
 
   sl.registerLazySingleton<GetPairingUseCase>(
     () => GetPairingUseCase(sl()),
+  );
+
+  sl.registerLazySingleton<GetPairingBetweenUsersUseCase>(
+    () => GetPairingBetweenUsersUseCase(sl()),
+  );
+
+  sl.registerLazySingleton<WatchPendingPairRequestsUseCase>(
+    () => WatchPendingPairRequestsUseCase(sl()),
+  );
+
+  sl.registerLazySingleton<WatchAcceptedPairingsUseCase>(
+    () => WatchAcceptedPairingsUseCase(sl()),
   );
 
   sl.registerLazySingleton<AcceptPairRequestUseCase>(

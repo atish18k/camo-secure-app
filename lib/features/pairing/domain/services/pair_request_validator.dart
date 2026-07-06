@@ -19,22 +19,25 @@ class PairRequestValidator {
     required String currentCamoId,
     required String targetCamoId,
   }) {
+    final String current = currentCamoId.trim().toUpperCase();
+    final String target = targetCamoId.trim().toUpperCase();
+
     // Empty
-    if (targetCamoId.trim().isEmpty) {
+    if (target.isEmpty) {
       throw const FormatException(
         'CAMO ID cannot be empty.',
       );
     }
 
     // Format
-    if (!_camoIdPattern.hasMatch(targetCamoId)) {
+    if (!_camoIdPattern.hasMatch(target)) {
       throw const FormatException(
         'Invalid CAMO ID format.',
       );
     }
 
     // Self Pair
-    if (currentCamoId == targetCamoId) {
+    if (current == target) {
       throw const FormatException(
         'You cannot pair with yourself.',
       );

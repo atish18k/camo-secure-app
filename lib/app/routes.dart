@@ -7,6 +7,10 @@ import 'package:flutter/material.dart';
 import '../features/auth/presentation/screens/home_screen.dart';
 import '../features/auth/presentation/screens/login_screen.dart';
 import '../features/dashboard/presentation/screens/dashboard_screen.dart';
+import '../features/pairing/presentation/screens/my_pairings_screen.dart';
+import '../features/pairing/presentation/screens/pair_request_screen.dart';
+import '../features/pairing/presentation/screens/pending_pair_requests_screen.dart';
+import '../features/pairing/presentation/screens/qr_scanner_screen.dart';
 import '../features/splash/presentation/screens/splash_screen.dart';
 
 // ---------------------------------------------------------------------------
@@ -30,6 +34,15 @@ class AppRoutes {
   static const String dashboard = '/dashboard';
 
   // ---------------------------------------------------------------------------
+  // Pairing Routes
+  // ---------------------------------------------------------------------------
+
+  static const String pairRequest = '/pair-request';
+  static const String pendingPairRequests = '/pending-pair-requests';
+  static const String myPairings = '/my-pairings';
+  static const String qrScanner = '/qr-scanner';
+
+  // ---------------------------------------------------------------------------
   // Route Map
   // ---------------------------------------------------------------------------
 
@@ -39,6 +52,10 @@ class AppRoutes {
       login: (context) => const LoginScreen(),
       home: (context) => const HomeScreen(),
       dashboard: (context) => const DashboardScreen(),
+      pairRequest: (context) => const PairRequestScreen(),
+      pendingPairRequests: (context) => const PendingPairRequestsScreen(),
+      myPairings: (context) => const MyPairingsScreen(),
+      qrScanner: (context) => const QrScannerScreen(),
     };
   }
 }

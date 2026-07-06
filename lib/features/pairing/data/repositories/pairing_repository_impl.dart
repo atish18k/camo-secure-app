@@ -46,6 +46,27 @@ class PairingRepositoryImpl implements PairingRepository {
     return remoteDataSource.getPairing(pairingId);
   }
 
+  @override
+  Future<PairingEntity?> getPairingBetweenUsers({
+    required String requesterUid,
+    required String receiverUid,
+  }) {
+    return remoteDataSource.getPairingBetweenUsers(
+      requesterUid: requesterUid,
+      receiverUid: receiverUid,
+    );
+  }
+
+  @override
+  Stream<List<PairingEntity>> watchPendingRequests(String receiverUid) {
+    return remoteDataSource.watchPendingRequests(receiverUid);
+  }
+
+  @override
+  Stream<List<PairingEntity>> watchAcceptedPairings(String userUid) {
+    return remoteDataSource.watchAcceptedPairings(userUid);
+  }
+
   // ---------------------------------------------------------------------------
   // Update
   // ---------------------------------------------------------------------------

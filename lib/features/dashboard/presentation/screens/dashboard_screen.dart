@@ -5,6 +5,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../app/routes.dart';
 import '../../../../core/theme/camo_spacing.dart';
 import '../../../../shared/layouts/responsive_container.dart';
 import '../providers/dashboard_provider.dart';
@@ -84,39 +85,39 @@ class DashboardScreen extends ConsumerWidget {
       childAspectRatio: 1.2,
       children: [
         QuickActionTile(
-          title: 'Encode',
-          subtitle: 'Secure a message',
-          icon: Icons.lock_outline,
-          onTap: () => _showComingSoon(
-            context: context,
-            featureName: 'Encode',
+          title: 'Pair Request',
+          subtitle: 'Send CAMO request',
+          icon: Icons.person_add_alt_1_outlined,
+          onTap: () => Navigator.pushNamed(
+            context,
+            AppRoutes.pairRequest,
           ),
         ),
         QuickActionTile(
-          title: 'Decode',
-          subtitle: 'Open a message',
-          icon: Icons.lock_open_outlined,
-          onTap: () => _showComingSoon(
-            context: context,
-            featureName: 'Decode',
+          title: 'Pending',
+          subtitle: 'Accept or reject',
+          icon: Icons.mark_email_unread_outlined,
+          onTap: () => Navigator.pushNamed(
+            context,
+            AppRoutes.pendingPairRequests,
           ),
         ),
         QuickActionTile(
-          title: 'Pairing',
+          title: 'My Pairings',
+          subtitle: 'Trusted CAMO users',
+          icon: Icons.people_alt_outlined,
+          onTap: () => Navigator.pushNamed(
+            context,
+            AppRoutes.myPairings,
+          ),
+        ),
+        QuickActionTile(
+          title: 'Scan QR',
           subtitle: 'Scan CAMO QR',
           icon: Icons.qr_code_scanner,
-          onTap: () => _showComingSoon(
-            context: context,
-            featureName: 'Pairing Hub',
-          ),
-        ),
-        QuickActionTile(
-          title: 'Security',
-          subtitle: 'Privacy settings',
-          icon: Icons.shield_outlined,
-          onTap: () => _showComingSoon(
-            context: context,
-            featureName: 'Security Center',
+          onTap: () => Navigator.pushNamed(
+            context,
+            AppRoutes.qrScanner,
           ),
         ),
       ],
@@ -125,16 +126,5 @@ class DashboardScreen extends ConsumerWidget {
 
   Widget _buildRecentActivity() {
     return const RecentActivityCard();
-  }
-
-  void _showComingSoon({
-    required BuildContext context,
-    required String featureName,
-  }) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('$featureName coming soon.'),
-      ),
-    );
   }
 }
