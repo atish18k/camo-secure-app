@@ -12,17 +12,12 @@ import '../../features/auth/domain/repositories/auth_repository.dart';
 import '../../features/auth/domain/usecases/check_auth_status_usecase.dart';
 import '../../features/auth/domain/usecases/get_current_user_id_usecase.dart';
 import '../../features/auth/domain/usecases/login_usecase.dart';
-import '../../features/pairing/data/datasources/pair_request_remote_datasource.dart';
 import '../../features/pairing/data/datasources/pairing_remote_datasource.dart';
-import '../../features/pairing/data/repositories/pair_request_repository_impl.dart';
 import '../../features/pairing/data/repositories/pairing_repository_impl.dart';
-import '../../features/pairing/domain/repositories/pair_request_repository.dart';
 import '../../features/pairing/domain/repositories/pairing_repository.dart';
 import '../../features/pairing/domain/usecases/create_pairing_usecase.dart';
-import '../../features/pairing/domain/usecases/get_pair_request_usecase.dart';
+import '../../features/pairing/domain/usecases/find_pairing_user_usecase.dart';
 import '../../features/pairing/domain/usecases/get_pairing_usecase.dart';
-import '../../features/pairing/domain/usecases/send_pair_request_usecase.dart';
-import '../../features/pairing/domain/usecases/watch_incoming_pair_requests_usecase.dart';
 import '../../features/profile/data/datasources/profile_remote_datasource.dart';
 import '../../features/profile/data/repositories/profile_repository_impl.dart';
 import '../../features/profile/domain/repositories/profile_repository.dart';
@@ -78,10 +73,6 @@ Future<void> initDependencies() async {
     () => FirebasePairingRemoteDataSource(sl()),
   );
 
-  sl.registerLazySingleton<PairRequestRemoteDataSource>(
-    () => FirebasePairRequestRemoteDataSource(sl()),
-  );
-
   // ---------------------------------------------------------------------------
   // Repositories
   // ---------------------------------------------------------------------------
@@ -98,10 +89,6 @@ Future<void> initDependencies() async {
     () => PairingRepositoryImpl(
       remoteDataSource: sl(),
     ),
-  );
-
-  sl.registerLazySingleton<PairRequestRepository>(
-    () => PairRequestRepositoryImpl(sl()),
   );
 
   // ---------------------------------------------------------------------------
@@ -143,10 +130,6 @@ Future<void> initDependencies() async {
   // Pairing Use Cases
   // ---------------------------------------------------------------------------
 
-  sl.registerLazySingleton<WatchIncomingPairRequestsUseCase>(
-    () => WatchIncomingPairRequestsUseCase(sl()),
-  );
-
   sl.registerLazySingleton<CreatePairingUseCase>(
     () => CreatePairingUseCase(sl()),
   );
@@ -155,11 +138,7 @@ Future<void> initDependencies() async {
     () => GetPairingUseCase(sl()),
   );
 
-  sl.registerLazySingleton<SendPairRequestUseCase>(
-    () => SendPairRequestUseCase(sl()),
-  );
-
-  sl.registerLazySingleton<GetPairRequestUseCase>(
-    () => GetPairRequestUseCase(sl()),
+  sl.registerLazySingleton<FindPairingUserUseCase>(
+    () => FindPairingUserUseCase(sl()),
   );
 }

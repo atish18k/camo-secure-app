@@ -1,9 +1,25 @@
+// ---------------------------------------------------------------------------
+// Imports
+// ---------------------------------------------------------------------------
+
 import 'package:flutter/material.dart';
 
-import '../../../../app/routes.dart';
+// ---------------------------------------------------------------------------
+// Home Screen
+// ---------------------------------------------------------------------------
 
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+  // ---------------------------------------------------------------------------
+  // Constructor
+  // ---------------------------------------------------------------------------
+
+  const HomeScreen({
+    super.key,
+  });
+
+  // ---------------------------------------------------------------------------
+  // Build
+  // ---------------------------------------------------------------------------
 
   @override
   Widget build(BuildContext context) {
@@ -11,19 +27,19 @@ class HomeScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('CAMO'),
       ),
-      body: Center(
+      body: const Center(
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: EdgeInsets.all(24),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Icon(
+              Icon(
                 Icons.verified_user_outlined,
                 size: 72,
               ),
-              const SizedBox(height: 24),
-              const Text(
+              SizedBox(height: 24),
+              Text(
                 'Authentication Successful',
                 textAlign: TextAlign.center,
                 style: TextStyle(
@@ -31,30 +47,10 @@ class HomeScreen extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 40),
-
-              FilledButton.icon(
-                onPressed: () {
-                  Navigator.pushNamed(
-                    context,
-                    AppRoutes.pairRequest,
-                  );
-                },
-                icon: const Icon(Icons.link),
-                label: const Text('Send Pair Request'),
-              ),
-
-              const SizedBox(height: 16),
-
-              OutlinedButton.icon(
-                onPressed: () {
-                  Navigator.pushNamed(
-                    context,
-                    AppRoutes.incomingPairRequests,
-                  );
-                },
-                icon: const Icon(Icons.inbox_outlined),
-                label: const Text('Incoming Requests'),
+              SizedBox(height: 16),
+              Text(
+                'Pairing features are being rebuilt in Sprint-014.',
+                textAlign: TextAlign.center,
               ),
             ],
           ),

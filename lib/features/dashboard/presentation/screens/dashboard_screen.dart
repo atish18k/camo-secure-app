@@ -4,7 +4,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../app/routes.dart';
+
 import '../../../../core/theme/camo_spacing.dart';
 import '../../../../shared/layouts/responsive_container.dart';
 import '../providers/dashboard_provider.dart';
@@ -19,15 +19,7 @@ import '../widgets/security_center_card.dart';
 // ---------------------------------------------------------------------------
 
 class DashboardScreen extends ConsumerWidget {
-  // ---------------------------------------------------------------------------
-  // Constructor
-  // ---------------------------------------------------------------------------
-
   const DashboardScreen({super.key});
-
-  // ---------------------------------------------------------------------------
-  // Build
-  // ---------------------------------------------------------------------------
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -42,20 +34,12 @@ class DashboardScreen extends ConsumerWidget {
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // App Bar
-  // ---------------------------------------------------------------------------
-
   AppBar _buildAppBar() {
     return AppBar(
       title: const Text('CAMO'),
       centerTitle: false,
     );
   }
-
-  // ---------------------------------------------------------------------------
-  // Body
-  // ---------------------------------------------------------------------------
 
   Widget _buildBody({
     required BuildContext context,
@@ -82,10 +66,6 @@ class DashboardScreen extends ConsumerWidget {
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // Identity Card
-  // ---------------------------------------------------------------------------
-
   Widget _buildIdentityCard(DashboardState state) {
     return IdentityCard(
       displayName: state.displayName,
@@ -93,10 +73,6 @@ class DashboardScreen extends ConsumerWidget {
       isPaired: state.isPaired,
     );
   }
-
-  // ---------------------------------------------------------------------------
-  // Quick Actions
-  // ---------------------------------------------------------------------------
 
   Widget _buildQuickActions(BuildContext context) {
     return GridView.count(
@@ -127,9 +103,12 @@ class DashboardScreen extends ConsumerWidget {
         ),
         QuickActionTile(
           title: 'Pairing',
-          subtitle: 'Manage devices',
-          icon: Icons.link,
-          onTap: () => _openPairingHub(context),
+          subtitle: 'Scan CAMO QR',
+          icon: Icons.qr_code_scanner,
+          onTap: () => _showComingSoon(
+            context: context,
+            featureName: 'Pairing Hub',
+          ),
         ),
         QuickActionTile(
           title: 'Security',
@@ -144,25 +123,9 @@ class DashboardScreen extends ConsumerWidget {
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // Recent Activity
-  // ---------------------------------------------------------------------------
-
   Widget _buildRecentActivity() {
     return const RecentActivityCard();
   }
-
-  // ---------------------------------------------------------------------------
-  // Navigation
-  // ---------------------------------------------------------------------------
-
-  void _openPairingHub(BuildContext context) {
-    Navigator.of(context).pushNamed(AppRoutes.pairingHub);
-  }
-
-  // ---------------------------------------------------------------------------
-  // Feedback
-  // ---------------------------------------------------------------------------
 
   void _showComingSoon({
     required BuildContext context,

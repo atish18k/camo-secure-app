@@ -2,43 +2,33 @@
 // Imports
 // ---------------------------------------------------------------------------
 
-import 'package:flutter/material.dart';
-
-import '../features/auth/presentation/screens/home_screen.dart';
-import '../features/auth/presentation/screens/login_screen.dart';
-import '../features/dashboard/presentation/screens/dashboard_screen.dart';
-import '../features/splash/presentation/screens/splash_screen.dart';
+import '../../../profile/domain/entities/user_entity.dart';
+import '../../../profile/domain/usecases/get_user_by_camo_id_usecase.dart';
 
 // ---------------------------------------------------------------------------
-// App Routes
+// Use Case
 // ---------------------------------------------------------------------------
 
-class AppRoutes {
+class FindPairingUserUseCase {
   // ---------------------------------------------------------------------------
   // Constructor
   // ---------------------------------------------------------------------------
 
-  const AppRoutes._();
+  const FindPairingUserUseCase(
+    this._getUserByCamoIdUseCase,
+  );
 
   // ---------------------------------------------------------------------------
-  // Core Routes
+  // Dependencies
   // ---------------------------------------------------------------------------
 
-  static const String splash = '/';
-  static const String login = '/login';
-  static const String home = '/home';
-  static const String dashboard = '/dashboard';
+  final GetUserByCamoIdUseCase _getUserByCamoIdUseCase;
 
   // ---------------------------------------------------------------------------
-  // Route Map
+  // Call
   // ---------------------------------------------------------------------------
 
-  static Map<String, WidgetBuilder> get routes {
-    return {
-      splash: (context) => const SplashScreen(),
-      login: (context) => const LoginScreen(),
-      home: (context) => const HomeScreen(),
-      dashboard: (context) => const DashboardScreen(),
-    };
+  Future<UserEntity?> call(String camoId) {
+    return _getUserByCamoIdUseCase(camoId);
   }
 }
