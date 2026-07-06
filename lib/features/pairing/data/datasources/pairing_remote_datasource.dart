@@ -1,7 +1,16 @@
+// ---------------------------------------------------------------------------
+// Imports
+// ---------------------------------------------------------------------------
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../../../core/constants/firestore_paths.dart';
+import '../../domain/entities/pairing_entity.dart';
 import '../models/pairing_model.dart';
+
+// ---------------------------------------------------------------------------
+// Remote Data Source
+// ---------------------------------------------------------------------------
 
 abstract class PairingRemoteDataSource {
   // ---------------------------------------------------------------------------
@@ -11,10 +20,20 @@ abstract class PairingRemoteDataSource {
   Future<void> savePairing(PairingModel pairing);
 
   Future<PairingModel?> getPairing(String id);
+
+  Future<void> updatePairingStatus(
+    String id,
+    PairingStatus status,
+  );
+
+  Future<void> deletePairing(String id);
 }
 
-class FirebasePairingRemoteDataSource
-    implements PairingRemoteDataSource {
+// ---------------------------------------------------------------------------
+// Firebase Remote Data Source
+// ---------------------------------------------------------------------------
+
+class FirebasePairingRemoteDataSource implements PairingRemoteDataSource {
   // ---------------------------------------------------------------------------
   // Constructor
   // ---------------------------------------------------------------------------
@@ -33,10 +52,7 @@ class FirebasePairingRemoteDataSource
 
   @override
   Future<void> savePairing(PairingModel pairing) async {
-    await _firestore
-        .collection(FirestorePaths.pairings)
-        .doc(pairing.id)
-        .set(
+    await _firestore.collection(FirestorePaths.pairings).doc(pairing.id).set(
           pairing.toMap(),
           SetOptions(merge: true),
         );
@@ -45,10 +61,7 @@ class FirebasePairingRemoteDataSource
   @override
   Future<PairingModel?> getPairing(String id) async {
     final DocumentSnapshot<Map<String, dynamic>> snapshot =
-        await _firestore
-            .collection(FirestorePaths.pairings)
-            .doc(id)
-            .get();
+        await _firestore.collection(FirestorePaths.pairings).doc(id).get();
 
     if (!snapshot.exists) {
       return null;
@@ -60,6 +73,27 @@ class FirebasePairingRemoteDataSource
       return null;
     }
 
-    return PairingModel.fromMap(data);
+    return PairingModel.fromMap(
+      data,
+      id: snapshot.id,
+    );
+  }
+
+  @override
+  Future<void> updatePairingStatus(
+    String id,
+    PairingStatus status,
+  ) async {
+    await _firestore.collection(FirestorePaths.pairings).doc(id).update({
+      'status': status.name,
+      'updatedAt': Timestamp.fromDate(DateTime.now()),
+      'acceptedAt':
+          status == PairingStatus.accepted ? Timestamp.fromDate(DateTime.now()) : null,
+    });
+  }
+
+  @override
+  Future<void> deletePairing(String id) async {
+    await _firestore.collection(FirestorePaths.pairings).doc(id).delete();
   }
 }

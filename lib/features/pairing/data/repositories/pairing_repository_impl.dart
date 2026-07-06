@@ -1,34 +1,81 @@
+// ---------------------------------------------------------------------------
+// Imports
+// ---------------------------------------------------------------------------
+
 import '../../domain/entities/pairing_entity.dart';
 import '../../domain/repositories/pairing_repository.dart';
 import '../datasources/pairing_remote_datasource.dart';
 import '../models/pairing_model.dart';
+
+// ---------------------------------------------------------------------------
+// Class
+// ---------------------------------------------------------------------------
 
 class PairingRepositoryImpl implements PairingRepository {
   // ---------------------------------------------------------------------------
   // Constructor
   // ---------------------------------------------------------------------------
 
-  const PairingRepositoryImpl(this._remoteDataSource);
+  const PairingRepositoryImpl({
+    required this.remoteDataSource,
+  });
 
   // ---------------------------------------------------------------------------
-  // Dependencies
+  // Properties
   // ---------------------------------------------------------------------------
 
-  final PairingRemoteDataSource _remoteDataSource;
+  final PairingRemoteDataSource remoteDataSource;
 
   // ---------------------------------------------------------------------------
-  // Repository Methods
+  // Create Pair Request
   // ---------------------------------------------------------------------------
 
   @override
-  Future<void> savePairing(PairingEntity pairing) async {
-    final PairingModel model = PairingModel.fromEntity(pairing);
-
-    await _remoteDataSource.savePairing(model);
+  Future<void> createPairRequest(PairingEntity pairing) {
+    return remoteDataSource.savePairing(
+      PairingModel.fromEntity(pairing),
+    );
   }
 
+  // ---------------------------------------------------------------------------
+  // Get Pairing
+  // ---------------------------------------------------------------------------
+
   @override
-  Future<PairingEntity?> getPairing(String id) {
-    return _remoteDataSource.getPairing(id);
+  Future<PairingEntity?> getPairingById(String pairingId) {
+    return remoteDataSource.getPairing(pairingId);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Accept Pair Request
+  // ---------------------------------------------------------------------------
+
+  @override
+  Future<void> acceptPairRequest(String pairingId) {
+    return remoteDataSource.updatePairingStatus(
+      pairingId,
+      PairingStatus.accepted,
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Reject Pair Request
+  // ---------------------------------------------------------------------------
+
+  @override
+  Future<void> rejectPairRequest(String pairingId) {
+    return remoteDataSource.updatePairingStatus(
+      pairingId,
+      PairingStatus.rejected,
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Delete Pairing
+  // ---------------------------------------------------------------------------
+
+  @override
+  Future<void> deletePairing(String pairingId) {
+    return remoteDataSource.deletePairing(pairingId);
   }
 }
