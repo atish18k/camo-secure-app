@@ -1,25 +1,37 @@
+// ---------------------------------------------------------------------------
+// Imports
+// ---------------------------------------------------------------------------
+
 import 'package:flutter/material.dart';
 
 import '../../../../shared/components/camo_id_text_field.dart';
 import 'send_pair_request_button.dart';
 
-class PairRequestForm extends StatefulWidget {
-  final bool isLoading;
-  final ValueChanged<String> onSubmit;
+// ---------------------------------------------------------------------------
+// Widget
+// ---------------------------------------------------------------------------
 
+class PairRequestForm extends StatefulWidget {
   const PairRequestForm({
     super.key,
     required this.isLoading,
     required this.onSubmit,
   });
 
+  final bool isLoading;
+  final ValueChanged<String> onSubmit;
+
   @override
   State<PairRequestForm> createState() => _PairRequestFormState();
 }
 
+// ---------------------------------------------------------------------------
+// State
+// ---------------------------------------------------------------------------
+
 class _PairRequestFormState extends State<PairRequestForm> {
-  final _formKey = GlobalKey<FormState>();
-  final _camoIdController = TextEditingController();
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final TextEditingController _camoIdController = TextEditingController();
 
   @override
   void dispose() {
@@ -28,23 +40,29 @@ class _PairRequestFormState extends State<PairRequestForm> {
   }
 
   void _submit() {
-    final isValid = _formKey.currentState?.validate() ?? false;
+    if (widget.isLoading) {
+      return;
+    }
+
+    final bool isValid = _formKey.currentState?.validate() ?? false;
 
     if (!isValid) {
       return;
     }
 
-    widget.onSubmit(_camoIdController.text.trim());
+    widget.onSubmit(_camoIdController.text.trim().toUpperCase());
   }
 
   String? _validateCamoId(String? value) {
-    final camoId = value?.trim() ?? '';
+    final String camoId = value?.trim().toUpperCase() ?? '';
 
     if (camoId.isEmpty) {
       return 'CAMO ID is required.';
     }
 
-    final isValid = RegExp(r'^CM-[A-Z0-9]{4}-[A-Z0-9]{4}$').hasMatch(camoId);
+    final bool isValid = RegExp(
+      r'^CM-[A-Z0-9]{4}-[A-Z0-9]{4}$',
+    ).hasMatch(camoId);
 
     if (!isValid) {
       return 'Enter a valid CAMO ID.';

@@ -8,7 +8,7 @@ import '../datasources/pairing_remote_datasource.dart';
 import '../models/pairing_model.dart';
 
 // ---------------------------------------------------------------------------
-// Class
+// Repository Implementation
 // ---------------------------------------------------------------------------
 
 class PairingRepositoryImpl implements PairingRepository {
@@ -27,7 +27,7 @@ class PairingRepositoryImpl implements PairingRepository {
   final PairingRemoteDataSource remoteDataSource;
 
   // ---------------------------------------------------------------------------
-  // Create Pair Request
+  // Create
   // ---------------------------------------------------------------------------
 
   @override
@@ -38,7 +38,7 @@ class PairingRepositoryImpl implements PairingRepository {
   }
 
   // ---------------------------------------------------------------------------
-  // Get Pairing
+  // Read
   // ---------------------------------------------------------------------------
 
   @override
@@ -47,7 +47,7 @@ class PairingRepositoryImpl implements PairingRepository {
   }
 
   // ---------------------------------------------------------------------------
-  // Accept Pair Request
+  // Update
   // ---------------------------------------------------------------------------
 
   @override
@@ -58,10 +58,6 @@ class PairingRepositoryImpl implements PairingRepository {
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // Reject Pair Request
-  // ---------------------------------------------------------------------------
-
   @override
   Future<void> rejectPairRequest(String pairingId) {
     return remoteDataSource.updatePairingStatus(
@@ -71,7 +67,7 @@ class PairingRepositoryImpl implements PairingRepository {
   }
 
   // ---------------------------------------------------------------------------
-  // Delete Pairing
+  // Delete
   // ---------------------------------------------------------------------------
 
   @override

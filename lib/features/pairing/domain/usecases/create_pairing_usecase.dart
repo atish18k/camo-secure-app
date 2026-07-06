@@ -6,7 +6,7 @@ import '../entities/pairing_entity.dart';
 import '../repositories/pairing_repository.dart';
 
 // ---------------------------------------------------------------------------
-// Use Case
+// Create Pairing Use Case
 // ---------------------------------------------------------------------------
 
 class CreatePairingUseCase {

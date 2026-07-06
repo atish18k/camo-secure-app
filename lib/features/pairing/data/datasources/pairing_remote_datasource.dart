@@ -14,17 +14,29 @@ import '../models/pairing_model.dart';
 
 abstract class PairingRemoteDataSource {
   // ---------------------------------------------------------------------------
-  // Pairing
+  // Create
   // ---------------------------------------------------------------------------
 
   Future<void> savePairing(PairingModel pairing);
 
+  // ---------------------------------------------------------------------------
+  // Read
+  // ---------------------------------------------------------------------------
+
   Future<PairingModel?> getPairing(String id);
+
+  // ---------------------------------------------------------------------------
+  // Update
+  // ---------------------------------------------------------------------------
 
   Future<void> updatePairingStatus(
     String id,
     PairingStatus status,
   );
+
+  // ---------------------------------------------------------------------------
+  // Delete
+  // ---------------------------------------------------------------------------
 
   Future<void> deletePairing(String id);
 }
@@ -47,7 +59,7 @@ class FirebasePairingRemoteDataSource implements PairingRemoteDataSource {
   final FirebaseFirestore _firestore;
 
   // ---------------------------------------------------------------------------
-  // Pairing
+  // Create
   // ---------------------------------------------------------------------------
 
   @override
@@ -57,6 +69,10 @@ class FirebasePairingRemoteDataSource implements PairingRemoteDataSource {
           SetOptions(merge: true),
         );
   }
+
+  // ---------------------------------------------------------------------------
+  // Read
+  // ---------------------------------------------------------------------------
 
   @override
   Future<PairingModel?> getPairing(String id) async {
@@ -79,18 +95,28 @@ class FirebasePairingRemoteDataSource implements PairingRemoteDataSource {
     );
   }
 
+  // ---------------------------------------------------------------------------
+  // Update
+  // ---------------------------------------------------------------------------
+
   @override
   Future<void> updatePairingStatus(
     String id,
     PairingStatus status,
   ) async {
+    final DateTime now = DateTime.now();
+
     await _firestore.collection(FirestorePaths.pairings).doc(id).update({
       'status': status.name,
-      'updatedAt': Timestamp.fromDate(DateTime.now()),
-      'acceptedAt':
-          status == PairingStatus.accepted ? Timestamp.fromDate(DateTime.now()) : null,
+      'updatedAt': Timestamp.fromDate(now),
+      if (status == PairingStatus.accepted)
+        'acceptedAt': Timestamp.fromDate(now),
     });
   }
+
+  // ---------------------------------------------------------------------------
+  // Delete
+  // ---------------------------------------------------------------------------
 
   @override
   Future<void> deletePairing(String id) async {

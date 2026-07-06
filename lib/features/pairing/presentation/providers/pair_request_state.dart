@@ -1,5 +1,9 @@
 import '../../../../core/errors/failure.dart';
-import '../../domain/entities/pair_request_entity.dart';
+import '../../domain/entities/pairing_entity.dart';
+
+// ---------------------------------------------------------------------------
+// UI Status
+// ---------------------------------------------------------------------------
 
 enum PairRequestUiStatus {
   initial,
@@ -9,37 +13,53 @@ enum PairRequestUiStatus {
   failure,
 }
 
+// ---------------------------------------------------------------------------
+// State
+// ---------------------------------------------------------------------------
+
 class PairRequestState {
-  final PairRequestUiStatus status;
-  final PairRequestEntity? request;
-  final Failure? failure;
+  // ---------------------------------------------------------------------------
+  // Constructor
+  // ---------------------------------------------------------------------------
 
   const PairRequestState({
     required this.status,
-    this.request,
+    this.pairing,
     this.failure,
   });
 
+  // ---------------------------------------------------------------------------
+  // Properties
+  // ---------------------------------------------------------------------------
+
+  final PairRequestUiStatus status;
+  final PairingEntity? pairing;
+  final Failure? failure;
+
+  // ---------------------------------------------------------------------------
+  // Named Constructors
+  // ---------------------------------------------------------------------------
+
   const PairRequestState.initial()
       : status = PairRequestUiStatus.initial,
-        request = null,
+        pairing = null,
         failure = null;
 
   const PairRequestState.loading()
       : status = PairRequestUiStatus.loading,
-        request = null,
+        pairing = null,
         failure = null;
 
   const PairRequestState.sent()
       : status = PairRequestUiStatus.sent,
-        request = null,
+        pairing = null,
         failure = null;
 
-  const PairRequestState.loaded(this.request)
+  const PairRequestState.loaded(this.pairing)
       : status = PairRequestUiStatus.loaded,
         failure = null;
 
   const PairRequestState.failure(this.failure)
       : status = PairRequestUiStatus.failure,
-        request = null;
+        pairing = null;
 }

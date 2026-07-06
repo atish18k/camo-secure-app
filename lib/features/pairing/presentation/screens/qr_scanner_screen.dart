@@ -12,10 +12,6 @@ import '../../domain/services/qr_payload_parser.dart';
 // ---------------------------------------------------------------------------
 
 class QrScannerScreen extends StatefulWidget {
-  // ---------------------------------------------------------------------------
-  // Constructor
-  // ---------------------------------------------------------------------------
-
   const QrScannerScreen({
     super.key,
   });
@@ -24,13 +20,12 @@ class QrScannerScreen extends StatefulWidget {
   State<QrScannerScreen> createState() => _QrScannerScreenState();
 }
 
-class _QrScannerScreenState extends State<QrScannerScreen> {
-  // ---------------------------------------------------------------------------
-  // Controller
-  // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// State
+// ---------------------------------------------------------------------------
 
-  final MobileScannerController _controller =
-      MobileScannerController();
+class _QrScannerScreenState extends State<QrScannerScreen> {
+  final MobileScannerController _controller = MobileScannerController();
 
   bool _isProcessing = false;
 
@@ -38,7 +33,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
   // QR Detection
   // ---------------------------------------------------------------------------
 
-  void _onDetect(BarcodeCapture capture) {
+  Future<void> _onDetect(BarcodeCapture capture) async {
     if (_isProcessing) return;
 
     final Barcode? barcode = capture.barcodes.firstOrNull;
@@ -52,8 +47,9 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
     _isProcessing = true;
 
     try {
-      final QrPayload payload =
-          QrPayloadParser().parse(value);
+      final QrPayload payload = QrPayloadParser().parse(value);
+
+      await _controller.stop();
 
       if (!mounted) return;
 

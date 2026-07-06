@@ -2,36 +2,30 @@
 // Imports
 // ---------------------------------------------------------------------------
 
-import '../entities/pairing_entity.dart';
+import '../repositories/pairing_repository.dart';
 
 // ---------------------------------------------------------------------------
-// Repository
+// Accept Pair Request Use Case
 // ---------------------------------------------------------------------------
 
-abstract interface class PairingRepository {
+class AcceptPairRequestUseCase {
   // ---------------------------------------------------------------------------
-  // Create
-  // ---------------------------------------------------------------------------
-
-  Future<void> createPairRequest(PairingEntity pairing);
-
-  // ---------------------------------------------------------------------------
-  // Read
+  // Constructor
   // ---------------------------------------------------------------------------
 
-  Future<PairingEntity?> getPairingById(String pairingId);
+  const AcceptPairRequestUseCase(this._repository);
 
   // ---------------------------------------------------------------------------
-  // Update
+  // Dependencies
   // ---------------------------------------------------------------------------
 
-  Future<void> acceptPairRequest(String pairingId);
-
-  Future<void> rejectPairRequest(String pairingId);
+  final PairingRepository _repository;
 
   // ---------------------------------------------------------------------------
-  // Delete
+  // Call
   // ---------------------------------------------------------------------------
 
-  Future<void> deletePairing(String pairingId);
+  Future<void> call(String pairingId) {
+    return _repository.acceptPairRequest(pairingId);
+  }
 }
