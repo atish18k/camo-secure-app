@@ -6,6 +6,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/di/injection_container.dart';
+import '../../../../core/theme/camo_colors.dart';
+import '../../../../core/theme/camo_icons.dart';
+import '../../../../core/theme/camo_spacing.dart';
+import '../../../../shared/layouts/responsive_container.dart';
+import '../../../../shared/widgets/cards/camo_card.dart';
 import '../../../auth/domain/usecases/get_current_user_id_usecase.dart';
 import '../../domain/entities/pairing_entity.dart';
 import '../../domain/usecases/delete_pairing_usecase.dart';
@@ -16,9 +21,17 @@ import '../providers/accepted_pairings_provider.dart';
 // ---------------------------------------------------------------------------
 
 class MyPairingsScreen extends ConsumerWidget {
+  // ---------------------------------------------------------------------------
+  // Constructor
+  // ---------------------------------------------------------------------------
+
   const MyPairingsScreen({
     super.key,
   });
+
+  // ---------------------------------------------------------------------------
+  // Build
+  // ---------------------------------------------------------------------------
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -28,89 +41,109 @@ class MyPairingsScreen extends ConsumerWidget {
     final String? currentUserUid = sl<GetCurrentUserIdUseCase>()();
 
     return Scaffold(
+      backgroundColor: CamoColors.background,
       appBar: AppBar(
+        backgroundColor: CamoColors.background,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
         title: const Text('My Pairings'),
       ),
       body: SafeArea(
-        child: pairings.when(
-          loading: () => const Center(
-            child: CircularProgressIndicator(),
-          ),
-          error: (error, stackTrace) => Center(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(
-                'Unable to load pairings.\n$error',
-                textAlign: TextAlign.center,
-              ),
-            ),
-          ),
-          data: (items) {
-            if (currentUserUid == null || currentUserUid.isEmpty) {
-              return const Center(
-                child: Text('Please login again to view pairings.'),
+        child: ResponsiveContainer(
+          child: pairings.when(
+            loading: _buildLoading,
+            error: _buildError,
+            data: (List<PairingEntity> items) {
+              if (currentUserUid == null || currentUserUid.isEmpty) {
+                return _buildLoginRequiredState();
+              }
+
+              if (items.isEmpty) {
+                return _buildEmptyState();
+              }
+
+              return _buildPairingsList(
+                context: context,
+                items: items,
+                currentUserUid: currentUserUid,
               );
-            }
-
-            if (items.isEmpty) {
-              return const Center(
-                child: Text('No active pairings.'),
-              );
-            }
-
-            return ListView.separated(
-              padding: const EdgeInsets.all(16),
-              itemCount: items.length,
-              separatorBuilder: (context, index) => const SizedBox(
-                height: 12,
-              ),
-              itemBuilder: (context, index) {
-                final PairingEntity pairing = items[index];
-
-                final String otherCamoId =
-                    pairing.requesterUid == currentUserUid
-                        ? pairing.receiverCamoId
-                        : pairing.requesterCamoId;
-
-                return Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          leading: const CircleAvatar(
-                            child: Icon(Icons.person),
-                          ),
-                          title: Text(otherCamoId),
-                          subtitle: Text(
-                            'Status: ${pairing.status.name.toUpperCase()}',
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        SizedBox(
-                          width: double.infinity,
-                          child: OutlinedButton.icon(
-                            icon: const Icon(Icons.link_off),
-                            label: const Text('Disconnect'),
-                            onPressed: () => _confirmDisconnect(
-                              context: context,
-                              pairing: pairing,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            );
-          },
+            },
+          ),
         ),
       ),
     );
   }
+
+  // ---------------------------------------------------------------------------
+  // Widgets
+  // ---------------------------------------------------------------------------
+
+  Widget _buildLoading() {
+    return const Center(
+      child: CircularProgressIndicator(),
+    );
+  }
+
+  Widget _buildError(
+    Object error,
+    StackTrace stackTrace,
+  ) {
+    return Center(
+      child: Padding(
+        padding: CamoSpacing.screen,
+        child: Text(
+          'Unable to load pairings.\n$error',
+          textAlign: TextAlign.center,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoginRequiredState() {
+    return const Center(
+      child: Text('Please login again to view pairings.'),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return const Center(
+      child: Text('No active pairings.'),
+    );
+  }
+
+  Widget _buildPairingsList({
+    required BuildContext context,
+    required List<PairingEntity> items,
+    required String currentUserUid,
+  }) {
+    return ListView.separated(
+      padding: CamoSpacing.screen,
+      itemCount: items.length,
+      separatorBuilder: (BuildContext context, int index) {
+        return CamoSpacing.gapMd;
+      },
+      itemBuilder: (BuildContext context, int index) {
+        final PairingEntity pairing = items[index];
+
+        final String otherCamoId = pairing.requesterUid == currentUserUid
+            ? pairing.receiverCamoId
+            : pairing.requesterCamoId;
+
+        return _PairingCard(
+          pairing: pairing,
+          otherCamoId: otherCamoId,
+          onDisconnect: () => _confirmDisconnect(
+            context: context,
+            pairing: pairing,
+          ),
+        );
+      },
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Actions
+  // ---------------------------------------------------------------------------
 
   Future<void> _confirmDisconnect({
     required BuildContext context,
@@ -118,7 +151,7 @@ class MyPairingsScreen extends ConsumerWidget {
   }) async {
     final bool? shouldDisconnect = await showDialog<bool>(
       context: context,
-      builder: (context) {
+      builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Disconnect Pairing?'),
           content: const Text(
@@ -161,5 +194,70 @@ class MyPairingsScreen extends ConsumerWidget {
         ),
       );
     }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Private Widget
+// ---------------------------------------------------------------------------
+
+class _PairingCard extends StatelessWidget {
+  // ---------------------------------------------------------------------------
+  // Constructor
+  // ---------------------------------------------------------------------------
+
+  const _PairingCard({
+    required this.pairing,
+    required this.otherCamoId,
+    required this.onDisconnect,
+  });
+
+  // ---------------------------------------------------------------------------
+  // Properties
+  // ---------------------------------------------------------------------------
+
+  final PairingEntity pairing;
+  final String otherCamoId;
+  final VoidCallback onDisconnect;
+
+  // ---------------------------------------------------------------------------
+  // Build
+  // ---------------------------------------------------------------------------
+
+  @override
+  Widget build(BuildContext context) {
+    return CamoCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const CircleAvatar(
+              backgroundColor: CamoColors.background,
+              child: Icon(
+                CamoIcons.profile,
+                color: CamoColors.primary,
+              ),
+            ),
+            title: Text(otherCamoId),
+            subtitle: Text(
+              'Status: ${pairing.status.name.toUpperCase()}',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: CamoColors.textSecondary,
+                  ),
+            ),
+          ),
+          CamoSpacing.gapSm,
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              icon: const Icon(CamoIcons.disconnect),
+              label: const Text('Disconnect'),
+              onPressed: onDisconnect,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

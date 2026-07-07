@@ -1,46 +1,64 @@
+// ---------------------------------------------------------------------------
+// Imports
+// ---------------------------------------------------------------------------
+
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/camo_colors.dart';
 import '../../../../core/theme/camo_icons.dart';
 import '../../../../core/theme/camo_spacing.dart';
 import '../../../../core/theme/camo_typography.dart';
+import '../../../../shared/layouts/responsive_container.dart';
 import '../widgets/login_form.dart';
 
+// ---------------------------------------------------------------------------
+// Login Screen
+// ---------------------------------------------------------------------------
+
 class LoginScreen extends StatelessWidget {
-  const LoginScreen({super.key});
+  // ---------------------------------------------------------------------------
+  // Constructor
+  // ---------------------------------------------------------------------------
+
+  const LoginScreen({
+    super.key,
+  });
+
+  // ---------------------------------------------------------------------------
+  // Build
+  // ---------------------------------------------------------------------------
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: CamoColors.background,
       body: SafeArea(
-        child: Center(
+        child: ResponsiveContainer(
           child: SingleChildScrollView(
             padding: CamoSpacing.screen,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(
-                maxWidth: 420,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _buildLogo(),
-                  CamoSpacing.gapXxl,
-                  _buildTitle(context),
-                  CamoSpacing.gapSm,
-                  _buildSubtitle(context),
-                  CamoSpacing.gapXxl,
-                  const LoginForm(),
-                  CamoSpacing.gapXxl,
-                  _buildVersion(context),
-                ],
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildLogo(),
+                CamoSpacing.gapXxl,
+                _buildTitle(context),
+                CamoSpacing.gapSm,
+                _buildSubtitle(context),
+                CamoSpacing.gapXxl,
+                const LoginForm(),
+                CamoSpacing.gapXxl,
+                _buildVersion(context),
+              ],
             ),
           ),
         ),
       ),
     );
   }
+
+  // ---------------------------------------------------------------------------
+  // Private Widgets
+  // ---------------------------------------------------------------------------
 
   Widget _buildLogo() {
     return const Icon(

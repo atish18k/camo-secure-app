@@ -1,3 +1,7 @@
+// ---------------------------------------------------------------------------
+// Imports
+// ---------------------------------------------------------------------------
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -7,8 +11,18 @@ import '../../../../core/di/injection_container.dart';
 import '../../../../core/theme/camo_typography.dart';
 import '../../../auth/domain/usecases/check_auth_status_usecase.dart';
 
+// ---------------------------------------------------------------------------
+// Splash Screen
+// ---------------------------------------------------------------------------
+
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key});
+  // ---------------------------------------------------------------------------
+  // Constructor
+  // ---------------------------------------------------------------------------
+
+  const SplashScreen({
+    super.key,
+  });
 
   // ---------------------------------------------------------------------------
   // Create State
@@ -17,6 +31,10 @@ class SplashScreen extends StatefulWidget {
   @override
   State<SplashScreen> createState() => _SplashScreenState();
 }
+
+// ---------------------------------------------------------------------------
+// State
+// ---------------------------------------------------------------------------
 
 class _SplashScreenState extends State<SplashScreen> {
   // ---------------------------------------------------------------------------
@@ -52,7 +70,9 @@ class _SplashScreenState extends State<SplashScreen> {
   void _checkSession() {
     final bool isSignedIn = sl<CheckAuthStatusUseCase>()();
 
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
 
     Navigator.pushReplacementNamed(
       context,

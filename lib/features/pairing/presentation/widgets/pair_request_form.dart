@@ -4,6 +4,7 @@
 
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/camo_spacing.dart';
 import '../../../../shared/components/camo_id_text_field.dart';
 import 'send_pair_request_button.dart';
 
@@ -12,14 +13,26 @@ import 'send_pair_request_button.dart';
 // ---------------------------------------------------------------------------
 
 class PairRequestForm extends StatefulWidget {
+  // ---------------------------------------------------------------------------
+  // Constructor
+  // ---------------------------------------------------------------------------
+
   const PairRequestForm({
     super.key,
     required this.isLoading,
     required this.onSubmit,
   });
 
+  // ---------------------------------------------------------------------------
+  // Properties
+  // ---------------------------------------------------------------------------
+
   final bool isLoading;
   final ValueChanged<String> onSubmit;
+
+  // ---------------------------------------------------------------------------
+  // Create State
+  // ---------------------------------------------------------------------------
 
   @override
   State<PairRequestForm> createState() => _PairRequestFormState();
@@ -30,14 +43,50 @@ class PairRequestForm extends StatefulWidget {
 // ---------------------------------------------------------------------------
 
 class _PairRequestFormState extends State<PairRequestForm> {
+  // ---------------------------------------------------------------------------
+  // Properties
+  // ---------------------------------------------------------------------------
+
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _camoIdController = TextEditingController();
+
+  // ---------------------------------------------------------------------------
+  // Lifecycle
+  // ---------------------------------------------------------------------------
 
   @override
   void dispose() {
     _camoIdController.dispose();
     super.dispose();
   }
+
+  // ---------------------------------------------------------------------------
+  // Build
+  // ---------------------------------------------------------------------------
+
+  @override
+  Widget build(BuildContext context) {
+    return Form(
+      key: _formKey,
+      child: Column(
+        children: [
+          CamoIdTextField(
+            controller: _camoIdController,
+            validator: _validateCamoId,
+          ),
+          CamoSpacing.gapLg,
+          SendPairRequestButton(
+            isLoading: widget.isLoading,
+            onPressed: _submit,
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Actions
+  // ---------------------------------------------------------------------------
 
   void _submit() {
     if (widget.isLoading) {
@@ -52,6 +101,10 @@ class _PairRequestFormState extends State<PairRequestForm> {
 
     widget.onSubmit(_camoIdController.text.trim().toUpperCase());
   }
+
+  // ---------------------------------------------------------------------------
+  // Validators
+  // ---------------------------------------------------------------------------
 
   String? _validateCamoId(String? value) {
     final String camoId = value?.trim().toUpperCase() ?? '';
@@ -69,25 +122,5 @@ class _PairRequestFormState extends State<PairRequestForm> {
     }
 
     return null;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Form(
-      key: _formKey,
-      child: Column(
-        children: [
-          CamoIdTextField(
-            controller: _camoIdController,
-            validator: _validateCamoId,
-          ),
-          const SizedBox(height: 16),
-          SendPairRequestButton(
-            isLoading: widget.isLoading,
-            onPressed: _submit,
-          ),
-        ],
-      ),
-    );
   }
 }

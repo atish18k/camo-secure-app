@@ -4,29 +4,32 @@
 
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/camo_typography.dart';
+import '../../../core/theme/camo_colors.dart';
+import '../../../core/theme/camo_radius.dart';
+import '../../../core/theme/camo_shadows.dart';
+import '../../../core/theme/camo_spacing.dart';
 
 // ---------------------------------------------------------------------------
 // Widget
 // ---------------------------------------------------------------------------
 
-class SendPairRequestButton extends StatelessWidget {
+class CamoWorkspaceBox extends StatelessWidget {
   // ---------------------------------------------------------------------------
   // Constructor
   // ---------------------------------------------------------------------------
 
-  const SendPairRequestButton({
+  const CamoWorkspaceBox({
     super.key,
-    required this.isLoading,
-    required this.onPressed,
+    required this.title,
+    required this.child,
   });
 
   // ---------------------------------------------------------------------------
   // Properties
   // ---------------------------------------------------------------------------
 
-  final bool isLoading;
-  final VoidCallback? onPressed;
+  final String title;
+  final Widget child;
 
   // ---------------------------------------------------------------------------
   // Build
@@ -34,23 +37,24 @@ class SendPairRequestButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    return Container(
       width: double.infinity,
-      height: 56,
-      child: FilledButton(
-        onPressed: isLoading ? null : onPressed,
-        child: isLoading
-            ? const SizedBox(
-                width: 22,
-                height: 22,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                ),
-              )
-            : Text(
-                'Send Pair Request',
-                style: CamoTypography.button,
-              ),
+      padding: CamoSpacing.card,
+      decoration: BoxDecoration(
+        color: CamoColors.surface,
+        borderRadius: BorderRadius.circular(CamoRadius.xl),
+        boxShadow: CamoShadows.card,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          CamoSpacing.gapMd,
+          child,
+        ],
       ),
     );
   }

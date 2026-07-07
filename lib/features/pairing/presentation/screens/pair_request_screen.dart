@@ -5,12 +5,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/theme/camo_colors.dart';
+import '../../../../core/theme/camo_spacing.dart';
+import '../../../../shared/layouts/responsive_container.dart';
 import '../providers/pair_request_provider.dart';
 import '../providers/pair_request_state.dart';
 import '../widgets/pair_request_form.dart';
 
 // ---------------------------------------------------------------------------
-// Pair Request Screen
+// Class
 // ---------------------------------------------------------------------------
 
 class PairRequestScreen extends ConsumerWidget {
@@ -46,7 +49,8 @@ class PairRequestScreen extends ConsumerWidget {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
-                  next.failure?.message ?? 'Unable to send pair request.',
+                  next.failure?.message ??
+                      'Unable to send pair request.',
                 ),
               ),
             );
@@ -59,19 +63,27 @@ class PairRequestScreen extends ConsumerWidget {
     );
 
     return Scaffold(
+      backgroundColor: CamoColors.background,
       appBar: AppBar(
-        title: const Text('Pair Request'),
+        backgroundColor: CamoColors.background,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        title: const Text(
+          'Pair Request',
+        ),
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: PairRequestForm(
-            isLoading: state.status == PairRequestUiStatus.loading,
-            onSubmit: (camoId) {
-              ref
-                  .read(pairRequestProvider.notifier)
-                  .createPairRequestByCamoId(camoId);
-            },
+        child: ResponsiveContainer(
+          child: Padding(
+            padding: CamoSpacing.screen,
+            child: PairRequestForm(
+              isLoading: state.status == PairRequestUiStatus.loading,
+              onSubmit: (String camoId) {
+                ref
+                    .read(pairRequestProvider.notifier)
+                    .createPairRequestByCamoId(camoId);
+              },
+            ),
           ),
         ),
       ),

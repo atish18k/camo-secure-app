@@ -4,29 +4,34 @@
 
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/camo_typography.dart';
+import '../../../core/theme/camo_icons.dart';
+import '../../../core/theme/camo_typography.dart';
 
 // ---------------------------------------------------------------------------
 // Widget
 // ---------------------------------------------------------------------------
 
-class SendPairRequestButton extends StatelessWidget {
+class CamoActionButton extends StatelessWidget {
   // ---------------------------------------------------------------------------
   // Constructor
   // ---------------------------------------------------------------------------
 
-  const SendPairRequestButton({
+  const CamoActionButton({
     super.key,
-    required this.isLoading,
+    required this.label,
+    required this.icon,
     required this.onPressed,
+    this.isLoading = false,
   });
 
   // ---------------------------------------------------------------------------
   // Properties
   // ---------------------------------------------------------------------------
 
-  final bool isLoading;
+  final String label;
+  final IconData icon;
   final VoidCallback? onPressed;
+  final bool isLoading;
 
   // ---------------------------------------------------------------------------
   // Build
@@ -37,20 +42,24 @@ class SendPairRequestButton extends StatelessWidget {
     return SizedBox(
       width: double.infinity,
       height: 56,
-      child: FilledButton(
+      child: FilledButton.icon(
         onPressed: isLoading ? null : onPressed,
-        child: isLoading
+        icon: isLoading
             ? const SizedBox(
-                width: 22,
-                height: 22,
+                width: CamoIcons.sm,
+                height: CamoIcons.sm,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
                 ),
               )
-            : Text(
-                'Send Pair Request',
-                style: CamoTypography.button,
+            : Icon(
+                icon,
+                size: CamoIcons.sm,
               ),
+        label: Text(
+          label,
+          style: CamoTypography.button,
+        ),
       ),
     );
   }

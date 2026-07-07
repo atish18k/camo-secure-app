@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 
 import '../features/auth/presentation/screens/home_screen.dart';
 import '../features/auth/presentation/screens/login_screen.dart';
-import '../features/dashboard/presentation/screens/dashboard_screen.dart';
 import '../features/pairing/presentation/screens/my_pairings_screen.dart';
 import '../features/pairing/presentation/screens/pair_request_screen.dart';
 import '../features/pairing/presentation/screens/pending_pair_requests_screen.dart';
@@ -50,10 +49,14 @@ class AppRoutes {
     return {
       splash: (context) => const SplashScreen(),
       login: (context) => const LoginScreen(),
+
+      // Both routes temporarily point to the new Workspace.
       home: (context) => const HomeScreen(),
-      dashboard: (context) => const DashboardScreen(),
+      dashboard: (context) => const HomeScreen(),
+
       pairRequest: (context) => const PairRequestScreen(),
-      pendingPairRequests: (context) => const PendingPairRequestsScreen(),
+      pendingPairRequests: (context) =>
+          const PendingPairRequestsScreen(),
       myPairings: (context) => const MyPairingsScreen(),
       qrScanner: (context) => const QrScannerScreen(),
     };
