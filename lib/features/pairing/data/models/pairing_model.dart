@@ -1,8 +1,20 @@
+// ---------------------------------------------------------------------------
+// Imports
+// ---------------------------------------------------------------------------
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../domain/entities/pairing_entity.dart';
 
+// ---------------------------------------------------------------------------
+// Model
+// ---------------------------------------------------------------------------
+
 class PairingModel extends PairingEntity {
+  // ---------------------------------------------------------------------------
+  // Constructor
+  // ---------------------------------------------------------------------------
+
   const PairingModel({
     required super.id,
     required super.requesterUid,
@@ -15,6 +27,10 @@ class PairingModel extends PairingEntity {
     super.acceptedAt,
     super.version = 1,
   });
+
+  // ---------------------------------------------------------------------------
+  // Factories
+  // ---------------------------------------------------------------------------
 
   factory PairingModel.fromEntity(PairingEntity entity) {
     return PairingModel(
@@ -58,7 +74,13 @@ class PairingModel extends PairingEntity {
     );
   }
 
-  Map<String, dynamic> toFirestore() => toMap();
+  // ---------------------------------------------------------------------------
+  // Mapping
+  // ---------------------------------------------------------------------------
+
+  Map<String, dynamic> toFirestore() {
+    return toMap();
+  }
 
   Map<String, dynamic> toMap() {
     return {
@@ -70,27 +92,45 @@ class PairingModel extends PairingEntity {
       'status': status.name,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
-      'acceptedAt': acceptedAt == null ? null : Timestamp.fromDate(acceptedAt!),
+      'acceptedAt': acceptedAt == null
+          ? null
+          : Timestamp.fromDate(acceptedAt!),
       'version': version,
     };
   }
 
+  // ---------------------------------------------------------------------------
+  // Helpers
+  // ---------------------------------------------------------------------------
+
   static PairingStatus _statusFromString(String? value) {
     return PairingStatus.values.firstWhere(
-      (status) => status.name == value,
+      (PairingStatus status) => status.name == value,
       orElse: () => PairingStatus.pending,
     );
   }
 
   static DateTime _dateTimeFromTimestamp(Object? value) {
-    if (value is Timestamp) return value.toDate();
-    if (value is String) return DateTime.tryParse(value) ?? DateTime.now();
+    if (value is Timestamp) {
+      return value.toDate();
+    }
+
+    if (value is String) {
+      return DateTime.tryParse(value) ?? DateTime.now();
+    }
+
     return DateTime.now();
   }
 
   static DateTime? _nullableDateTimeFromTimestamp(Object? value) {
-    if (value is Timestamp) return value.toDate();
-    if (value is String) return DateTime.tryParse(value);
+    if (value is Timestamp) {
+      return value.toDate();
+    }
+
+    if (value is String) {
+      return DateTime.tryParse(value);
+    }
+
     return null;
   }
 }

@@ -1,4 +1,12 @@
+// ---------------------------------------------------------------------------
+// Imports
+// ---------------------------------------------------------------------------
+
 import 'package:firebase_auth/firebase_auth.dart';
+
+// ---------------------------------------------------------------------------
+// Remote Data Source
+// ---------------------------------------------------------------------------
 
 abstract class AuthRemoteDataSource {
   Future<UserCredential> signIn({
@@ -11,10 +19,26 @@ abstract class AuthRemoteDataSource {
   User? get currentUser;
 }
 
+// ---------------------------------------------------------------------------
+// Firebase Implementation
+// ---------------------------------------------------------------------------
+
 class FirebaseAuthRemoteDataSource implements AuthRemoteDataSource {
+  // ---------------------------------------------------------------------------
+  // Constructor
+  // ---------------------------------------------------------------------------
+
+  const FirebaseAuthRemoteDataSource(this._firebaseAuth);
+
+  // ---------------------------------------------------------------------------
+  // Properties
+  // ---------------------------------------------------------------------------
+
   final FirebaseAuth _firebaseAuth;
 
-  FirebaseAuthRemoteDataSource(this._firebaseAuth);
+  // ---------------------------------------------------------------------------
+  // Authentication
+  // ---------------------------------------------------------------------------
 
   @override
   Future<UserCredential> signIn({
@@ -31,6 +55,10 @@ class FirebaseAuthRemoteDataSource implements AuthRemoteDataSource {
   Future<void> signOut() {
     return _firebaseAuth.signOut();
   }
+
+  // ---------------------------------------------------------------------------
+  // Getters
+  // ---------------------------------------------------------------------------
 
   @override
   User? get currentUser => _firebaseAuth.currentUser;

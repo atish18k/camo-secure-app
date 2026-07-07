@@ -4,6 +4,7 @@
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get_it/get_it.dart';
 
 import '../../features/auth/data/datasources/auth_remote_datasource.dart';
@@ -31,6 +32,8 @@ import '../../features/profile/domain/usecases/create_user_profile_usecase.dart'
 import '../../features/profile/domain/usecases/get_user_by_camo_id_usecase.dart';
 import '../../features/profile/domain/usecases/get_user_profile_usecase.dart';
 import '../../services/identity/camo_id_generator.dart';
+import '../../services/secure_storage/flutter_secure_storage_service.dart';
+import '../../services/secure_storage/secure_storage_service.dart';
 
 // ---------------------------------------------------------------------------
 // Service Locator
@@ -55,12 +58,20 @@ Future<void> initDependencies() async {
     () => FirebaseFirestore.instance,
   );
 
+  sl.registerLazySingleton<FlutterSecureStorage>(
+    FlutterSecureStorage.new,
+  );
+
   // ---------------------------------------------------------------------------
   // Services
   // ---------------------------------------------------------------------------
 
   sl.registerLazySingleton<CamoIdGenerator>(
     CamoIdGenerator.new,
+  );
+
+  sl.registerLazySingleton<SecureStorageService>(
+    () => FlutterSecureStorageService(sl()),
   );
 
   // ---------------------------------------------------------------------------

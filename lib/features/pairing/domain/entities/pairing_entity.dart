@@ -1,4 +1,12 @@
+// ---------------------------------------------------------------------------
+// Imports
+// ---------------------------------------------------------------------------
+
 import 'package:equatable/equatable.dart';
+
+// ---------------------------------------------------------------------------
+// Enum
+// ---------------------------------------------------------------------------
 
 /// Represents the current lifecycle state of a CAMO pairing.
 enum PairingStatus {
@@ -10,9 +18,17 @@ enum PairingStatus {
   expired,
 }
 
+// ---------------------------------------------------------------------------
+// Entity
+// ---------------------------------------------------------------------------
+
 /// Core domain entity representing a trusted pairing relationship
 /// between two CAMO identities.
 class PairingEntity extends Equatable {
+  // ---------------------------------------------------------------------------
+  // Constructor
+  // ---------------------------------------------------------------------------
+
   const PairingEntity({
     required this.id,
     required this.requesterUid,
@@ -25,6 +41,10 @@ class PairingEntity extends Equatable {
     this.acceptedAt,
     this.version = 1,
   });
+
+  // ---------------------------------------------------------------------------
+  // Properties
+  // ---------------------------------------------------------------------------
 
   final String id;
 
@@ -41,6 +61,10 @@ class PairingEntity extends Equatable {
   final DateTime? acceptedAt;
 
   final int version;
+
+  // ---------------------------------------------------------------------------
+  // Copy With
+  // ---------------------------------------------------------------------------
 
   PairingEntity copyWith({
     String? id,
@@ -67,6 +91,10 @@ class PairingEntity extends Equatable {
       version: version ?? this.version,
     );
   }
+
+  // ---------------------------------------------------------------------------
+  // Equatable
+  // ---------------------------------------------------------------------------
 
   @override
   List<Object?> get props => [

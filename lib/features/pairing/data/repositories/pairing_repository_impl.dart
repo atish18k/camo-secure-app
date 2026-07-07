@@ -50,10 +50,20 @@ class PairingRepositoryImpl implements PairingRepository {
   Future<PairingEntity?> getPairingBetweenUsers({
     required String requesterUid,
     required String receiverUid,
-  }) {
-    return remoteDataSource.getPairingBetweenUsers(
+  }) async {
+    final PairingEntity? forwardPairing =
+        await remoteDataSource.getPairingBetweenUsers(
       requesterUid: requesterUid,
       receiverUid: receiverUid,
+    );
+
+    if (forwardPairing != null) {
+      return forwardPairing;
+    }
+
+    return remoteDataSource.getPairingBetweenUsers(
+      requesterUid: receiverUid,
+      receiverUid: requesterUid,
     );
   }
 

@@ -2,21 +2,16 @@
 // Imports
 // ---------------------------------------------------------------------------
 
-import '../../../../core/errors/result.dart';
+import 'dart:typed_data';
 
 // ---------------------------------------------------------------------------
-// Repository
+// Nonce Generator
 // ---------------------------------------------------------------------------
 
-abstract class AuthRepository {
-  Future<Result<void>> signIn({
-    required String email,
-    required String password,
-  });
+abstract class CamoNonceGenerator {
+  // ---------------------------------------------------------------------------
+  // Generate
+  // ---------------------------------------------------------------------------
 
-  Future<Result<void>> signOut();
-
-  bool get isSignedIn;
-
-  String? get currentUserId;
+  Uint8List generateNonce();
 }

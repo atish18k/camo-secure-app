@@ -1,36 +1,45 @@
 // ---------------------------------------------------------------------------
-// Secure Storage Service
+// Imports
 // ---------------------------------------------------------------------------
 
-abstract class SecureStorageService {
+import 'dart:typed_data';
+
+import 'camo_nonce_generator.dart';
+import 'camo_secure_random.dart';
+
+// ---------------------------------------------------------------------------
+// Secure Nonce Generator
+// ---------------------------------------------------------------------------
+
+class CamoSecureNonceGenerator implements CamoNonceGenerator {
   // ---------------------------------------------------------------------------
-  // Write
+  // Constructor
   // ---------------------------------------------------------------------------
 
-  Future<void> write({
-    required String key,
-    required String value,
-  });
+  const CamoSecureNonceGenerator(
+    this._secureRandom,
+  );
 
   // ---------------------------------------------------------------------------
-  // Read
+  // Constants
   // ---------------------------------------------------------------------------
 
-  Future<String?> read({
-    required String key,
-  });
+  static const int nonceLength = 12;
 
   // ---------------------------------------------------------------------------
-  // Delete
+  // Dependencies
   // ---------------------------------------------------------------------------
 
-  Future<void> delete({
-    required String key,
-  });
+  final CamoSecureRandom _secureRandom;
 
   // ---------------------------------------------------------------------------
-  // Delete All
+  // Generate
   // ---------------------------------------------------------------------------
 
-  Future<void> deleteAll();
+  @override
+  Uint8List generateNonce() {
+    return _secureRandom.generateBytes(
+      nonceLength,
+    );
+  }
 }

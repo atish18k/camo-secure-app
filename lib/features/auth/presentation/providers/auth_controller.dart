@@ -1,3 +1,7 @@
+// ---------------------------------------------------------------------------
+// Imports
+// ---------------------------------------------------------------------------
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -10,8 +14,16 @@ import '../../domain/repositories/auth_repository.dart';
 import '../../domain/usecases/login_usecase.dart';
 import 'auth_state.dart';
 
+// ---------------------------------------------------------------------------
+// Provider
+// ---------------------------------------------------------------------------
+
 final authControllerProvider =
     NotifierProvider<AuthController, AuthState>(AuthController.new);
+
+// ---------------------------------------------------------------------------
+// Controller
+// ---------------------------------------------------------------------------
 
 class AuthController extends Notifier<AuthState> {
   // ---------------------------------------------------------------------------
@@ -76,9 +88,9 @@ class AuthController extends Notifier<AuthState> {
     required CreateUserProfileUseCase createUserProfileUseCase,
     required String fallbackEmail,
   }) async {
-    final user = authRepository.currentUser;
+    final String? currentUserId = authRepository.currentUserId;
 
-    if (user == null) {
+    if (currentUserId == null) {
       state = const AuthState.failure(
         AuthFailure(
           message: 'Login succeeded but user data was not found.',
@@ -90,11 +102,11 @@ class AuthController extends Notifier<AuthState> {
     try {
       await createUserProfileUseCase(
         UserEntity(
-          uid: user.uid,
+          uid: currentUserId,
           camoId: '',
-          email: user.email ?? fallbackEmail,
-          displayName: user.displayName ?? 'CAMO User',
-          photoUrl: user.photoURL,
+          email: fallbackEmail.trim(),
+          displayName: 'CAMO User',
+          photoUrl: null,
           createdAt: DateTime.now(),
         ),
       );

@@ -1,10 +1,11 @@
+// ---------------------------------------------------------------------------
+// Entity
+// ---------------------------------------------------------------------------
+
 class UserEntity {
-  final String uid;
-  final String camoId;
-  final String email;
-  final String? displayName;
-  final String? photoUrl;
-  final DateTime createdAt;
+  // ---------------------------------------------------------------------------
+  // Constructor
+  // ---------------------------------------------------------------------------
 
   const UserEntity({
     required this.uid,
@@ -14,6 +15,21 @@ class UserEntity {
     this.photoUrl,
     required this.createdAt,
   });
+
+  // ---------------------------------------------------------------------------
+  // Properties
+  // ---------------------------------------------------------------------------
+
+  final String uid;
+  final String camoId;
+  final String email;
+  final String? displayName;
+  final String? photoUrl;
+  final DateTime createdAt;
+
+  // ---------------------------------------------------------------------------
+  // Copy With
+  // ---------------------------------------------------------------------------
 
   UserEntity copyWith({
     String? uid,
@@ -32,6 +48,10 @@ class UserEntity {
       createdAt: createdAt ?? this.createdAt,
     );
   }
+
+  // ---------------------------------------------------------------------------
+  // Equality
+  // ---------------------------------------------------------------------------
 
   @override
   bool operator ==(Object other) {

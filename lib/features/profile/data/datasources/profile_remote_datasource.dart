@@ -27,8 +27,7 @@ abstract class ProfileRemoteDataSource {
 // Class
 // ---------------------------------------------------------------------------
 
-class FirebaseProfileRemoteDataSource
-    implements ProfileRemoteDataSource {
+class FirebaseProfileRemoteDataSource implements ProfileRemoteDataSource {
   // ---------------------------------------------------------------------------
   // Constructor
   // ---------------------------------------------------------------------------
@@ -47,10 +46,7 @@ class FirebaseProfileRemoteDataSource
 
   @override
   Future<void> saveUser(UserProfileModel user) async {
-    await _firestore
-        .collection(FirestorePaths.users)
-        .doc(user.uid)
-        .set(
+    await _firestore.collection(FirestorePaths.users).doc(user.uid).set(
           user.toMap(),
           SetOptions(merge: true),
         );
@@ -59,10 +55,7 @@ class FirebaseProfileRemoteDataSource
   @override
   Future<UserProfileModel?> getUser(String uid) async {
     final DocumentSnapshot<Map<String, dynamic>> snapshot =
-        await _firestore
-            .collection(FirestorePaths.users)
-            .doc(uid)
-            .get();
+        await _firestore.collection(FirestorePaths.users).doc(uid).get();
 
     if (!snapshot.exists) {
       return null;
@@ -81,15 +74,14 @@ class FirebaseProfileRemoteDataSource
   Future<UserProfileModel?> getUserByCamoId(
     String camoId,
   ) async {
-    final QuerySnapshot<Map<String, dynamic>> query =
-        await _firestore
-            .collection(FirestorePaths.users)
-            .where(
-              'camoId',
-              isEqualTo: camoId,
-            )
-            .limit(1)
-            .get();
+    final QuerySnapshot<Map<String, dynamic>> query = await _firestore
+        .collection(FirestorePaths.users)
+        .where(
+          'camoId',
+          isEqualTo: camoId,
+        )
+        .limit(1)
+        .get();
 
     if (query.docs.isEmpty) {
       return null;
