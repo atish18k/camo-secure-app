@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../app/routes.dart';
+import '../../../../core/theme/camo_colors.dart';
+import '../../../../core/theme/camo_spacing.dart';
+import '../../../../core/theme/camo_typography.dart';
 import '../providers/auth_controller.dart';
 import '../providers/auth_state.dart';
 import 'email_field.dart';
@@ -11,27 +14,15 @@ import 'password_field.dart';
 class LoginForm extends ConsumerStatefulWidget {
   const LoginForm({super.key});
 
-  // ---------------------------------------------------------------------------
-  // Create State
-  // ---------------------------------------------------------------------------
-
   @override
   ConsumerState<LoginForm> createState() => _LoginFormState();
 }
 
 class _LoginFormState extends ConsumerState<LoginForm> {
-  // ---------------------------------------------------------------------------
-  // Properties
-  // ---------------------------------------------------------------------------
-
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-
-  // ---------------------------------------------------------------------------
-  // Lifecycle
-  // ---------------------------------------------------------------------------
 
   @override
   void dispose() {
@@ -39,10 +30,6 @@ class _LoginFormState extends ConsumerState<LoginForm> {
     _passwordController.dispose();
     super.dispose();
   }
-
-  // ---------------------------------------------------------------------------
-  // Build
-  // ---------------------------------------------------------------------------
 
   @override
   Widget build(BuildContext context) {
@@ -60,11 +47,11 @@ class _LoginFormState extends ConsumerState<LoginForm> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           EmailField(controller: _emailController),
-          const SizedBox(height: 16),
+          CamoSpacing.gapLg,
           PasswordField(controller: _passwordController),
-          const SizedBox(height: 8),
+          CamoSpacing.gapSm,
           _buildForgotPasswordButton(isLoading),
-          const SizedBox(height: 16),
+          CamoSpacing.gapLg,
           LoginButton(
             isLoading: isLoading,
             onPressed: isLoading ? null : _login,
@@ -74,23 +61,19 @@ class _LoginFormState extends ConsumerState<LoginForm> {
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // Widgets
-  // ---------------------------------------------------------------------------
-
   Widget _buildForgotPasswordButton(bool isLoading) {
     return Align(
       alignment: Alignment.centerRight,
       child: TextButton(
         onPressed: isLoading ? null : _onForgotPassword,
+        style: TextButton.styleFrom(
+          foregroundColor: CamoColors.textSecondary,
+          textStyle: CamoTypography.label,
+        ),
         child: const Text('Forgot Password?'),
       ),
     );
   }
-
-  // ---------------------------------------------------------------------------
-  // Auth Listener
-  // ---------------------------------------------------------------------------
 
   void _handleAuthStateChange(
     AuthState? previous,
@@ -121,10 +104,6 @@ class _LoginFormState extends ConsumerState<LoginForm> {
         return;
     }
   }
-
-  // ---------------------------------------------------------------------------
-  // Actions
-  // ---------------------------------------------------------------------------
 
   Future<void> _login() async {
     final FormState? form = _formKey.currentState;

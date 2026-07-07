@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../app/routes.dart';
+import '../../../../core/theme/camo_colors.dart';
+import '../../../../core/theme/camo_icons.dart';
 import '../../../../core/theme/camo_spacing.dart';
 import '../../../../shared/layouts/responsive_container.dart';
 import '../../../pairing/domain/services/qr_payload_parser.dart';
@@ -23,7 +25,17 @@ import '../widgets/security_center_card.dart';
 // ---------------------------------------------------------------------------
 
 class DashboardScreen extends ConsumerWidget {
-  const DashboardScreen({super.key});
+  // ---------------------------------------------------------------------------
+  // Constructor
+  // ---------------------------------------------------------------------------
+
+  const DashboardScreen({
+    super.key,
+  });
+
+  // ---------------------------------------------------------------------------
+  // Build
+  // ---------------------------------------------------------------------------
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -45,7 +57,8 @@ class DashboardScreen extends ConsumerWidget {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
-                  next.failure?.message ?? 'Unable to send pair request.',
+                  next.failure?.message ??
+                      'Unable to send pair request.',
                 ),
               ),
             );
@@ -58,6 +71,7 @@ class DashboardScreen extends ConsumerWidget {
     );
 
     return Scaffold(
+      backgroundColor: CamoColors.background,
       appBar: _buildAppBar(),
       body: _buildBody(
         context: context,
@@ -67,12 +81,23 @@ class DashboardScreen extends ConsumerWidget {
     );
   }
 
+  // ---------------------------------------------------------------------------
+  // App Bar
+  // ---------------------------------------------------------------------------
+
   AppBar _buildAppBar() {
     return AppBar(
-      title: const Text('CAMO'),
+      backgroundColor: CamoColors.background,
+      surfaceTintColor: Colors.transparent,
+      elevation: 0,
       centerTitle: false,
+      title: const Text('CAMO'),
     );
   }
+
+  // ---------------------------------------------------------------------------
+  // Body
+  // ---------------------------------------------------------------------------
 
   Widget _buildBody({
     required BuildContext context,
@@ -81,20 +106,20 @@ class DashboardScreen extends ConsumerWidget {
   }) {
     return SafeArea(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(CamoSpacing.lg),
+        padding: CamoSpacing.screen,
         child: ResponsiveContainer(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildIdentityCard(state),
-              const SizedBox(height: CamoSpacing.lg),
+              CamoSpacing.gapLg,
               const SecurityCenterCard(),
-              const SizedBox(height: CamoSpacing.lg),
+              CamoSpacing.gapLg,
               _buildQuickActions(
                 context: context,
                 ref: ref,
               ),
-              const SizedBox(height: CamoSpacing.lg),
+              CamoSpacing.gapLg,
               _buildRecentActivity(),
             ],
           ),
@@ -102,6 +127,10 @@ class DashboardScreen extends ConsumerWidget {
       ),
     );
   }
+
+  // ---------------------------------------------------------------------------
+  // Widgets
+  // ---------------------------------------------------------------------------
 
   Widget _buildIdentityCard(DashboardState state) {
     return IdentityCard(
@@ -126,7 +155,7 @@ class DashboardScreen extends ConsumerWidget {
         QuickActionTile(
           title: 'Pair Request',
           subtitle: 'Send CAMO request',
-          icon: Icons.person_add_alt_1_outlined,
+          icon: CamoIcons.pair,
           onTap: () => Navigator.pushNamed(
             context,
             AppRoutes.pairRequest,
@@ -135,7 +164,7 @@ class DashboardScreen extends ConsumerWidget {
         QuickActionTile(
           title: 'Pending',
           subtitle: 'Accept or reject',
-          icon: Icons.mark_email_unread_outlined,
+          icon: CamoIcons.pending,
           onTap: () => Navigator.pushNamed(
             context,
             AppRoutes.pendingPairRequests,
@@ -144,7 +173,7 @@ class DashboardScreen extends ConsumerWidget {
         QuickActionTile(
           title: 'My Pairings',
           subtitle: 'Trusted CAMO users',
-          icon: Icons.people_alt_outlined,
+          icon: CamoIcons.pairings,
           onTap: () => Navigator.pushNamed(
             context,
             AppRoutes.myPairings,
@@ -153,7 +182,7 @@ class DashboardScreen extends ConsumerWidget {
         QuickActionTile(
           title: 'Scan QR',
           subtitle: 'Scan CAMO QR',
-          icon: Icons.qr_code_scanner,
+          icon: CamoIcons.scanQr,
           onTap: () async {
             final Object? result = await Navigator.pushNamed(
               context,
@@ -166,7 +195,9 @@ class DashboardScreen extends ConsumerWidget {
 
             ref
                 .read(pairRequestProvider.notifier)
-                .createPairRequestByCamoId(result.camoId);
+                .createPairRequestByCamoId(
+                  result.camoId,
+                );
           },
         ),
       ],

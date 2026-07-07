@@ -1,8 +1,19 @@
+// -----------------------------------------------------------------------------
+// Imports
+// -----------------------------------------------------------------------------
+
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/camo_typography.dart';
+
+// -----------------------------------------------------------------------------
+// Class
+// -----------------------------------------------------------------------------
+
 class LoginButton extends StatelessWidget {
-  final bool isLoading;
-  final VoidCallback? onPressed;
+  // ---------------------------------------------------------------------------
+  // Constructor
+  // ---------------------------------------------------------------------------
 
   const LoginButton({
     super.key,
@@ -10,20 +21,36 @@ class LoginButton extends StatelessWidget {
     required this.onPressed,
   });
 
+  // ---------------------------------------------------------------------------
+  // Properties
+  // ---------------------------------------------------------------------------
+
+  final bool isLoading;
+  final VoidCallback? onPressed;
+
+  // ---------------------------------------------------------------------------
+  // Build
+  // ---------------------------------------------------------------------------
+
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       width: double.infinity,
-      height: 52,
+      height: 56,
       child: FilledButton(
         onPressed: isLoading ? null : onPressed,
         child: isLoading
             ? const SizedBox(
                 width: 22,
                 height: 22,
-                child: CircularProgressIndicator(strokeWidth: 2),
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                ),
               )
-            : const Text('Login'),
+            : Text(
+                'Login',
+                style: CamoTypography.button,
+              ),
       ),
     );
   }

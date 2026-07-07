@@ -1,21 +1,22 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/camo_colors.dart';
+import '../../../../core/theme/camo_icons.dart';
+import '../../../../core/theme/camo_spacing.dart';
+import '../../../../core/theme/camo_typography.dart';
 import '../widgets/login_form.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
 
-  // ---------------------------------------------------------------------------
-  // Build
-  // ---------------------------------------------------------------------------
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: CamoColors.background,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
+            padding: CamoSpacing.screen,
             child: ConstrainedBox(
               constraints: const BoxConstraints(
                 maxWidth: 420,
@@ -24,13 +25,13 @@ class LoginScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   _buildLogo(),
-                  const SizedBox(height: 24),
+                  CamoSpacing.gapXxl,
                   _buildTitle(context),
-                  const SizedBox(height: 8),
+                  CamoSpacing.gapSm,
                   _buildSubtitle(context),
-                  const SizedBox(height: 40),
+                  CamoSpacing.gapXxl,
                   const LoginForm(),
-                  const SizedBox(height: 24),
+                  CamoSpacing.gapXxl,
                   _buildVersion(context),
                 ],
               ),
@@ -41,50 +42,43 @@ class LoginScreen extends StatelessWidget {
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // Logo
-  // ---------------------------------------------------------------------------
-
   Widget _buildLogo() {
     return const Icon(
-      Icons.security,
+      CamoIcons.security,
       size: 72,
+      color: CamoColors.primary,
     );
   }
-
-  // ---------------------------------------------------------------------------
-  // Title
-  // ---------------------------------------------------------------------------
 
   Widget _buildTitle(BuildContext context) {
     return Text(
       'CAMO',
       textAlign: TextAlign.center,
-      style: Theme.of(context).textTheme.headlineMedium,
+      style: CamoTypography.appTitle.copyWith(
+        fontSize: 32,
+        letterSpacing: 4,
+        color: CamoColors.textPrimary,
+      ),
     );
   }
-
-  // ---------------------------------------------------------------------------
-  // Subtitle
-  // ---------------------------------------------------------------------------
 
   Widget _buildSubtitle(BuildContext context) {
     return Text(
       'Privacy Beyond Encryption',
       textAlign: TextAlign.center,
-      style: Theme.of(context).textTheme.bodyMedium,
+      style: CamoTypography.body.copyWith(
+        color: CamoColors.textSecondary,
+      ),
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // Version
-  // ---------------------------------------------------------------------------
-
   Widget _buildVersion(BuildContext context) {
     return Text(
-      'Version 0.4.0',
+      'Version 0.15.1',
       textAlign: TextAlign.center,
-      style: Theme.of(context).textTheme.bodySmall,
+      style: CamoTypography.label.copyWith(
+        color: CamoColors.textHint,
+      ),
     );
   }
 }

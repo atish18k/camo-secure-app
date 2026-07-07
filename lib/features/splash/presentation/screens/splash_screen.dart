@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../app/routes.dart';
 import '../../../../core/di/injection_container.dart';
+import '../../../../core/theme/camo_typography.dart';
 import '../../../auth/domain/usecases/check_auth_status_usecase.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -65,14 +66,18 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    final ThemeData theme = Theme.of(context);
+
+    return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Center(
         child: Text(
           'CAMO',
-          style: TextStyle(
+          style: CamoTypography.appTitle.copyWith(
             fontSize: 36,
-            fontWeight: FontWeight.bold,
+            fontWeight: FontWeight.w800,
             letterSpacing: 4,
+            color: theme.colorScheme.primary,
           ),
         ),
       ),

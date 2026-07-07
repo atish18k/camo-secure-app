@@ -1,10 +1,37 @@
+// -----------------------------------------------------------------------------
+// Imports
+// -----------------------------------------------------------------------------
+
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/camo_colors.dart';
+import '../../../../core/theme/camo_icons.dart';
+
+// -----------------------------------------------------------------------------
+// Class
+// -----------------------------------------------------------------------------
+
 class EmailField extends StatelessWidget {
+  // ---------------------------------------------------------------------------
+  // Constructor
+  // ---------------------------------------------------------------------------
+
+  const EmailField({
+    super.key,
+    required this.controller,
+    this.validator,
+  });
+
+  // ---------------------------------------------------------------------------
+  // Properties
+  // ---------------------------------------------------------------------------
+
   final TextEditingController controller;
   final String? Function(String?)? validator;
 
-  const EmailField({super.key, required this.controller, this.validator});
+  // ---------------------------------------------------------------------------
+  // Build
+  // ---------------------------------------------------------------------------
 
   @override
   Widget build(BuildContext context) {
@@ -12,12 +39,16 @@ class EmailField extends StatelessWidget {
       controller: controller,
       keyboardType: TextInputType.emailAddress,
       textInputAction: TextInputAction.next,
-      autofillHints: const [AutofillHints.email],
-      decoration: const InputDecoration(
+      autofillHints: const [
+        AutofillHints.email,
+      ],
+      decoration: InputDecoration(
         labelText: 'Email',
         hintText: 'Enter your email',
-        prefixIcon: Icon(Icons.email_outlined),
-        border: OutlineInputBorder(),
+        prefixIcon: const Icon(
+          CamoIcons.email,
+          color: CamoColors.icon,
+        ),
       ),
       validator: validator,
     );

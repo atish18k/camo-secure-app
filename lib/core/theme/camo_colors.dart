@@ -1,24 +1,71 @@
 import 'package:flutter/material.dart';
 
-class CamoColors {
+abstract final class CamoColors {
   const CamoColors._();
 
-  static const Color background = Color(0xFF0B1220);
-  static const Color surface = Color(0xFF111827);
-  static const Color card = Color(0xFF1E293B);
-  static const Color border = Color(0xFF334155);
+  // ---------------------------------------------------------------------------
+  // Brand
+  // ---------------------------------------------------------------------------
 
-  static const Color primary = Color(0xFF2563EB);
-  static const Color primaryLight = Color(0xFF3B82F6);
+  static const Color primary = Color(0xFF00695C);
+  static const Color primaryLight = Color(0xFF00897B);
+  static const Color primaryDark = Color(0xFF004D40);
 
-  static const Color success = Color(0xFF10B981);
-  static const Color warning = Color(0xFFF59E0B);
-  static const Color danger = Color(0xFFEF4444);
+  // ---------------------------------------------------------------------------
+  // Background
+  // ---------------------------------------------------------------------------
 
-  static const Color textPrimary = Color(0xFFF8FAFC);
-  static const Color textSecondary = Color(0xFF94A3B8);
-  static const Color textMuted = Color(0xFF64748B);
+  static const Color background = Color(0xFFF5F7FA);
+  static const Color surface = Colors.white;
 
-  static const Color white = Color(0xFFFFFFFF);
-  static const Color black = Color(0xFF000000);
+  // ---------------------------------------------------------------------------
+  // Text
+  // ---------------------------------------------------------------------------
+
+  static const Color textPrimary = Color(0xFF212121);
+  static const Color textSecondary = Color(0xFF616161);
+  static const Color textHint = Color(0xFF9E9E9E);
+
+  // ---------------------------------------------------------------------------
+  // Border
+  // ---------------------------------------------------------------------------
+
+  static const Color border = Color(0xFFE0E0E0);
+
+  // ---------------------------------------------------------------------------
+  // Status
+  // ---------------------------------------------------------------------------
+
+  static const Color success = Color(0xFF2E7D32);
+  static const Color warning = Color(0xFFFFA000);
+  static const Color error = Color(0xFFD32F2F);
+  static const Color info = Color(0xFF1976D2);
+
+  // ---------------------------------------------------------------------------
+  // Badge
+  // ---------------------------------------------------------------------------
+
+  static const Color badge = Color(0xFFD32F2F);
+  static const Color badgeText = Colors.white;
+
+  // ---------------------------------------------------------------------------
+  // Icons
+  // ---------------------------------------------------------------------------
+
+  static const Color icon = Color(0xFF424242);
+  static const Color iconDisabled = Color(0xFFBDBDBD);
+
+  // ---------------------------------------------------------------------------
+  // Inputs
+  // ---------------------------------------------------------------------------
+
+  static const Color inputBackground = Colors.white;
+
+  // ---------------------------------------------------------------------------
+  // Legacy Compatibility
+  // ---------------------------------------------------------------------------
+
+  static const Color card = surface;
+  static const Color white = Colors.white;
+  static const Color danger = error;
 }

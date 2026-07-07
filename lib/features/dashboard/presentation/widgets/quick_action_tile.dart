@@ -1,10 +1,22 @@
+// ---------------------------------------------------------------------------
+// Imports
+// ---------------------------------------------------------------------------
+
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/camo_colors.dart';
 import '../../../../core/theme/camo_spacing.dart';
 import '../../../../shared/widgets/cards/camo_card.dart';
 
+// ---------------------------------------------------------------------------
+// Class
+// ---------------------------------------------------------------------------
+
 class QuickActionTile extends StatelessWidget {
+  // ---------------------------------------------------------------------------
+  // Constructor
+  // ---------------------------------------------------------------------------
+
   const QuickActionTile({
     super.key,
     required this.title,
@@ -14,14 +26,24 @@ class QuickActionTile extends StatelessWidget {
     this.iconColor,
   });
 
+  // ---------------------------------------------------------------------------
+  // Properties
+  // ---------------------------------------------------------------------------
+
   final String title;
   final String subtitle;
   final IconData icon;
   final Color? iconColor;
   final VoidCallback onTap;
 
+  // ---------------------------------------------------------------------------
+  // Build
+  // ---------------------------------------------------------------------------
+
   @override
   Widget build(BuildContext context) {
+    final Color effectiveIconColor = iconColor ?? CamoColors.primary;
+
     return CamoCard(
       onTap: onTap,
       child: Column(
@@ -32,17 +54,17 @@ class QuickActionTile extends StatelessWidget {
             width: 52,
             height: 52,
             decoration: BoxDecoration(
-              color: (iconColor ?? CamoColors.primary).withValues(alpha: 0.12),
+              color: effectiveIconColor.withValues(alpha: 0.12),
               shape: BoxShape.circle,
             ),
             child: Icon(
               icon,
-              color: iconColor ?? CamoColors.primary,
+              color: effectiveIconColor,
               size: 26,
             ),
           ),
 
-          const SizedBox(height: CamoSpacing.md),
+          CamoSpacing.gapMd,
 
           Text(
             title,

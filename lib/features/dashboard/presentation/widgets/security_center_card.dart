@@ -5,6 +5,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/camo_colors.dart';
+import '../../../../core/theme/camo_icons.dart';
 import '../../../../core/theme/camo_spacing.dart';
 import '../../../../shared/widgets/cards/camo_card.dart';
 
@@ -13,7 +14,17 @@ import '../../../../shared/widgets/cards/camo_card.dart';
 // ---------------------------------------------------------------------------
 
 class SecurityCenterCard extends StatelessWidget {
-  const SecurityCenterCard({super.key});
+  // ---------------------------------------------------------------------------
+  // Constructor
+  // ---------------------------------------------------------------------------
+
+  const SecurityCenterCard({
+    super.key,
+  });
+
+  // ---------------------------------------------------------------------------
+  // Build
+  // ---------------------------------------------------------------------------
 
   @override
   Widget build(BuildContext context) {
@@ -25,23 +36,24 @@ class SecurityCenterCard extends StatelessWidget {
             'Security Center',
             style: Theme.of(context).textTheme.titleMedium,
           ),
-          const SizedBox(height: CamoSpacing.lg),
 
-          _SecurityStatusRow(
+          CamoSpacing.gapLg,
+
+          const _SecurityStatusRow(
             label: 'Encryption',
             value: 'AES-256 Ready',
           ),
 
-          const SizedBox(height: CamoSpacing.md),
+          CamoSpacing.gapMd,
 
-          _SecurityStatusRow(
+          const _SecurityStatusRow(
             label: 'Device',
             value: 'Verified',
           ),
 
-          const SizedBox(height: CamoSpacing.md),
+          CamoSpacing.gapMd,
 
-          _SecurityStatusRow(
+          const _SecurityStatusRow(
             label: 'Session',
             value: 'Protected',
           ),
@@ -56,13 +68,25 @@ class SecurityCenterCard extends StatelessWidget {
 // ---------------------------------------------------------------------------
 
 class _SecurityStatusRow extends StatelessWidget {
+  // ---------------------------------------------------------------------------
+  // Constructor
+  // ---------------------------------------------------------------------------
+
   const _SecurityStatusRow({
     required this.label,
     required this.value,
   });
 
+  // ---------------------------------------------------------------------------
+  // Properties
+  // ---------------------------------------------------------------------------
+
   final String label;
   final String value;
+
+  // ---------------------------------------------------------------------------
+  // Build
+  // ---------------------------------------------------------------------------
 
   @override
   Widget build(BuildContext context) {
@@ -75,11 +99,11 @@ class _SecurityStatusRow extends StatelessWidget {
           ),
         ),
         const Icon(
-          Icons.verified_outlined,
-          size: 18,
+          CamoIcons.security,
+          size: CamoIcons.sm,
           color: CamoColors.success,
         ),
-        const SizedBox(width: CamoSpacing.xs),
+        CamoSpacing.gapHorizontalSm,
         Text(
           value,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
