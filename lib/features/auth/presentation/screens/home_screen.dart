@@ -4,8 +4,10 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../app/routes.dart';
+import '../../../../core/di/injection_container.dart';
 import '../../../../core/theme/camo_colors.dart';
 import '../../../../core/theme/camo_icons.dart';
 import '../../../../core/theme/camo_spacing.dart';
@@ -20,31 +22,35 @@ import '../../../../shared/widgets/workspace/camo_output_field.dart';
 import '../../../../shared/widgets/workspace/camo_pair_selector.dart';
 import '../../../../shared/widgets/workspace/camo_subject_field.dart';
 import '../../../../shared/widgets/workspace/camo_workspace_box.dart';
+import '../../../auth/domain/usecases/get_current_user_id_usecase.dart';
+import '../../../pairing/domain/entities/pairing_entity.dart';
+import '../../../pairing/presentation/providers/accepted_pairings_provider.dart';
+import '../../../workspace/presentation/providers/workspace_controller.dart';
 
 // ---------------------------------------------------------------------------
 // Home Screen
 // ---------------------------------------------------------------------------
 
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({
     super.key,
   });
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
 // ---------------------------------------------------------------------------
 // State
 // ---------------------------------------------------------------------------
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends ConsumerState<HomeScreen> {
   final TextEditingController _subjectController = TextEditingController();
   final TextEditingController _inputController = TextEditingController();
   final TextEditingController _outputController = TextEditingController();
 
   CamoWorkspaceTab _selectedTab = CamoWorkspaceTab.encoder;
-  String? _selectedPairLabel;
+  PairingEntity? _selectedPair;
   CamoPairStatus _selectedPairStatus = CamoPairStatus.offline;
   bool _isCamouflageEnabled = false;
 
@@ -65,8 +71,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final bool canRun =
-        _selectedPairLabel != null && _inputController.text.trim().isNotEmpty;
+    final workspaceState = ref.watch(workspaceControllerProvider);
+    final acceptedPairings = ref.watch(acceptedPairingsProvider);
+
+    final bool canRun = _selectedPair != null &&
+        _inputController.text.trim().isNotEmpty &&
+        !workspaceState.isLoading;
 
     return Scaffold(
       backgroundColor: CamoColors.background,
@@ -112,7 +122,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      _buildPairSelector(),
+                      _buildPairSelector(acceptedPairings),
                       CamoSpacing.gapLg,
                       CamoTabs(
                         selectedTab: _selectedTab,
@@ -136,12 +146,14 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildPairSelector() {
+  Widget _buildPairSelector(
+    AsyncValue<List<PairingEntity>> acceptedPairings,
+  ) {
     return Center(
       child: CamoPairSelector(
         selectedPairLabel: _selectedPairLabel,
         status: _selectedPairStatus,
-        onTap: _showPairSelectionSheet,
+        onTap: () => _showPairSelectionSheet(acceptedPairings),
       ),
     );
   }
@@ -188,9 +200,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildPairOption({
-    required String label,
-    required String camoId,
-    required CamoPairStatus status,
+    required PairingEntity pairing,
   }) {
     return ListTile(
       leading: const CircleAvatar(
@@ -200,15 +210,15 @@ class _HomeScreenState extends State<HomeScreen> {
           color: CamoColors.primary,
         ),
       ),
-      title: Text(label),
-      subtitle: Text(camoId),
-      trailing: _PairStatusDot(status: status),
+      title: Text(_pairLabel(pairing)),
+      subtitle: Text(_pairCamoId(pairing)),
+      trailing: const _PairStatusDot(status: CamoPairStatus.online),
       onTap: () {
         Navigator.pop(context);
 
         setState(() {
-          _selectedPairLabel = label;
-          _selectedPairStatus = status;
+          _selectedPair = pairing;
+          _selectedPairStatus = CamoPairStatus.online;
           _outputController.clear();
         });
       },
@@ -232,7 +242,9 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  Future<void> _showPairSelectionSheet() async {
+  Future<void> _showPairSelectionSheet(
+    AsyncValue<List<PairingEntity>> acceptedPairings,
+  ) async {
     await showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
@@ -241,46 +253,80 @@ class _HomeScreenState extends State<HomeScreen> {
         return SafeArea(
           child: Padding(
             padding: CamoSpacing.screen,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Select Pair',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                CamoSpacing.gapMd,
-                _buildPairOption(
-                  label: 'Rahul',
-                  camoId: 'CM-YNQH-RWBT',
-                  status: CamoPairStatus.online,
-                ),
-                _buildPairOption(
-                  label: 'Office Laptop',
-                  camoId: 'CM-FJM1-ZQM2',
-                  status: CamoPairStatus.away,
-                ),
-                _buildPairOption(
-                  label: 'Amit',
-                  camoId: 'CM-X9Y8-Z7W6',
-                  status: CamoPairStatus.offline,
-                ),
-                CamoSpacing.gapSm,
-                OutlinedButton.icon(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    Navigator.pushNamed(
-                      context,
-                      AppRoutes.pairRequest,
-                    );
-                  },
-                  icon: const Icon(CamoIcons.pair),
-                  label: const Text('New Pair'),
-                ),
-              ],
+            child: acceptedPairings.when(
+              data: (List<PairingEntity> pairings) {
+                if (pairings.isEmpty) {
+                  return _buildEmptyPairSheet();
+                }
+
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Select Pair',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    CamoSpacing.gapMd,
+                    ...pairings.map(
+                      (PairingEntity pairing) => _buildPairOption(
+                        pairing: pairing,
+                      ),
+                    ),
+                    CamoSpacing.gapSm,
+                    _buildNewPairButton(),
+                  ],
+                );
+              },
+              loading: () => const Center(
+                child: CircularProgressIndicator(),
+              ),
+              error: (_, _) => _buildPairErrorSheet(),
             ),
           ),
         );
       },
+    );
+  }
+
+  Widget _buildEmptyPairSheet() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          'No active pairings found.',
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        CamoSpacing.gapMd,
+        _buildNewPairButton(),
+      ],
+    );
+  }
+
+  Widget _buildPairErrorSheet() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          'Unable to load pairings.',
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        CamoSpacing.gapMd,
+        _buildNewPairButton(),
+      ],
+    );
+  }
+
+  Widget _buildNewPairButton() {
+    return OutlinedButton.icon(
+      onPressed: () {
+        Navigator.pop(context);
+        Navigator.pushNamed(
+          context,
+          AppRoutes.pairRequest,
+        );
+      },
+      icon: const Icon(CamoIcons.pair),
+      label: const Text('New Pair'),
     );
   }
 
@@ -304,6 +350,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _clearOutput() {
     _outputController.clear();
+    ref.read(workspaceControllerProvider.notifier).clearOutput();
   }
 
   Future<void> _copyOutput() async {
@@ -327,12 +374,38 @@ class _HomeScreenState extends State<HomeScreen> {
     _showComingSoon();
   }
 
-  void _runWorkspaceAction() {
-    final String action =
-        _selectedTab == CamoWorkspaceTab.encoder ? 'Encoded' : 'Decoded';
+  Future<void> _runWorkspaceAction() async {
+    final String input = _inputController.text.trim();
 
-    _outputController.text =
-        '$action output preview for $_selectedPairLabel.';
+    if (input.isEmpty || _selectedPair == null) {
+      return;
+    }
+
+    final workspaceController =
+        ref.read(workspaceControllerProvider.notifier);
+
+    if (_selectedTab == CamoWorkspaceTab.encoder) {
+      await workspaceController.encode(
+        plainText: input,
+        subject: _isCamouflageEnabled
+            ? _subjectController.text.trim()
+            : null,
+        camouflageEnabled: _isCamouflageEnabled,
+      );
+    } else {
+      await workspaceController.decode(
+        encodedText: input,
+      );
+    }
+
+    final workspaceState = ref.read(workspaceControllerProvider);
+
+    if (workspaceState.errorMessage != null) {
+      _showMessage(workspaceState.errorMessage!);
+      return;
+    }
+
+    _outputController.text = workspaceState.output;
   }
 
   void _closeDrawer() {
@@ -362,6 +435,28 @@ class _HomeScreenState extends State<HomeScreen> {
         content: Text(message),
       ),
     );
+  }
+
+  String get _selectedPairLabel {
+    if (_selectedPair == null) {
+      return '';
+    }
+
+    return _pairLabel(_selectedPair!);
+  }
+
+  String _pairLabel(PairingEntity pairing) {
+    return _pairCamoId(pairing);
+  }
+
+  String _pairCamoId(PairingEntity pairing) {
+    final String? currentUserId = sl<GetCurrentUserIdUseCase>()();
+
+    if (currentUserId == pairing.requesterUid) {
+      return pairing.receiverCamoId;
+    }
+
+    return pairing.requesterCamoId;
   }
 
   void _refresh() {
