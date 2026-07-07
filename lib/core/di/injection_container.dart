@@ -7,6 +7,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get_it/get_it.dart';
 
+import '../../core/crypto/encryption/camo_aes_gcm_engine.dart';
+import '../../core/crypto/encryption/camo_crypto_engine.dart';
+import '../../core/crypto/encryption/camo_message_crypto_service.dart';
+import '../../core/crypto/encryption/camo_nonce_generator.dart';
+import '../../core/crypto/encryption/camo_payload_formatter.dart';
+import '../../core/crypto/encryption/camo_secure_nonce_generator.dart';
+import '../../core/crypto/encryption/camo_secure_random.dart';
 import '../../features/auth/data/datasources/auth_remote_datasource.dart';
 import '../../features/auth/data/repositories/auth_repository_impl.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
@@ -72,6 +79,32 @@ Future<void> initDependencies() async {
 
   sl.registerLazySingleton<SecureStorageService>(
     () => FlutterSecureStorageService(sl()),
+  );
+
+  sl.registerLazySingleton<CamoSecureRandom>(
+    CamoSecureRandom.new,
+  );
+
+  sl.registerLazySingleton<CamoNonceGenerator>(
+    () => CamoSecureNonceGenerator(
+      sl(),
+    ),
+  );
+
+  sl.registerLazySingleton<CamoCryptoEngine>(
+    CamoAesGcmEngine.new,
+  );
+
+  sl.registerLazySingleton<CamoPayloadFormatter>(
+    CamoPayloadFormatter.new,
+  );
+
+  sl.registerLazySingleton<CamoMessageCryptoService>(
+    () => CamoMessageCryptoService(
+      cryptoEngine: sl(),
+      nonceGenerator: sl(),
+      payloadFormatter: sl(),
+    ),
   );
 
   // ---------------------------------------------------------------------------

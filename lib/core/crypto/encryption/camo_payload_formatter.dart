@@ -3,7 +3,9 @@
 // ---------------------------------------------------------------------------
 
 import 'dart:convert';
+import 'dart:typed_data';
 
+import 'camo_binary_serializer.dart';
 import 'camo_crypto_payload.dart';
 
 // ---------------------------------------------------------------------------
@@ -12,10 +14,24 @@ import 'camo_crypto_payload.dart';
 
 class CamoPayloadFormatter {
   // ---------------------------------------------------------------------------
+  // Constructor
+  // ---------------------------------------------------------------------------
+
+  CamoPayloadFormatter({
+    CamoBinarySerializer? serializer,
+  }) : _serializer = serializer ?? CamoBinarySerializer();
+
+  // ---------------------------------------------------------------------------
   // Constants
   // ---------------------------------------------------------------------------
 
   static const String protocolPrefix = 'CM1';
+
+  // ---------------------------------------------------------------------------
+  // Dependencies
+  // ---------------------------------------------------------------------------
+
+  final CamoBinarySerializer _serializer;
 
   // ---------------------------------------------------------------------------
   // Encode
@@ -24,23 +40,11 @@ class CamoPayloadFormatter {
   String encode(
     CamoCryptoPayload payload,
   ) {
-    final Map<String, dynamic> map = {
-      'v': payload.version,
-      'alg': payload.algorithm,
-      'n': payload.nonce,
-      'ct': payload.cipherText,
-      'tag': payload.authenticationTag,
-      'ts': payload.createdAt.toUtc().toIso8601String(),
-      'camo': payload.camouflageEnabled,
-      'sub': payload.subject,
-    };
+    final Uint8List bytes = _serializer.serialize(payload);
 
-    final String jsonPayload = jsonEncode(map);
-    final String encodedPayload = base64UrlEncode(
-      utf8.encode(jsonPayload),
-    );
+    final String encoded = base64UrlEncode(bytes);
 
-    return '$protocolPrefix|$encodedPayload';
+    return '$protocolPrefix|$encoded';
   }
 
   // ---------------------------------------------------------------------------
@@ -53,28 +57,15 @@ class CamoPayloadFormatter {
     final List<String> parts = encodedPayload.split('|');
 
     if (parts.length != 2 || parts.first != protocolPrefix) {
-      throw const FormatException('Invalid CAMO payload format.');
+      throw const FormatException(
+        'Invalid CAMO payload format.',
+      );
     }
 
-    final String jsonPayload = utf8.decode(
+    final Uint8List bytes = Uint8List.fromList(
       base64Url.decode(parts.last),
     );
 
-    final Map<String, dynamic> map =
-        jsonDecode(jsonPayload) as Map<String, dynamic>;
-
-    return CamoCryptoPayload(
-      version: map['v'] as int? ?? 1,
-      algorithm: map['alg'] as String? ?? '',
-      nonce: map['n'] as String? ?? '',
-      cipherText: map['ct'] as String? ?? '',
-      authenticationTag: map['tag'] as String? ?? '',
-      createdAt: DateTime.tryParse(
-            map['ts'] as String? ?? '',
-          )?.toUtc() ??
-          DateTime.now().toUtc(),
-      camouflageEnabled: map['camo'] as bool? ?? false,
-      subject: map['sub'] as String?,
-    );
+    return _serializer.deserialize(bytes);
   }
 }
