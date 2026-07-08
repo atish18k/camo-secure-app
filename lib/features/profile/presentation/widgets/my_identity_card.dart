@@ -3,37 +3,33 @@
 // ---------------------------------------------------------------------------
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/camo_colors.dart';
 import '../../../../core/theme/camo_spacing.dart';
 import '../../../../core/theme/camo_typography.dart';
-import '../../../../shared/widgets/cards/camo_card.dart';
-import '../providers/identity_card_controller.dart';
-import 'identity_qr_dialog.dart';
+import '../providers/my_identity_controller.dart';
+import '../providers/my_identity_state.dart';
 
 // ---------------------------------------------------------------------------
-// Class
+// Widget
 // ---------------------------------------------------------------------------
 
-class IdentityCard extends StatelessWidget {
+class MyIdentityCard extends ConsumerWidget {
   // ---------------------------------------------------------------------------
   // Constructor
   // ---------------------------------------------------------------------------
 
-  const IdentityCard({
+  const MyIdentityCard({
     super.key,
-    required this.displayName,
-    required this.camoId,
-    this.isPaired = false,
+    required this.onQrTap,
   });
 
   // ---------------------------------------------------------------------------
   // Properties
   // ---------------------------------------------------------------------------
 
-  final String displayName;
-  final String camoId;
-  final bool isPaired;
+  final VoidCallback onQrTap;
 
   static const Duration _animationDuration = Duration(milliseconds: 280);
 
@@ -42,47 +38,48 @@ class IdentityCard extends StatelessWidget {
   // ---------------------------------------------------------------------------
 
   @override
-  Widget build(BuildContext context) {
-    final IdentityCardController controller = IdentityCardController(
-      camoId: camoId,
-    );
+  Widget build(BuildContext context, WidgetRef ref) {
+    final MyIdentityState state = ref.watch(myIdentityControllerProvider);
+    final MyIdentityController controller =
+        ref.read(myIdentityControllerProvider.notifier);
 
-    return CamoCard(
-      child: ListenableBuilder(
-        listenable: controller,
-        builder: (BuildContext context, Widget? child) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const Icon(
-                Icons.person_outline_rounded,
-                size: 44,
-                color: CamoColors.primary,
-              ),
-              CamoSpacing.gapMd,
-              Text(
-                displayName.trim().isEmpty ? 'CAMO User' : displayName,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-                style: CamoTypography.cardTitle.copyWith(
-                  color: CamoColors.textPrimary,
-                ),
-              ),
-              CamoSpacing.gapLg,
-              _buildIdentityRow(
-                context: context,
-                controller: controller,
-              ),
-              CamoSpacing.gapLg,
-              _buildQrButton(
-                context: context,
-                controller: controller,
-              ),
-            ],
-          );
-        },
-      ),
+    if (state.isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const Icon(
+          Icons.person_outline_rounded,
+          size: 52,
+          color: CamoColors.primary,
+        ),
+        CamoSpacing.gapMd,
+        Text(
+          state.displayName.trim().isEmpty ? 'CAMO User' : state.displayName,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          textAlign: TextAlign.center,
+          style: CamoTypography.cardTitle.copyWith(
+            color: CamoColors.textPrimary,
+          ),
+        ),
+        CamoSpacing.gapLg,
+        _buildIdentityRow(
+          context: context,
+          state: state,
+          controller: controller,
+        ),
+        CamoSpacing.gapLg,
+        OutlinedButton.icon(
+          onPressed: onQrTap,
+          icon: const Icon(Icons.qr_code_2_outlined),
+          label: const Text('QR Code'),
+        ),
+      ],
     );
   }
 
@@ -92,13 +89,14 @@ class IdentityCard extends StatelessWidget {
 
   Widget _buildIdentityRow({
     required BuildContext context,
-    required IdentityCardController controller,
+    required MyIdentityState state,
+    required MyIdentityController controller,
   }) {
     return Row(
       children: [
         Expanded(
           child: _IdentityActionButton(
-            label: controller.isVisible ? 'Hide' : 'Reveal',
+            label: state.isVisible ? 'Hide' : 'Reveal',
             onTap: controller.toggleVisibility,
           ),
         ),
@@ -122,13 +120,13 @@ class IdentityCard extends StatelessWidget {
               );
             },
             child: Text(
-              controller.displayCamoId,
-              key: ValueKey<String>(controller.displayCamoId),
+              state.maskedCamoId,
+              key: ValueKey<String>(state.maskedCamoId),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
               style: CamoTypography.bodyStrong.copyWith(
-                color: controller.isVisible
+                color: state.isVisible
                     ? CamoColors.textPrimary
                     : CamoColors.textSecondary,
                 letterSpacing: 0.8,
@@ -139,7 +137,7 @@ class IdentityCard extends StatelessWidget {
         const SizedBox(width: CamoSpacing.sm),
         Expanded(
           child: _IdentityActionButton(
-            label: controller.isCopied ? 'Copied' : 'Copy',
+            label: state.isCopied ? 'Copied' : 'Copy',
             onTap: () => _copyCamoId(
               context: context,
               controller: controller,
@@ -150,30 +148,13 @@ class IdentityCard extends StatelessWidget {
     );
   }
 
-  Widget _buildQrButton({
-    required BuildContext context,
-    required IdentityCardController controller,
-  }) {
-    return Align(
-      alignment: Alignment.center,
-      child: OutlinedButton.icon(
-        onPressed: () => _showQr(
-          context: context,
-          controller: controller,
-        ),
-        icon: const Icon(Icons.qr_code_2_outlined),
-        label: const Text('QR Code'),
-      ),
-    );
-  }
-
   // ---------------------------------------------------------------------------
   // Actions
   // ---------------------------------------------------------------------------
 
   Future<void> _copyCamoId({
     required BuildContext context,
-    required IdentityCardController controller,
+    required MyIdentityController controller,
   }) async {
     final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
     final bool success = await controller.copyCamoId();
@@ -184,29 +165,6 @@ class IdentityCard extends StatelessWidget {
           success ? 'CAMO ID copied.' : 'CAMO ID is not available yet.',
         ),
       ),
-    );
-  }
-
-  void _showQr({
-    required BuildContext context,
-    required IdentityCardController controller,
-  }) {
-    if (!controller.hasValidCamoId) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('CAMO ID is not available yet.'),
-        ),
-      );
-      return;
-    }
-
-    showDialog<void>(
-      context: context,
-      builder: (BuildContext context) {
-        return IdentityQrDialog(
-          camoId: controller.camoId,
-        );
-      },
     );
   }
 }

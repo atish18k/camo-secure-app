@@ -82,7 +82,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       backgroundColor: CamoColors.background,
       drawer: CamoDrawer(
         onWorkspaceTap: _closeDrawer,
-        onMyIdentityTap: _closeDrawerAndShowComingSoon,
+        onMyIdentityTap: _openMyIdentity,
         onPairingHubTap: _openPairingHub,
         onEncryptedHistoryTap: _closeDrawerAndShowComingSoon,
         onDecryptedHistoryTap: _closeDrawerAndShowComingSoon,
@@ -419,6 +419,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   void _closeDrawerAndShowComingSoon() {
     Navigator.pop(context);
     _showComingSoon();
+  }
+
+  void _openMyIdentity() {
+    Navigator.pop(context);
+    Navigator.pushNamed(
+      context,
+      AppRoutes.myIdentity,
+    );
   }
 
   void _openPairingHub() {

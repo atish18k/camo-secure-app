@@ -21,6 +21,13 @@ class IdentityCardController extends ChangeNotifier {
   });
 
   // ---------------------------------------------------------------------------
+  // Constants
+  // ---------------------------------------------------------------------------
+
+  static const Duration autoHideDuration = Duration(seconds: 5);
+  static const Duration copyResetDuration = Duration(milliseconds: 500);
+
+  // ---------------------------------------------------------------------------
   // Properties
   // ---------------------------------------------------------------------------
 
@@ -28,6 +35,8 @@ class IdentityCardController extends ChangeNotifier {
 
   bool _isVisible = false;
   bool _isCopied = false;
+
+  Timer? _autoHideTimer;
   Timer? _copyResetTimer;
 
   // ---------------------------------------------------------------------------
@@ -59,15 +68,18 @@ class IdentityCardController extends ChangeNotifier {
   // ---------------------------------------------------------------------------
 
   void reveal() {
-    if (_isVisible) {
+    if (!hasValidCamoId) {
       return;
     }
 
     _isVisible = true;
+    _restartAutoHideTimer();
     notifyListeners();
   }
 
   void hide() {
+    _autoHideTimer?.cancel();
+
     if (!_isVisible) {
       return;
     }
@@ -99,6 +111,7 @@ class IdentityCardController extends ChangeNotifier {
 
   @override
   void dispose() {
+    _autoHideTimer?.cancel();
     _copyResetTimer?.cancel();
     super.dispose();
   }
@@ -107,6 +120,15 @@ class IdentityCardController extends ChangeNotifier {
   // Private Methods
   // ---------------------------------------------------------------------------
 
+  void _restartAutoHideTimer() {
+    _autoHideTimer?.cancel();
+
+    _autoHideTimer = Timer(
+      autoHideDuration,
+      hide,
+    );
+  }
+
   void _markAsCopied() {
     _copyResetTimer?.cancel();
 
@@ -114,7 +136,7 @@ class IdentityCardController extends ChangeNotifier {
     notifyListeners();
 
     _copyResetTimer = Timer(
-      const Duration(milliseconds: 500),
+      copyResetDuration,
       () {
         _isCopied = false;
         notifyListeners();
