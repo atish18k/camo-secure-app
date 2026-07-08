@@ -24,6 +24,13 @@ class FlutterSecurePairSecretManager implements PairSecretManager {
   );
 
   // ---------------------------------------------------------------------------
+  // Constants
+  // ---------------------------------------------------------------------------
+
+  static const int pairSecretLength = 32;
+  static const String _storagePrefix = 'pair_secret';
+
+  // ---------------------------------------------------------------------------
   // Dependencies
   // ---------------------------------------------------------------------------
 
@@ -36,7 +43,7 @@ class FlutterSecurePairSecretManager implements PairSecretManager {
 
   @override
   Future<Uint8List> createPairSecret() async {
-    return _secureRandom.generateBytes(32);
+    return _secureRandom.generateBytes(pairSecretLength);
   }
 
   // ---------------------------------------------------------------------------
@@ -49,7 +56,7 @@ class FlutterSecurePairSecretManager implements PairSecretManager {
     required Uint8List pairSecret,
   }) {
     return _secureStorageService.write(
-      key: 'pair_secret_$pairingId',
+      key: _storageKey(pairingId),
       value: base64Encode(pairSecret),
     );
   }
@@ -58,37 +65,41 @@ class FlutterSecurePairSecretManager implements PairSecretManager {
   // Read
   // ---------------------------------------------------------------------------
 
-  // ---------------------------------------------------------------------------
-// Read
-// ---------------------------------------------------------------------------
+  @override
+  Future<Uint8List?> loadPairSecret(
+    String pairingId,
+  ) async {
+    final String? value = await _secureStorageService.read(
+      key: _storageKey(pairingId),
+    );
 
-@override
-Future<Uint8List?> loadPairSecret(
-  String pairingId,
-) async {
-  final String? value = await _secureStorageService.read(
-    key: 'pair_secret_$pairingId',
-  );
+    if (value == null || value.isEmpty) {
+      return null;
+    }
 
-  if (value == null) {
-    return null;
+    return Uint8List.fromList(
+      base64Decode(value),
+    );
   }
-
-  return Uint8List.fromList(
-    base64Decode(value),
-  );
-}
 
   // ---------------------------------------------------------------------------
   // Delete
   // ---------------------------------------------------------------------------
 
   @override
-Future<void> deletePairSecret(
-  String pairingId,
-) {
-  return _secureStorageService.delete(
-    key: 'pair_secret_$pairingId',
-  );
-}
+  Future<void> deletePairSecret(
+    String pairingId,
+  ) {
+    return _secureStorageService.delete(
+      key: _storageKey(pairingId),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Helpers
+  // ---------------------------------------------------------------------------
+
+  String _storageKey(String pairingId) {
+    return '${_storagePrefix}_$pairingId';
+  }
 }

@@ -9,11 +9,16 @@ import 'package:get_it/get_it.dart';
 
 import '../../core/crypto/encryption/camo_aes_gcm_engine.dart';
 import '../../core/crypto/encryption/camo_crypto_engine.dart';
+import '../../core/crypto/encryption/camo_crypto_facade.dart';
+import '../../core/crypto/encryption/camo_hkdf_key_derivation.dart';
+import '../../core/crypto/encryption/camo_key_agreement.dart';
+import '../../core/crypto/encryption/camo_key_derivation.dart';
 import '../../core/crypto/encryption/camo_message_crypto_service.dart';
 import '../../core/crypto/encryption/camo_nonce_generator.dart';
 import '../../core/crypto/encryption/camo_payload_formatter.dart';
 import '../../core/crypto/encryption/camo_secure_nonce_generator.dart';
 import '../../core/crypto/encryption/camo_secure_random.dart';
+import '../../core/crypto/encryption/camo_x25519_key_agreement.dart';
 import '../../features/auth/data/datasources/auth_remote_datasource.dart';
 import '../../features/auth/data/repositories/auth_repository_impl.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
@@ -32,6 +37,10 @@ import '../../features/pairing/domain/usecases/get_pairing_usecase.dart';
 import '../../features/pairing/domain/usecases/reject_pair_request_usecase.dart';
 import '../../features/pairing/domain/usecases/watch_accepted_pairings_usecase.dart';
 import '../../features/pairing/domain/usecases/watch_pending_pair_requests_usecase.dart';
+import '../../features/pairing/security/device_key_manager.dart';
+import '../../features/pairing/security/flutter_secure_device_key_manager.dart';
+import '../../features/pairing/security/flutter_secure_pair_secret_manager.dart';
+import '../../features/pairing/security/pair_secret_manager.dart';
 import '../../features/profile/data/datasources/profile_remote_datasource.dart';
 import '../../features/profile/data/repositories/profile_repository_impl.dart';
 import '../../features/profile/domain/repositories/profile_repository.dart';
@@ -85,6 +94,19 @@ Future<void> initDependencies() async {
     CamoSecureRandom.new,
   );
 
+  sl.registerLazySingleton<PairSecretManager>(
+    () => FlutterSecurePairSecretManager(
+      sl(),
+      sl(),
+    ),
+  );
+
+  sl.registerLazySingleton<DeviceKeyManager>(
+    () => FlutterSecureDeviceKeyManager(
+      sl(),
+    ),
+  );
+
   sl.registerLazySingleton<CamoNonceGenerator>(
     () => CamoSecureNonceGenerator(
       sl(),
@@ -93,6 +115,14 @@ Future<void> initDependencies() async {
 
   sl.registerLazySingleton<CamoCryptoEngine>(
     CamoAesGcmEngine.new,
+  );
+
+  sl.registerLazySingleton<CamoKeyAgreement>(
+    CamoX25519KeyAgreement.new,
+  );
+
+  sl.registerLazySingleton<CamoKeyDerivation>(
+    CamoHkdfKeyDerivation.new,
   );
 
   sl.registerLazySingleton<CamoPayloadFormatter>(
@@ -138,6 +168,18 @@ Future<void> initDependencies() async {
   sl.registerLazySingleton<PairingRepository>(
     () => PairingRepositoryImpl(
       remoteDataSource: sl(),
+    ),
+  );
+
+  sl.registerLazySingleton<CamoCryptoFacade>(
+    () => CamoCryptoFacade(
+      authRepository: sl(),
+      pairingRepository: sl(),
+      profileRepository: sl(),
+      deviceKeyManager: sl(),
+      keyAgreement: sl(),
+      keyDerivation: sl(),
+      messageCryptoService: sl(),
     ),
   );
 

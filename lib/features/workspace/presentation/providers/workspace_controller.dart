@@ -2,11 +2,10 @@
 // Imports
 // ---------------------------------------------------------------------------
 
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/crypto/encryption/camo_message_crypto_service.dart';
+import '../../../../core/crypto/encryption/camo_crypto_facade.dart';
 import '../../../../core/di/injection_container.dart';
 import 'workspace_state.dart';
 
@@ -24,18 +23,6 @@ final workspaceControllerProvider =
 // ---------------------------------------------------------------------------
 
 class WorkspaceController extends Notifier<WorkspaceState> {
-  // ---------------------------------------------------------------------------
-  // Constants
-  // ---------------------------------------------------------------------------
-
-  static final Uint8List _devKey = Uint8List.fromList(
-    List<int>.filled(32, 7),
-  );
-
-  // ---------------------------------------------------------------------------
-  // Build
-  // ---------------------------------------------------------------------------
-
   @override
   WorkspaceState build() {
     return const WorkspaceState();
@@ -46,6 +33,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   // ---------------------------------------------------------------------------
 
   Future<void> encode({
+    required String pairingId,
     required String plainText,
     String? subject,
     bool camouflageEnabled = false,
@@ -56,12 +44,11 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     );
 
     try {
-      final CamoMessageCryptoService cryptoService =
-          sl<CamoMessageCryptoService>();
+      final CamoCryptoFacade cryptoFacade = sl<CamoCryptoFacade>();
 
-      final String output = await cryptoService.encode(
+      final String output = await cryptoFacade.encodeForPair(
+        pairingId: pairingId,
         plainText: plainText,
-        key: _devKey,
         subject: subject,
         camouflageEnabled: camouflageEnabled,
       );
@@ -87,6 +74,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   // ---------------------------------------------------------------------------
 
   Future<void> decode({
+    required String pairingId,
     required String encodedText,
   }) async {
     state = state.copyWith(
@@ -95,12 +83,11 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     );
 
     try {
-      final CamoMessageCryptoService cryptoService =
-          sl<CamoMessageCryptoService>();
+      final CamoCryptoFacade cryptoFacade = sl<CamoCryptoFacade>();
 
-      final String output = await cryptoService.decode(
+      final String output = await cryptoFacade.decodeForPair(
+        pairingId: pairingId,
         encodedText: encodedText,
-        key: _devKey,
       );
 
       state = state.copyWith(

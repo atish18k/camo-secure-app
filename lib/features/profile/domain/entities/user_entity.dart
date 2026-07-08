@@ -3,33 +3,23 @@
 // ---------------------------------------------------------------------------
 
 class UserEntity {
-  // ---------------------------------------------------------------------------
-  // Constructor
-  // ---------------------------------------------------------------------------
-
   const UserEntity({
     required this.uid,
     required this.camoId,
     required this.email,
     this.displayName,
     this.photoUrl,
+    this.publicKey,
     required this.createdAt,
   });
-
-  // ---------------------------------------------------------------------------
-  // Properties
-  // ---------------------------------------------------------------------------
 
   final String uid;
   final String camoId;
   final String email;
   final String? displayName;
   final String? photoUrl;
+  final String? publicKey;
   final DateTime createdAt;
-
-  // ---------------------------------------------------------------------------
-  // Copy With
-  // ---------------------------------------------------------------------------
 
   UserEntity copyWith({
     String? uid,
@@ -37,6 +27,7 @@ class UserEntity {
     String? email,
     String? displayName,
     String? photoUrl,
+    String? publicKey,
     DateTime? createdAt,
   }) {
     return UserEntity(
@@ -45,13 +36,10 @@ class UserEntity {
       email: email ?? this.email,
       displayName: displayName ?? this.displayName,
       photoUrl: photoUrl ?? this.photoUrl,
+      publicKey: publicKey ?? this.publicKey,
       createdAt: createdAt ?? this.createdAt,
     );
   }
-
-  // ---------------------------------------------------------------------------
-  // Equality
-  // ---------------------------------------------------------------------------
 
   @override
   bool operator ==(Object other) {
@@ -63,6 +51,7 @@ class UserEntity {
             email == other.email &&
             displayName == other.displayName &&
             photoUrl == other.photoUrl &&
+            publicKey == other.publicKey &&
             createdAt == other.createdAt;
   }
 
@@ -73,6 +62,7 @@ class UserEntity {
         email,
         displayName,
         photoUrl,
+        publicKey,
         createdAt,
       );
 }

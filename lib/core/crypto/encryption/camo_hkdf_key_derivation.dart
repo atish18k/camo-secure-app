@@ -28,7 +28,7 @@ class CamoHkdfKeyDerivation implements CamoKeyDerivation {
   Future<Uint8List> deriveKey({
     required String localUserId,
     required String remoteUserId,
-    required Uint8List pairSecret,
+    required Uint8List sharedSecret,
     required Uint8List salt,
   }) async {
     final List<String> sortedUserIds = <String>[
@@ -46,7 +46,7 @@ class CamoHkdfKeyDerivation implements CamoKeyDerivation {
     );
 
     final SecretKey derivedSecretKey = await hkdf.deriveKey(
-      secretKey: SecretKey(pairSecret),
+      secretKey: SecretKey(sharedSecret),
       nonce: salt,
       info: info,
     );

@@ -5,18 +5,16 @@
 import 'dart:typed_data';
 
 // ---------------------------------------------------------------------------
-// Key Derivation
+// Key Agreement
 // ---------------------------------------------------------------------------
 
-abstract class CamoKeyDerivation {
+abstract class CamoKeyAgreement {
   // ---------------------------------------------------------------------------
-  // Derive Key
+  // Create Shared Secret
   // ---------------------------------------------------------------------------
 
-  Future<Uint8List> deriveKey({
-    required String localUserId,
-    required String remoteUserId,
-    required Uint8List sharedSecret,
-    required Uint8List salt,
+  Future<Uint8List> createSharedSecret({
+    required Uint8List privateKey,
+    required Uint8List remotePublicKey,
   });
 }

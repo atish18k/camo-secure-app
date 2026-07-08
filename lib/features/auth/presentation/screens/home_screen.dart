@@ -386,6 +386,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     if (_selectedTab == CamoWorkspaceTab.encoder) {
       await workspaceController.encode(
+        pairingId: _selectedPair!.id,
         plainText: input,
         subject: _isCamouflageEnabled
             ? _subjectController.text.trim()
@@ -394,6 +395,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       );
     } else {
       await workspaceController.decode(
+        pairingId: _selectedPair!.id,
         encodedText: input,
       );
     }

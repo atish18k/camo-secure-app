@@ -5,6 +5,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../../../core/constants/firestore_paths.dart';
+import '../models/user_crypto_model.dart';
 import '../models/user_profile_model.dart';
 
 // ---------------------------------------------------------------------------
@@ -12,15 +13,18 @@ import '../models/user_profile_model.dart';
 // ---------------------------------------------------------------------------
 
 abstract class ProfileRemoteDataSource {
-  // ---------------------------------------------------------------------------
-  // User Profile
-  // ---------------------------------------------------------------------------
-
   Future<void> saveUser(UserProfileModel user);
 
   Future<UserProfileModel?> getUser(String uid);
 
   Future<UserProfileModel?> getUserByCamoId(String camoId);
+
+  Future<void> saveUserCrypto({
+    required String uid,
+    required UserCryptoModel crypto,
+  });
+
+  Future<UserCryptoModel?> getUserCrypto(String uid);
 }
 
 // ---------------------------------------------------------------------------
@@ -28,21 +32,9 @@ abstract class ProfileRemoteDataSource {
 // ---------------------------------------------------------------------------
 
 class FirebaseProfileRemoteDataSource implements ProfileRemoteDataSource {
-  // ---------------------------------------------------------------------------
-  // Constructor
-  // ---------------------------------------------------------------------------
-
   const FirebaseProfileRemoteDataSource(this._firestore);
 
-  // ---------------------------------------------------------------------------
-  // Dependencies
-  // ---------------------------------------------------------------------------
-
   final FirebaseFirestore _firestore;
-
-  // ---------------------------------------------------------------------------
-  // User Profile
-  // ---------------------------------------------------------------------------
 
   @override
   Future<void> saveUser(UserProfileModel user) async {
@@ -71,9 +63,7 @@ class FirebaseProfileRemoteDataSource implements ProfileRemoteDataSource {
   }
 
   @override
-  Future<UserProfileModel?> getUserByCamoId(
-    String camoId,
-  ) async {
+  Future<UserProfileModel?> getUserByCamoId(String camoId) async {
     final QuerySnapshot<Map<String, dynamic>> query = await _firestore
         .collection(FirestorePaths.users)
         .where(
@@ -90,5 +80,47 @@ class FirebaseProfileRemoteDataSource implements ProfileRemoteDataSource {
     return UserProfileModel.fromMap(
       query.docs.first.data(),
     );
+  }
+
+  // ---------------------------------------------------------------------------
+  // User Crypto
+  // ---------------------------------------------------------------------------
+
+  @override
+  Future<void> saveUserCrypto({
+    required String uid,
+    required UserCryptoModel crypto,
+  }) async {
+    await _firestore
+        .collection(FirestorePaths.users)
+        .doc(uid)
+        .collection('security')
+        .doc('current')
+        .set(
+          crypto.toMap(),
+          SetOptions(merge: true),
+        );
+  }
+
+  @override
+  Future<UserCryptoModel?> getUserCrypto(String uid) async {
+    final DocumentSnapshot<Map<String, dynamic>> snapshot = await _firestore
+        .collection(FirestorePaths.users)
+        .doc(uid)
+        .collection('security')
+        .doc('current')
+        .get();
+
+    if (!snapshot.exists) {
+      return null;
+    }
+
+    final Map<String, dynamic>? data = snapshot.data();
+
+    if (data == null) {
+      return null;
+    }
+
+    return UserCryptoModel.fromMap(data);
   }
 }

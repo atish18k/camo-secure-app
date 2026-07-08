@@ -5,18 +5,23 @@
 import 'dart:typed_data';
 
 // ---------------------------------------------------------------------------
-// Key Derivation
+// CAMO Key Pair
 // ---------------------------------------------------------------------------
 
-abstract class CamoKeyDerivation {
+class CamoKeyPair {
   // ---------------------------------------------------------------------------
-  // Derive Key
+  // Constructor
   // ---------------------------------------------------------------------------
 
-  Future<Uint8List> deriveKey({
-    required String localUserId,
-    required String remoteUserId,
-    required Uint8List sharedSecret,
-    required Uint8List salt,
+  const CamoKeyPair({
+    required this.privateKey,
+    required this.publicKey,
   });
+
+  // ---------------------------------------------------------------------------
+  // Properties
+  // ---------------------------------------------------------------------------
+
+  final Uint8List privateKey;
+  final Uint8List publicKey;
 }
