@@ -39,8 +39,6 @@ import '../../features/pairing/domain/usecases/watch_accepted_pairings_usecase.d
 import '../../features/pairing/domain/usecases/watch_pending_pair_requests_usecase.dart';
 import '../../features/pairing/security/device_key_manager.dart';
 import '../../features/pairing/security/flutter_secure_device_key_manager.dart';
-import '../../features/pairing/security/flutter_secure_pair_secret_manager.dart';
-import '../../features/pairing/security/pair_secret_manager.dart';
 import '../../features/profile/data/datasources/profile_remote_datasource.dart';
 import '../../features/profile/data/repositories/profile_repository_impl.dart';
 import '../../features/profile/domain/repositories/profile_repository.dart';
@@ -92,13 +90,6 @@ Future<void> initDependencies() async {
 
   sl.registerLazySingleton<CamoSecureRandom>(
     CamoSecureRandom.new,
-  );
-
-  sl.registerLazySingleton<PairSecretManager>(
-    () => FlutterSecurePairSecretManager(
-      sl(),
-      sl(),
-    ),
   );
 
   sl.registerLazySingleton<DeviceKeyManager>(
