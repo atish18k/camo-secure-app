@@ -83,7 +83,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       drawer: CamoDrawer(
         onWorkspaceTap: _closeDrawer,
         onMyIdentityTap: _closeDrawerAndShowComingSoon,
-        onMyPairingsTap: _openMyPairings,
+        onPairingHubTap: _openPairingHub,
+        onEncryptedHistoryTap: _closeDrawerAndShowComingSoon,
+        onDecryptedHistoryTap: _closeDrawerAndShowComingSoon,
         onSecurityCenterTap: _closeDrawerAndShowComingSoon,
         onSettingsTap: _closeDrawerAndShowComingSoon,
         onAboutTap: _closeDrawerAndShowComingSoon,
@@ -419,7 +421,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     _showComingSoon();
   }
 
-  void _openMyPairings() {
+  void _openPairingHub() {
     Navigator.pop(context);
     Navigator.pushNamed(
       context,
