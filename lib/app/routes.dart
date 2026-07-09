@@ -6,11 +6,9 @@ import 'package:flutter/material.dart';
 
 import '../features/auth/presentation/screens/home_screen.dart';
 import '../features/auth/presentation/screens/login_screen.dart';
-import '../features/pairing/presentation/screens/my_pairings_screen.dart';
 import '../features/pairing/presentation/screens/pair_request_screen.dart';
 import '../features/pairing/presentation/screens/pending_pair_requests_screen.dart';
 import '../features/pairing/presentation/screens/qr_scanner_screen.dart';
-import '../features/profile/presentation/screens/my_identity_screen.dart';
 import '../features/splash/presentation/screens/splash_screen.dart';
 
 // ---------------------------------------------------------------------------
@@ -38,11 +36,9 @@ class AppRoutes {
       login: (context) => const LoginScreen(),
       home: (context) => const HomeScreen(),
       dashboard: (context) => const HomeScreen(),
-      myIdentity: (context) => const MyIdentityScreen(),
       pairRequest: (context) => const PairRequestScreen(),
       pendingPairRequests: (context) =>
           const PendingPairRequestsScreen(),
-      myPairings: (context) => const MyPairingsScreen(),
       qrScanner: (context) => const QrScannerScreen(),
     };
   }

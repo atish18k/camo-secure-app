@@ -31,7 +31,9 @@ class PairingRepositoryImpl implements PairingRepository {
   // ---------------------------------------------------------------------------
 
   @override
-  Future<void> createPairRequest(PairingEntity pairing) {
+  Future<void> createPairRequest(
+    PairingEntity pairing,
+  ) {
     return remoteDataSource.savePairing(
       PairingModel.fromEntity(pairing),
     );
@@ -42,7 +44,9 @@ class PairingRepositoryImpl implements PairingRepository {
   // ---------------------------------------------------------------------------
 
   @override
-  Future<PairingEntity?> getPairingById(String pairingId) {
+  Future<PairingEntity?> getPairingById(
+    String pairingId,
+  ) {
     return remoteDataSource.getPairing(pairingId);
   }
 
@@ -68,12 +72,23 @@ class PairingRepositoryImpl implements PairingRepository {
   }
 
   @override
-  Stream<List<PairingEntity>> watchPendingRequests(String receiverUid) {
+  Stream<List<PairingEntity>> watchPendingRequests(
+    String receiverUid,
+  ) {
     return remoteDataSource.watchPendingRequests(receiverUid);
   }
 
   @override
-  Stream<List<PairingEntity>> watchAcceptedPairings(String userUid) {
+  Stream<List<PairingEntity>> watchSentRequests(
+    String requesterUid,
+  ) {
+    return remoteDataSource.watchSentRequests(requesterUid);
+  }
+
+  @override
+  Stream<List<PairingEntity>> watchAcceptedPairings(
+    String userUid,
+  ) {
     return remoteDataSource.watchAcceptedPairings(userUid);
   }
 
@@ -82,7 +97,9 @@ class PairingRepositoryImpl implements PairingRepository {
   // ---------------------------------------------------------------------------
 
   @override
-  Future<void> acceptPairRequest(String pairingId) {
+  Future<void> acceptPairRequest(
+    String pairingId,
+  ) {
     return remoteDataSource.updatePairingStatus(
       pairingId,
       PairingStatus.accepted,
@@ -90,10 +107,22 @@ class PairingRepositoryImpl implements PairingRepository {
   }
 
   @override
-  Future<void> rejectPairRequest(String pairingId) {
+  Future<void> rejectPairRequest(
+    String pairingId,
+  ) {
     return remoteDataSource.updatePairingStatus(
       pairingId,
       PairingStatus.rejected,
+    );
+  }
+
+  @override
+  Future<void> cancelPairRequest(
+    String pairingId,
+  ) {
+    return remoteDataSource.updatePairingStatus(
+      pairingId,
+      PairingStatus.cancelled,
     );
   }
 
@@ -102,7 +131,9 @@ class PairingRepositoryImpl implements PairingRepository {
   // ---------------------------------------------------------------------------
 
   @override
-  Future<void> deletePairing(String pairingId) {
+  Future<void> deletePairing(
+    String pairingId,
+  ) {
     return remoteDataSource.deletePairing(pairingId);
   }
 }

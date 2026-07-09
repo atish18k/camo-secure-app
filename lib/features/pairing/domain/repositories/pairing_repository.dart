@@ -34,6 +34,10 @@ abstract interface class PairingRepository {
     String receiverUid,
   );
 
+  Stream<List<PairingEntity>> watchSentRequests(
+    String requesterUid,
+  );
+
   Stream<List<PairingEntity>> watchAcceptedPairings(
     String userUid,
   );
@@ -47,6 +51,10 @@ abstract interface class PairingRepository {
   );
 
   Future<void> rejectPairRequest(
+    String pairingId,
+  );
+
+  Future<void> cancelPairRequest(
     String pairingId,
   );
 
