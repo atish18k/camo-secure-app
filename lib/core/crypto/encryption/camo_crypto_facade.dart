@@ -11,6 +11,7 @@ import '../../../features/pairing/domain/repositories/pairing_repository.dart';
 import '../../../features/pairing/security/device_key_manager.dart';
 import '../../../features/profile/domain/entities/user_crypto_entity.dart';
 import '../../../features/profile/domain/repositories/profile_repository.dart';
+import '../cache/camo_key_cache.dart';
 import 'camo_key_agreement.dart';
 import 'camo_key_derivation.dart';
 import 'camo_message_crypto_service.dart';
@@ -27,6 +28,7 @@ class CamoCryptoFacade {
     required this.deviceKeyManager,
     required this.keyAgreement,
     required this.keyDerivation,
+    required this.keyCache,
     required this.messageCryptoService,
   });
 
@@ -36,6 +38,7 @@ class CamoCryptoFacade {
   final DeviceKeyManager deviceKeyManager;
   final CamoKeyAgreement keyAgreement;
   final CamoKeyDerivation keyDerivation;
+  final CamoKeyCache keyCache;
   final CamoMessageCryptoService messageCryptoService;
 
   Future<String> encodeForPair({
@@ -44,7 +47,7 @@ class CamoCryptoFacade {
     String? subject,
     bool camouflageEnabled = false,
   }) async {
-    final Uint8List key = await _deriveConversationKey(pairingId);
+    final Uint8List key = await _getConversationKey(pairingId);
 
     return messageCryptoService.encode(
       plainText: plainText,
@@ -58,7 +61,7 @@ class CamoCryptoFacade {
     required String pairingId,
     required String encodedText,
   }) async {
-    final Uint8List key = await _deriveConversationKey(pairingId);
+    final Uint8List key = await _getConversationKey(pairingId);
 
     return messageCryptoService.decode(
       encodedText: encodedText,
@@ -66,7 +69,7 @@ class CamoCryptoFacade {
     );
   }
 
-  Future<Uint8List> _deriveConversationKey(
+  Future<Uint8List> _getConversationKey(
     String pairingId,
   ) async {
     final String? currentUserId = authRepository.currentUserId;
@@ -83,9 +86,33 @@ class CamoCryptoFacade {
     }
 
     if (pairing.status != PairingStatus.accepted) {
+      keyCache.remove(pairingId);
       throw StateError('Pairing is not accepted.');
     }
 
+    final cachedEntry = keyCache.get(pairingId);
+
+    if (cachedEntry != null) {
+      return Uint8List.fromList(cachedEntry.key);
+    }
+
+    final Uint8List key = await _deriveConversationKey(
+      pairing: pairing,
+      currentUserId: currentUserId,
+    );
+
+    keyCache.put(
+      pairId: pairingId,
+      key: key,
+    );
+
+    return key;
+  }
+
+  Future<Uint8List> _deriveConversationKey({
+    required PairingEntity pairing,
+    required String currentUserId,
+  }) async {
     final String remoteUserId = _resolveRemoteUserId(
       pairing: pairing,
       currentUserId: currentUserId,

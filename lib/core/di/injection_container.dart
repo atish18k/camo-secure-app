@@ -7,6 +7,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get_it/get_it.dart';
 
+import '../../core/crypto/cache/camo_key_cache.dart';
+import '../../core/crypto/cache/camo_memory_key_cache.dart';
 import '../../core/crypto/encryption/camo_aes_gcm_engine.dart';
 import '../../core/crypto/encryption/camo_crypto_engine.dart';
 import '../../core/crypto/encryption/camo_crypto_facade.dart';
@@ -39,6 +41,10 @@ import '../../features/pairing/domain/usecases/watch_accepted_pairings_usecase.d
 import '../../features/pairing/domain/usecases/watch_pending_pair_requests_usecase.dart';
 import '../../features/pairing/security/device_key_manager.dart';
 import '../../features/pairing/security/flutter_secure_device_key_manager.dart';
+import '../../features/payload/data/parsers/camo_compact_payload_parser.dart';
+import '../../features/payload/data/serializers/camo_compact_payload_serializer.dart';
+import '../../features/payload/domain/repositories/camo_payload_parser.dart';
+import '../../features/payload/domain/repositories/camo_payload_serializer.dart';
 import '../../features/profile/data/datasources/profile_remote_datasource.dart';
 import '../../features/profile/data/repositories/profile_repository_impl.dart';
 import '../../features/profile/domain/repositories/profile_repository.dart';
@@ -92,6 +98,10 @@ Future<void> initDependencies() async {
     CamoSecureRandom.new,
   );
 
+  sl.registerLazySingleton<CamoKeyCache>(
+    CamoMemoryKeyCache.new,
+  );
+
   sl.registerLazySingleton<DeviceKeyManager>(
     () => FlutterSecureDeviceKeyManager(
       sl(),
@@ -115,6 +125,14 @@ Future<void> initDependencies() async {
 
   sl.registerLazySingleton<CamoKeyDerivation>(
     CamoHkdfKeyDerivation.new,
+  );
+
+  sl.registerLazySingleton<CamoPayloadSerializer>(
+    CamoCompactPayloadSerializer.new,
+  );
+
+  sl.registerLazySingleton<CamoPayloadParser>(
+    CamoCompactPayloadParser.new,
   );
 
   sl.registerLazySingleton<CamoPayloadFormatter>(
@@ -171,6 +189,7 @@ Future<void> initDependencies() async {
       deviceKeyManager: sl(),
       keyAgreement: sl(),
       keyDerivation: sl(),
+      keyCache: sl(),
       messageCryptoService: sl(),
     ),
   );
