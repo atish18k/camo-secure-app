@@ -12,6 +12,8 @@ import '../../../../core/theme/camo_spacing.dart';
 import '../../../../shared/layouts/responsive_container.dart';
 import '../../../../shared/widgets/cards/camo_card.dart';
 import '../../../auth/domain/usecases/get_current_user_id_usecase.dart';
+import '../../../profile/domain/entities/user_entity.dart';
+import '../../../profile/domain/repositories/profile_repository.dart';
 import '../../domain/entities/pairing_entity.dart';
 import '../../domain/usecases/delete_pairing_usecase.dart';
 import '../providers/accepted_pairings_provider.dart';
@@ -21,17 +23,9 @@ import '../providers/accepted_pairings_provider.dart';
 // ---------------------------------------------------------------------------
 
 class MyPairingsScreen extends ConsumerWidget {
-  // ---------------------------------------------------------------------------
-  // Constructor
-  // ---------------------------------------------------------------------------
-
   const MyPairingsScreen({
     super.key,
   });
-
-  // ---------------------------------------------------------------------------
-  // Build
-  // ---------------------------------------------------------------------------
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -46,7 +40,7 @@ class MyPairingsScreen extends ConsumerWidget {
         backgroundColor: CamoColors.background,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        title: const Text('My Pairings'),
+        title: const Text('Pairing Hub'),
       ),
       body: SafeArea(
         child: ResponsiveContainer(
@@ -73,10 +67,6 @@ class MyPairingsScreen extends ConsumerWidget {
       ),
     );
   }
-
-  // ---------------------------------------------------------------------------
-  // Widgets
-  // ---------------------------------------------------------------------------
 
   Widget _buildLoading() {
     return const Center(
@@ -125,12 +115,17 @@ class MyPairingsScreen extends ConsumerWidget {
       itemBuilder: (BuildContext context, int index) {
         final PairingEntity pairing = items[index];
 
+        final String otherUid = pairing.requesterUid == currentUserUid
+            ? pairing.receiverUid
+            : pairing.requesterUid;
+
         final String otherCamoId = pairing.requesterUid == currentUserUid
             ? pairing.receiverCamoId
             : pairing.requesterCamoId;
 
         return _PairingCard(
           pairing: pairing,
+          otherUid: otherUid,
           otherCamoId: otherCamoId,
           onDisconnect: () => _confirmDisconnect(
             context: context,
@@ -140,10 +135,6 @@ class MyPairingsScreen extends ConsumerWidget {
       },
     );
   }
-
-  // ---------------------------------------------------------------------------
-  // Actions
-  // ---------------------------------------------------------------------------
 
   Future<void> _confirmDisconnect({
     required BuildContext context,
@@ -202,62 +193,92 @@ class MyPairingsScreen extends ConsumerWidget {
 // ---------------------------------------------------------------------------
 
 class _PairingCard extends StatelessWidget {
-  // ---------------------------------------------------------------------------
-  // Constructor
-  // ---------------------------------------------------------------------------
-
   const _PairingCard({
     required this.pairing,
+    required this.otherUid,
     required this.otherCamoId,
     required this.onDisconnect,
   });
 
-  // ---------------------------------------------------------------------------
-  // Properties
-  // ---------------------------------------------------------------------------
-
   final PairingEntity pairing;
+  final String otherUid;
   final String otherCamoId;
   final VoidCallback onDisconnect;
 
-  // ---------------------------------------------------------------------------
-  // Build
-  // ---------------------------------------------------------------------------
-
   @override
   Widget build(BuildContext context) {
-    return CamoCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            leading: const CircleAvatar(
-              backgroundColor: CamoColors.background,
-              child: Icon(
-                CamoIcons.profile,
-                color: CamoColors.primary,
-              ),
-            ),
-            title: Text(otherCamoId),
-            subtitle: Text(
-              'Status: ${pairing.status.name.toUpperCase()}',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: CamoColors.textSecondary,
+    return FutureBuilder<UserEntity?>(
+      future: sl<ProfileRepository>().getUser(otherUid),
+      builder: (BuildContext context, AsyncSnapshot<UserEntity?> snapshot) {
+        final UserEntity? user = snapshot.data;
+        final String displayName = _resolveDisplayName(user);
+
+        return CamoCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const CircleAvatar(
+                  backgroundColor: CamoColors.background,
+                  child: Icon(
+                    CamoIcons.profile,
+                    color: CamoColors.primary,
                   ),
-            ),
+                ),
+                title: Text(displayName),
+                subtitle: Text(
+                  otherCamoId,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: CamoColors.textSecondary,
+                      ),
+                ),
+              ),
+              Text(
+                'Status: ${pairing.status.name.toUpperCase()}',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: CamoColors.textSecondary,
+                    ),
+              ),
+              CamoSpacing.gapSm,
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  icon: const Icon(CamoIcons.disconnect),
+                  label: const Text('Disconnect'),
+                  onPressed: onDisconnect,
+                ),
+              ),
+            ],
           ),
-          CamoSpacing.gapSm,
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              icon: const Icon(CamoIcons.disconnect),
-              label: const Text('Disconnect'),
-              onPressed: onDisconnect,
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
+  }
+
+  String _resolveDisplayName(UserEntity? user) {
+    final String? displayName = user?.displayName?.trim();
+
+    if (displayName != null &&
+        displayName.isNotEmpty &&
+        displayName != 'CAMO User') {
+      return displayName;
+    }
+
+    final String email = user?.email.trim() ?? '';
+
+    if (email.contains('@')) {
+      String name = email.split('@').first;
+
+      name = name.replaceAll('.', ' ');
+      name = name.replaceAll('_', ' ');
+      name = name.replaceAll('-', ' ');
+
+      if (name.trim().isNotEmpty) {
+        return name.trim();
+      }
+    }
+
+    return 'CAMO User';
   }
 }

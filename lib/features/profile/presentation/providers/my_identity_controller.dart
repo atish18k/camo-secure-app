@@ -72,12 +72,11 @@ class MyIdentityController extends Notifier<MyIdentityState> {
     }
 
     final UserEntity? user = await profileRepository.getUser(uid);
+    final String resolvedDisplayName = _resolveDisplayName(user);
 
     state = state.copyWith(
       isLoading: false,
-      displayName: user?.displayName?.trim().isNotEmpty == true
-          ? user!.displayName!
-          : 'CAMO User',
+      displayName: resolvedDisplayName,
       camoId: user?.camoId.trim().isNotEmpty == true
           ? user!.camoId
           : 'Profile Not Found',
@@ -182,6 +181,32 @@ class MyIdentityController extends Notifier<MyIdentityState> {
       default:
         return true;
     }
+  }
+
+  String _resolveDisplayName(UserEntity? user) {
+    final String? displayName = user?.displayName?.trim();
+
+    if (displayName != null &&
+        displayName.isNotEmpty &&
+        displayName != 'CAMO User') {
+      return displayName;
+    }
+
+    final String email = user?.email.trim() ?? '';
+
+    if (email.contains('@')) {
+      String name = email.split('@').first;
+
+      name = name.replaceAll('.', ' ');
+      name = name.replaceAll('_', ' ');
+      name = name.replaceAll('-', ' ');
+
+      if (name.trim().isNotEmpty) {
+        return name.trim();
+      }
+    }
+
+    return 'CAMO User';
   }
 
   void _disposeTimers() {

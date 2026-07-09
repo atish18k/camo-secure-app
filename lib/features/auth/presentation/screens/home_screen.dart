@@ -25,6 +25,8 @@ import '../../../../shared/widgets/workspace/camo_workspace_box.dart';
 import '../../../auth/domain/usecases/get_current_user_id_usecase.dart';
 import '../../../pairing/domain/entities/pairing_entity.dart';
 import '../../../pairing/presentation/providers/accepted_pairings_provider.dart';
+import '../../../profile/domain/entities/user_entity.dart';
+import '../../../profile/domain/repositories/profile_repository.dart';
 import '../../../workspace/presentation/providers/workspace_controller.dart';
 
 // ---------------------------------------------------------------------------
@@ -151,12 +153,27 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget _buildPairSelector(
     AsyncValue<List<PairingEntity>> acceptedPairings,
   ) {
-    return Center(
-      child: CamoPairSelector(
-        selectedPairLabel: _selectedPairLabel,
-        status: _selectedPairStatus,
-        onTap: () => _showPairSelectionSheet(acceptedPairings),
-      ),
+    if (_selectedPair == null) {
+      return Center(
+        child: CamoPairSelector(
+          selectedPairLabel: '',
+          status: _selectedPairStatus,
+          onTap: () => _showPairSelectionSheet(acceptedPairings),
+        ),
+      );
+    }
+
+    return FutureBuilder<UserEntity?>(
+      future: _loadRemoteUser(_selectedPair!),
+      builder: (BuildContext context, AsyncSnapshot<UserEntity?> snapshot) {
+        return Center(
+          child: CamoPairSelector(
+            selectedPairLabel: _resolveDisplayName(snapshot.data),
+            status: _selectedPairStatus,
+            onTap: () => _showPairSelectionSheet(acceptedPairings),
+          ),
+        );
+      },
     );
   }
 
@@ -204,25 +221,30 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget _buildPairOption({
     required PairingEntity pairing,
   }) {
-    return ListTile(
-      leading: const CircleAvatar(
-        backgroundColor: CamoColors.background,
-        child: Icon(
-          CamoIcons.profile,
-          color: CamoColors.primary,
-        ),
-      ),
-      title: Text(_pairLabel(pairing)),
-      subtitle: Text(_pairCamoId(pairing)),
-      trailing: const _PairStatusDot(status: CamoPairStatus.online),
-      onTap: () {
-        Navigator.pop(context);
+    return FutureBuilder<UserEntity?>(
+      future: _loadRemoteUser(pairing),
+      builder: (BuildContext context, AsyncSnapshot<UserEntity?> snapshot) {
+        return ListTile(
+          leading: const CircleAvatar(
+            backgroundColor: CamoColors.background,
+            child: Icon(
+              CamoIcons.profile,
+              color: CamoColors.primary,
+            ),
+          ),
+          title: Text(_resolveDisplayName(snapshot.data)),
+          subtitle: Text(_pairCamoId(pairing)),
+          trailing: const _PairStatusDot(status: CamoPairStatus.online),
+          onTap: () {
+            Navigator.pop(context);
 
-        setState(() {
-          _selectedPair = pairing;
-          _selectedPairStatus = CamoPairStatus.online;
-          _outputController.clear();
-        });
+            setState(() {
+              _selectedPair = pairing;
+              _selectedPairStatus = CamoPairStatus.online;
+              _outputController.clear();
+            });
+          },
+        );
       },
     );
   }
@@ -449,16 +471,40 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  String get _selectedPairLabel {
-    if (_selectedPair == null) {
-      return '';
-    }
+  Future<UserEntity?> _loadRemoteUser(PairingEntity pairing) {
+    final String? currentUserId = sl<GetCurrentUserIdUseCase>()();
 
-    return _pairLabel(_selectedPair!);
+    final String remoteUid = currentUserId == pairing.requesterUid
+        ? pairing.receiverUid
+        : pairing.requesterUid;
+
+    return sl<ProfileRepository>().getUser(remoteUid);
   }
 
-  String _pairLabel(PairingEntity pairing) {
-    return _pairCamoId(pairing);
+  String _resolveDisplayName(UserEntity? user) {
+    final String? displayName = user?.displayName?.trim();
+
+    if (displayName != null &&
+        displayName.isNotEmpty &&
+        displayName != 'CAMO User') {
+      return displayName;
+    }
+
+    final String email = user?.email.trim() ?? '';
+
+    if (email.contains('@')) {
+      String name = email.split('@').first;
+
+      name = name.replaceAll('.', ' ');
+      name = name.replaceAll('_', ' ');
+      name = name.replaceAll('-', ' ');
+
+      if (name.trim().isNotEmpty) {
+        return name.trim();
+      }
+    }
+
+    return 'CAMO User';
   }
 
   String _pairCamoId(PairingEntity pairing) {

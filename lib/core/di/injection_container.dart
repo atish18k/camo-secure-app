@@ -95,6 +95,7 @@ Future<void> initDependencies() async {
   sl.registerLazySingleton<DeviceKeyManager>(
     () => FlutterSecureDeviceKeyManager(
       sl(),
+      sl(),
     ),
   );
 
