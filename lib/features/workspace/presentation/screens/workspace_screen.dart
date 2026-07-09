@@ -20,7 +20,6 @@ import '../../../../shared/widgets/workspace/camo_action_button.dart';
 import '../../../../shared/widgets/workspace/camo_camouflage_switch.dart';
 import '../../../../shared/widgets/workspace/camo_input_field.dart';
 import '../../../../shared/widgets/workspace/camo_output_field.dart';
-import '../../../../shared/widgets/workspace/camo_pair_selector.dart';
 import '../../../../shared/widgets/workspace/camo_subject_field.dart';
 import '../../../../shared/widgets/workspace/camo_workspace_box.dart';
 import '../../../auth/domain/repositories/auth_repository.dart';
@@ -30,6 +29,7 @@ import '../../../pairing/presentation/providers/accepted_pairings_provider.dart'
 import '../../../profile/domain/entities/user_entity.dart';
 import '../../../profile/domain/repositories/profile_repository.dart';
 import '../providers/workspace_controller.dart';
+import '../widgets/workspace_pair_header.dart';
 
 // ---------------------------------------------------------------------------
 // Workspace Screen
@@ -55,7 +55,6 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
 
   CamoWorkspaceTab _selectedTab = CamoWorkspaceTab.encoder;
   PairingEntity? _selectedPair;
-  CamoPairStatus _selectedPairStatus = CamoPairStatus.offline;
   bool _isCamouflageEnabled = false;
   bool _routePairLoaded = false;
 
@@ -77,7 +76,6 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
 
     if (arguments is PairingEntity) {
       _selectedPair = arguments;
-      _selectedPairStatus = CamoPairStatus.online;
     }
 
     _routePairLoaded = true;
@@ -175,24 +173,23 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
     AsyncValue<List<PairingEntity>> acceptedPairings,
   ) {
     if (_selectedPair == null) {
-      return Center(
-        child: CamoPairSelector(
-          selectedPairLabel: '',
-          status: _selectedPairStatus,
-          onTap: () => _showPairSelectionSheet(acceptedPairings),
-        ),
+      return WorkspacePairHeader(
+        displayName: '',
+        camoId: '',
+        onTap: () => _showPairSelectionSheet(acceptedPairings),
       );
     }
 
     return FutureBuilder<UserEntity?>(
       future: _loadRemoteUser(_selectedPair!),
       builder: (BuildContext context, AsyncSnapshot<UserEntity?> snapshot) {
-        return Center(
-          child: CamoPairSelector(
-            selectedPairLabel: _resolveDisplayName(snapshot.data),
-            status: _selectedPairStatus,
-            onTap: () => _showPairSelectionSheet(acceptedPairings),
-          ),
+        final String camoId = _pairCamoId(_selectedPair!);
+
+        return WorkspacePairHeader(
+          displayName: _resolveDisplayName(snapshot.data),
+          camoId: camoId,
+          onTap: () => _showPairSelectionSheet(acceptedPairings),
+          onCopyTap: () => _copySelectedPairCamoId(camoId),
         );
       },
     );
@@ -208,9 +205,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
         ),
         if (_isCamouflageEnabled) ...[
           CamoSpacing.gapLg,
-          CamoSubjectField(
-            controller: _subjectController,
-          ),
+          CamoSubjectField(controller: _subjectController),
         ],
         CamoSpacing.gapLg,
         CamoInputField(
@@ -255,13 +250,11 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
           ),
           title: Text(_resolveDisplayName(snapshot.data)),
           subtitle: Text(_pairCamoId(pairing)),
-          trailing: const _PairStatusDot(status: CamoPairStatus.online),
           onTap: () {
             Navigator.pop(context);
 
             setState(() {
               _selectedPair = pairing;
-              _selectedPairStatus = CamoPairStatus.online;
               _outputController.clear();
             });
           },
@@ -398,6 +391,18 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
     ref.read(workspaceControllerProvider.notifier).clearOutput();
   }
 
+  Future<void> _copySelectedPairCamoId(String camoId) async {
+    if (camoId.trim().isEmpty) {
+      return;
+    }
+
+    await Clipboard.setData(
+      ClipboardData(text: camoId),
+    );
+
+    _showMessage('CAMO ID copied.');
+  }
+
   Future<void> _copyOutput() async {
     final String text = _outputController.text.trim();
 
@@ -407,9 +412,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
     }
 
     await Clipboard.setData(
-      ClipboardData(
-        text: text,
-      ),
+      ClipboardData(text: text),
     );
 
     _showMessage('Output copied.');
@@ -466,18 +469,12 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
 
   void _openMyIdentity() {
     Navigator.pop(context);
-    Navigator.pushNamed(
-      context,
-      AppRoutes.myIdentity,
-    );
+    Navigator.pushNamed(context, AppRoutes.myIdentity);
   }
 
   void _openPairingHub() {
     Navigator.pop(context);
-    Navigator.pushNamed(
-      context,
-      AppRoutes.myPairings,
-    );
+    Navigator.pushNamed(context, AppRoutes.myPairings);
   }
 
   Future<void> _logout() async {
@@ -509,9 +506,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
 
   void _showMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-      ),
+      SnackBar(content: Text(message)),
     );
   }
 
@@ -563,42 +558,5 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
 
   void _refresh() {
     setState(() {});
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Private Widget
-// ---------------------------------------------------------------------------
-
-class _PairStatusDot extends StatelessWidget {
-  const _PairStatusDot({
-    required this.status,
-  });
-
-  final CamoPairStatus status;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 10,
-      height: 10,
-      decoration: BoxDecoration(
-        color: _statusColor,
-        shape: BoxShape.circle,
-      ),
-    );
-  }
-
-  Color get _statusColor {
-    switch (status) {
-      case CamoPairStatus.online:
-        return CamoColors.success;
-
-      case CamoPairStatus.away:
-        return CamoColors.warning;
-
-      case CamoPairStatus.offline:
-        return CamoColors.error;
-    }
   }
 }
