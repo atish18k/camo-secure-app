@@ -15,10 +15,6 @@ import '../../../core/theme/camo_typography.dart';
 // ---------------------------------------------------------------------------
 
 class CamoInputField extends StatelessWidget {
-  // ---------------------------------------------------------------------------
-  // Constructor
-  // ---------------------------------------------------------------------------
-
   const CamoInputField({
     super.key,
     required this.controller,
@@ -28,19 +24,14 @@ class CamoInputField extends StatelessWidget {
     this.enabled = true,
   });
 
-  // ---------------------------------------------------------------------------
-  // Properties
-  // ---------------------------------------------------------------------------
-
   final TextEditingController controller;
   final VoidCallback onPasteTap;
   final VoidCallback onClearTap;
   final String hintText;
   final bool enabled;
 
-  // ---------------------------------------------------------------------------
-  // Build
-  // ---------------------------------------------------------------------------
+  static const int _minLines = 2;
+  static const int _maxLines = 6;
 
   @override
   Widget build(BuildContext context) {
@@ -54,49 +45,46 @@ class CamoInputField extends StatelessWidget {
           ),
         ),
         CamoSpacing.gapSm,
-        SizedBox(
-          height: 128,
-          child: Stack(
-            children: [
-              TextField(
-                controller: controller,
-                enabled: enabled,
-                expands: true,
-                minLines: null,
-                maxLines: null,
-                textAlignVertical: TextAlignVertical.top,
-                decoration: InputDecoration(
-                  hintText: hintText,
-                  contentPadding: const EdgeInsets.fromLTRB(
-                    CamoSpacing.lg,
-                    CamoSpacing.lg,
-                    52,
-                    CamoSpacing.lg,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(
-                      CamoRadius.lg,
-                    ),
+        Stack(
+          children: [
+            TextField(
+              controller: controller,
+              enabled: enabled,
+              minLines: _minLines,
+              maxLines: _maxLines,
+              keyboardType: TextInputType.multiline,
+              textAlignVertical: TextAlignVertical.top,
+              decoration: InputDecoration(
+                hintText: hintText,
+                contentPadding: const EdgeInsets.fromLTRB(
+                  CamoSpacing.lg,
+                  CamoSpacing.md,
+                  52,
+                  CamoSpacing.md,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(
+                    CamoRadius.lg,
                   ),
                 ),
               ),
-              Positioned(
-                top: CamoSpacing.sm,
-                right: CamoSpacing.sm,
-                child: IconButton(
-                  tooltip: 'Clear input',
-                  onPressed: enabled ? onClearTap : null,
-                  icon: const Icon(
-                    CamoIcons.clear,
-                    color: CamoColors.icon,
-                    size: CamoIcons.sm,
-                  ),
+            ),
+            Positioned(
+              top: CamoSpacing.xs,
+              right: CamoSpacing.xs,
+              child: IconButton(
+                tooltip: 'Clear input',
+                onPressed: enabled ? onClearTap : null,
+                icon: const Icon(
+                  CamoIcons.clear,
+                  color: CamoColors.icon,
+                  size: CamoIcons.sm,
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
-        CamoSpacing.gapSm,
+        CamoSpacing.gapXs,
         Align(
           alignment: Alignment.centerLeft,
           child: TextButton.icon(
