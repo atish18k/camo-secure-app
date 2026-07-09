@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../app/routes.dart';
 import '../../../../core/di/injection_container.dart';
+import '../../../../core/errors/result.dart' as app_result;
 import '../../../../core/theme/camo_colors.dart';
 import '../../../../core/theme/camo_icons.dart';
 import '../../../../core/theme/camo_spacing.dart';
@@ -22,6 +23,7 @@ import '../../../../shared/widgets/workspace/camo_output_field.dart';
 import '../../../../shared/widgets/workspace/camo_pair_selector.dart';
 import '../../../../shared/widgets/workspace/camo_subject_field.dart';
 import '../../../../shared/widgets/workspace/camo_workspace_box.dart';
+import '../../../auth/domain/repositories/auth_repository.dart';
 import '../../../auth/domain/usecases/get_current_user_id_usecase.dart';
 import '../../../pairing/domain/entities/pairing_entity.dart';
 import '../../../pairing/presentation/providers/accepted_pairings_provider.dart';
@@ -91,7 +93,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         onSecurityCenterTap: _closeDrawerAndShowComingSoon,
         onSettingsTap: _closeDrawerAndShowComingSoon,
         onAboutTap: _closeDrawerAndShowComingSoon,
-        onLogoutTap: _closeDrawerAndShowComingSoon,
+        onLogoutTap: _logout,
       ),
       body: SafeArea(
         child: Column(
@@ -457,6 +459,29 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       context,
       AppRoutes.myPairings,
     );
+  }
+
+  Future<void> _logout() async {
+    Navigator.pop(context);
+
+    final AuthRepository authRepository = sl<AuthRepository>();
+    final app_result.Result<void> result = await authRepository.signOut();
+
+    switch (result) {
+      case app_result.Success<void>():
+        if (!mounted) {
+          return;
+        }
+
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          AppRoutes.login,
+          (Route<dynamic> route) => false,
+        );
+
+      case app_result.Error<void>():
+        _showMessage('Logout failed.');
+    }
   }
 
   void _showComingSoon() {
