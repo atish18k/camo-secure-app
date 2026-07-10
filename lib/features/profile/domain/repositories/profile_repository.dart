@@ -1,5 +1,12 @@
-import '../entities/user_crypto_entity.dart';
+// ---------------------------------------------------------------------------
+// Imports
+// ---------------------------------------------------------------------------
+
 import '../entities/user_entity.dart';
+
+// ---------------------------------------------------------------------------
+// Profile Repository
+// ---------------------------------------------------------------------------
 
 abstract interface class ProfileRepository {
   Future<void> saveUser(UserEntity user);
@@ -7,17 +14,4 @@ abstract interface class ProfileRepository {
   Future<UserEntity?> getUser(String uid);
 
   Future<UserEntity?> getUserByCamoId(String camoId);
-
-  // ---------------------------------------------------------------------------
-  // Crypto
-  // ---------------------------------------------------------------------------
-
-  Future<void> saveUserCrypto({
-    required String uid,
-    required UserCryptoEntity crypto,
-  });
-
-  Future<UserCryptoEntity?> getUserCrypto(
-    String uid,
-  );
 }

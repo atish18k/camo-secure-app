@@ -1,4 +1,4 @@
-﻿import 'dart:typed_data';
+import 'dart:typed_data';
 
 import 'package:camo/core/crypto/encryption/camo_key_pair.dart';
 import 'package:camo/core/errors/result.dart';
@@ -22,20 +22,15 @@ void main() {
     late CamoDeviceRegistrationServiceImpl service;
 
     setUp(() {
-      authRepository = _FakeAuthRepository(
-        currentUserIdValue: 'user-1',
-      );
+      authRepository = _FakeAuthRepository(currentUserIdValue: 'user-1');
 
-      deviceIdentityService = _FakeDeviceIdentityService(
-        deviceId: 'device-1',
-      );
+      deviceIdentityService = _FakeDeviceIdentityService(deviceId: 'device-1');
 
       platformInfoProvider = const _FakePlatformInfoProvider();
 
       deviceKeyManager = _FakeDeviceKeyManager();
 
-      deviceRegistryRepository =
-          _FakeDeviceRegistryRepository();
+      deviceRegistryRepository = _FakeDeviceRegistryRepository();
 
       service = CamoDeviceRegistrationServiceImpl(
         authRepository,
@@ -47,8 +42,8 @@ void main() {
     });
 
     test('registers a new authenticated device', () async {
-      final CamoDeviceRegistryEntity device =
-          await service.registerCurrentDevice();
+      final CamoDeviceRegistryEntity device = await service
+          .registerCurrentDevice();
 
       expect(device.userId, 'user-1');
       expect(device.deviceId, 'device-1');
@@ -59,10 +54,7 @@ void main() {
       expect(deviceKeyManager.createInvocationCount, 1);
       expect(deviceKeyManager.saveInvocationCount, 1);
 
-      expect(
-        deviceRegistryRepository.registeredDevice,
-        isNotNull,
-      );
+      expect(deviceRegistryRepository.registeredDevice, isNotNull);
 
       expect(
         deviceRegistryRepository.registeredDevice!.publicKey,
@@ -71,13 +63,11 @@ void main() {
     });
 
     test('reuses an existing matching active device', () async {
-      final CamoKeyPair keyPair =
-          await deviceKeyManager.createKeyPair();
+      final CamoKeyPair keyPair = await deviceKeyManager.createKeyPair();
 
       await deviceKeyManager.saveKeyPair(keyPair);
 
-      deviceRegistryRepository.existingDevice =
-          CamoDeviceRegistryEntity(
+      deviceRegistryRepository.existingDevice = CamoDeviceRegistryEntity(
         deviceId: 'device-1',
         userId: 'user-1',
         publicKey: 'AQIDBA==',
@@ -88,40 +78,29 @@ void main() {
         lastSeenAt: DateTime.utc(2026, 1, 1),
       );
 
-      final CamoDeviceRegistryEntity device =
-          await service.registerCurrentDevice();
+      final CamoDeviceRegistryEntity device = await service
+          .registerCurrentDevice();
 
       expect(device.deviceId, 'device-1');
       expect(device.status, CamoDeviceStatus.active);
 
-      expect(
-        deviceRegistryRepository.updateLastSeenInvocationCount,
-        1,
-      );
+      expect(deviceRegistryRepository.updateLastSeenInvocationCount, 1);
 
-      expect(
-        deviceRegistryRepository.registerInvocationCount,
-        0,
-      );
+      expect(deviceRegistryRepository.registerInvocationCount, 0);
     });
 
     test('denies registration when user is not authenticated', () async {
       authRepository.currentUserIdValue = null;
 
-      expect(
-        service.registerCurrentDevice,
-        throwsA(isA<StateError>()),
-      );
+      expect(service.registerCurrentDevice, throwsA(isA<StateError>()));
     });
 
     test('denies a revoked existing device', () async {
-      final CamoKeyPair keyPair =
-          await deviceKeyManager.createKeyPair();
+      final CamoKeyPair keyPair = await deviceKeyManager.createKeyPair();
 
       await deviceKeyManager.saveKeyPair(keyPair);
 
-      deviceRegistryRepository.existingDevice =
-          CamoDeviceRegistryEntity(
+      deviceRegistryRepository.existingDevice = CamoDeviceRegistryEntity(
         deviceId: 'device-1',
         userId: 'user-1',
         publicKey: 'AQIDBA==',
@@ -132,25 +111,17 @@ void main() {
         lastSeenAt: DateTime.utc(2026, 1, 1),
       );
 
-      expect(
-        service.registerCurrentDevice,
-        throwsA(isA<StateError>()),
-      );
+      expect(service.registerCurrentDevice, throwsA(isA<StateError>()));
 
-      expect(
-        deviceRegistryRepository.updateLastSeenInvocationCount,
-        0,
-      );
+      expect(deviceRegistryRepository.updateLastSeenInvocationCount, 0);
     });
 
     test('denies a blocked existing device', () async {
-      final CamoKeyPair keyPair =
-          await deviceKeyManager.createKeyPair();
+      final CamoKeyPair keyPair = await deviceKeyManager.createKeyPair();
 
       await deviceKeyManager.saveKeyPair(keyPair);
 
-      deviceRegistryRepository.existingDevice =
-          CamoDeviceRegistryEntity(
+      deviceRegistryRepository.existingDevice = CamoDeviceRegistryEntity(
         deviceId: 'device-1',
         userId: 'user-1',
         publicKey: 'AQIDBA==',
@@ -161,20 +132,15 @@ void main() {
         lastSeenAt: DateTime.utc(2026, 1, 1),
       );
 
-      expect(
-        service.registerCurrentDevice,
-        throwsA(isA<StateError>()),
-      );
+      expect(service.registerCurrentDevice, throwsA(isA<StateError>()));
     });
 
     test('denies public key mismatch without overwriting registry', () async {
-      final CamoKeyPair keyPair =
-          await deviceKeyManager.createKeyPair();
+      final CamoKeyPair keyPair = await deviceKeyManager.createKeyPair();
 
       await deviceKeyManager.saveKeyPair(keyPair);
 
-      deviceRegistryRepository.existingDevice =
-          CamoDeviceRegistryEntity(
+      deviceRegistryRepository.existingDevice = CamoDeviceRegistryEntity(
         deviceId: 'device-1',
         userId: 'user-1',
         publicKey: 'different-public-key',
@@ -185,28 +151,17 @@ void main() {
         lastSeenAt: DateTime.utc(2026, 1, 1),
       );
 
-      expect(
-        service.registerCurrentDevice,
-        throwsA(isA<StateError>()),
-      );
+      expect(service.registerCurrentDevice, throwsA(isA<StateError>()));
 
-      expect(
-        deviceRegistryRepository.registerInvocationCount,
-        0,
-      );
+      expect(deviceRegistryRepository.registerInvocationCount, 0);
 
-      expect(
-        deviceRegistryRepository.updateLastSeenInvocationCount,
-        0,
-      );
+      expect(deviceRegistryRepository.updateLastSeenInvocationCount, 0);
     });
   });
 }
 
 class _FakeAuthRepository implements AuthRepository {
-  _FakeAuthRepository({
-    required this.currentUserIdValue,
-  });
+  _FakeAuthRepository({required this.currentUserIdValue});
 
   String? currentUserIdValue;
 
@@ -215,8 +170,7 @@ class _FakeAuthRepository implements AuthRepository {
 
   @override
   bool get isSignedIn =>
-      currentUserIdValue != null &&
-      currentUserIdValue!.isNotEmpty;
+      currentUserIdValue != null && currentUserIdValue!.isNotEmpty;
 
   @override
   Future<Result<void>> signIn({
@@ -232,11 +186,8 @@ class _FakeAuthRepository implements AuthRepository {
   }
 }
 
-class _FakeDeviceIdentityService
-    implements CamoDeviceIdentityService {
-  _FakeDeviceIdentityService({
-    required this.deviceId,
-  });
+class _FakeDeviceIdentityService implements CamoDeviceIdentityService {
+  _FakeDeviceIdentityService({required this.deviceId});
 
   final String deviceId;
 
@@ -249,15 +200,12 @@ class _FakeDeviceIdentityService
   Future<void> deleteDeviceId() async {}
 }
 
-class _FakePlatformInfoProvider
-    implements CamoPlatformInfoProvider {
+class _FakePlatformInfoProvider implements CamoPlatformInfoProvider {
   const _FakePlatformInfoProvider();
 
   @override
   CamoPlatformInfo getPlatformInfo() {
-    return const CamoPlatformInfo(
-      type: CamoPlatformType.web,
-    );
+    return const CamoPlatformInfo(type: CamoPlatformType.web);
   }
 }
 
@@ -272,19 +220,13 @@ class _FakeDeviceKeyManager implements DeviceKeyManager {
     createInvocationCount++;
 
     return CamoKeyPair(
-      privateKey: Uint8List.fromList(
-        <int>[9, 8, 7, 6],
-      ),
-      publicKey: Uint8List.fromList(
-        <int>[1, 2, 3, 4],
-      ),
+      privateKey: Uint8List.fromList(<int>[9, 8, 7, 6]),
+      publicKey: Uint8List.fromList(<int>[1, 2, 3, 4]),
     );
   }
 
   @override
-  Future<void> saveKeyPair(
-    CamoKeyPair keyPair,
-  ) async {
+  Future<void> saveKeyPair(CamoKeyPair keyPair) async {
     saveInvocationCount++;
     storedKeyPair = keyPair;
   }
@@ -305,8 +247,7 @@ class _FakeDeviceKeyManager implements DeviceKeyManager {
   }
 }
 
-class _FakeDeviceRegistryRepository
-    implements CamoDeviceRegistryRepository {
+class _FakeDeviceRegistryRepository implements CamoDeviceRegistryRepository {
   CamoDeviceRegistryEntity? existingDevice;
   CamoDeviceRegistryEntity? registeredDevice;
 
@@ -322,9 +263,7 @@ class _FakeDeviceRegistryRepository
   }
 
   @override
-  Future<void> registerDevice(
-    CamoDeviceRegistryEntity device,
-  ) async {
+  Future<void> registerDevice(CamoDeviceRegistryEntity device) async {
     registerInvocationCount++;
     registeredDevice = device;
   }
@@ -336,5 +275,12 @@ class _FakeDeviceRegistryRepository
     required DateTime lastSeenAt,
   }) async {
     updateLastSeenInvocationCount++;
+  }
+
+  @override
+  Future<CamoDeviceRegistryEntity?> getActiveDevice({
+    required String userId,
+  }) async {
+    return null;
   }
 }

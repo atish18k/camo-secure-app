@@ -2,18 +2,13 @@
 // Imports
 // ---------------------------------------------------------------------------
 
-import 'dart:convert';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/di/injection_container.dart';
 import '../../../../core/errors/failure.dart';
 import '../../../../core/errors/result.dart' as app_result;
-import '../../../pairing/security/device_key_manager.dart';
-import '../../../profile/domain/entities/user_crypto_entity.dart';
 import '../../../profile/domain/entities/user_entity.dart';
-import '../../../profile/domain/repositories/profile_repository.dart';
 import '../../../profile/domain/usecases/create_user_profile_usecase.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../domain/usecases/login_usecase.dart';
@@ -23,8 +18,9 @@ import 'auth_state.dart';
 // Provider
 // ---------------------------------------------------------------------------
 
-final authControllerProvider =
-    NotifierProvider<AuthController, AuthState>(AuthController.new);
+final authControllerProvider = NotifierProvider<AuthController, AuthState>(
+  AuthController.new,
+);
 
 // ---------------------------------------------------------------------------
 // Controller
@@ -36,10 +32,7 @@ class AuthController extends Notifier<AuthState> {
     return const AuthState.initial();
   }
 
-  Future<void> login({
-    required String email,
-    required String password,
-  }) async {
+  Future<void> login({required String email, required String password}) async {
     state = const AuthState.loading();
 
     try {
@@ -47,8 +40,6 @@ class AuthController extends Notifier<AuthState> {
       final AuthRepository authRepository = sl<AuthRepository>();
       final CreateUserProfileUseCase createUserProfileUseCase =
           sl<CreateUserProfileUseCase>();
-      final DeviceKeyManager deviceKeyManager = sl<DeviceKeyManager>();
-      final ProfileRepository profileRepository = sl<ProfileRepository>();
 
       final app_result.Result<void> result = await loginUseCase(
         email: email,
@@ -60,8 +51,6 @@ class AuthController extends Notifier<AuthState> {
           await _syncUserProfile(
             authRepository: authRepository,
             createUserProfileUseCase: createUserProfileUseCase,
-            deviceKeyManager: deviceKeyManager,
-            profileRepository: profileRepository,
             fallbackEmail: email,
           );
 
@@ -74,7 +63,8 @@ class AuthController extends Notifier<AuthState> {
 
       state = const AuthState.failure(
         AuthFailure(
-          message: 'Authentication failed. Please check your email and password.',
+          message:
+              'Authentication failed. Please check your email and password.',
         ),
       );
     }
@@ -83,17 +73,13 @@ class AuthController extends Notifier<AuthState> {
   Future<void> _syncUserProfile({
     required AuthRepository authRepository,
     required CreateUserProfileUseCase createUserProfileUseCase,
-    required DeviceKeyManager deviceKeyManager,
-    required ProfileRepository profileRepository,
     required String fallbackEmail,
   }) async {
     final String? currentUserId = authRepository.currentUserId;
 
-    if (currentUserId == null) {
+    if (currentUserId == null || currentUserId.trim().isEmpty) {
       state = const AuthState.failure(
-        AuthFailure(
-          message: 'Login succeeded but user data was not found.',
-        ),
+        AuthFailure(message: 'Login succeeded but user data was not found.'),
       );
       return;
     }
@@ -101,7 +87,7 @@ class AuthController extends Notifier<AuthState> {
     try {
       await createUserProfileUseCase(
         UserEntity(
-          uid: currentUserId,
+          uid: currentUserId.trim(),
           camoId: '',
           email: fallbackEmail.trim(),
           displayName: 'CAMO User',
@@ -110,25 +96,11 @@ class AuthController extends Notifier<AuthState> {
         ),
       );
 
-      var keyPair = await deviceKeyManager.loadKeyPair();
-
-      if (keyPair == null) {
-        keyPair = await deviceKeyManager.createKeyPair();
-        await deviceKeyManager.saveKeyPair(keyPair);
-      }
-
-      final DateTime now = DateTime.now().toUtc();
-
-      await profileRepository.saveUserCrypto(
-        uid: currentUserId,
-        crypto: UserCryptoEntity(
-          publicKey: base64Encode(keyPair.publicKey),
-          algorithm: 'X25519',
-          version: 1,
-          createdAt: now,
-          updatedAt: now,
-        ),
-      );
+      // Trusted-device registration and X25519 public-key publication are
+      // handled exclusively by LoginUseCase through
+      // CamoDeviceRegistrationService.
+      //
+      // Legacy profile crypto metadata is intentionally no longer written.
 
       state = const AuthState.authenticated();
     } catch (error, stackTrace) {

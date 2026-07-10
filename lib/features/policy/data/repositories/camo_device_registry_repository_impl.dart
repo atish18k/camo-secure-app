@@ -1,4 +1,4 @@
-﻿// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 // Imports
 // ---------------------------------------------------------------------------
 
@@ -12,23 +12,20 @@ import '../datasources/camo_device_registry_remote_datasource.dart';
 
 /// Enterprise implementation of the CAMO Device Registry repository.
 ///
-/// This repository only manages trusted device-registration metadata.
+/// This repository manages trusted public device-registration metadata only.
 ///
 /// It never stores or exposes:
 ///
 /// - private keys
 /// - shared secrets
 /// - derived encryption keys
-/// - plaintext
-class CamoDeviceRegistryRepositoryImpl
-    implements CamoDeviceRegistryRepository {
+/// - plaintext or decrypted content
+class CamoDeviceRegistryRepositoryImpl implements CamoDeviceRegistryRepository {
   // ---------------------------------------------------------------------------
   // Constructor
   // ---------------------------------------------------------------------------
 
-  const CamoDeviceRegistryRepositoryImpl(
-    this._remoteDataSource,
-  );
+  const CamoDeviceRegistryRepositoryImpl(this._remoteDataSource);
 
   // ---------------------------------------------------------------------------
   // Dependencies
@@ -44,15 +41,17 @@ class CamoDeviceRegistryRepositoryImpl
   Future<CamoDeviceRegistryEntity?> getDevice({
     required String userId,
     required String deviceId,
-  }) async {
-    try {
-      return await _remoteDataSource.getDevice(
-        userId: userId,
-        deviceId: deviceId,
-      );
-    } on StateError {
-      return null;
-    }
+  }) {
+    return _remoteDataSource.getDevice(userId: userId, deviceId: deviceId);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Get Active Device
+  // ---------------------------------------------------------------------------
+
+  @override
+  Future<CamoDeviceRegistryEntity?> getActiveDevice({required String userId}) {
+    return _remoteDataSource.getActiveDevice(userId: userId);
   }
 
   // ---------------------------------------------------------------------------
@@ -60,9 +59,7 @@ class CamoDeviceRegistryRepositoryImpl
   // ---------------------------------------------------------------------------
 
   @override
-  Future<void> registerDevice(
-    CamoDeviceRegistryEntity device,
-  ) {
+  Future<void> registerDevice(CamoDeviceRegistryEntity device) {
     return _remoteDataSource.registerDevice(device);
   }
 

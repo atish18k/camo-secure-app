@@ -5,11 +5,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../../../core/constants/firestore_paths.dart';
-import '../models/user_crypto_model.dart';
 import '../models/user_profile_model.dart';
 
 // ---------------------------------------------------------------------------
-// Interface
+// Profile Remote Data Source
 // ---------------------------------------------------------------------------
 
 abstract class ProfileRemoteDataSource {
@@ -18,17 +17,10 @@ abstract class ProfileRemoteDataSource {
   Future<UserProfileModel?> getUser(String uid);
 
   Future<UserProfileModel?> getUserByCamoId(String camoId);
-
-  Future<void> saveUserCrypto({
-    required String uid,
-    required UserCryptoModel crypto,
-  });
-
-  Future<UserCryptoModel?> getUserCrypto(String uid);
 }
 
 // ---------------------------------------------------------------------------
-// Class
+// Firebase Profile Remote Data Source
 // ---------------------------------------------------------------------------
 
 class FirebaseProfileRemoteDataSource implements ProfileRemoteDataSource {
@@ -36,18 +28,28 @@ class FirebaseProfileRemoteDataSource implements ProfileRemoteDataSource {
 
   final FirebaseFirestore _firestore;
 
+  // ---------------------------------------------------------------------------
+  // Save User
+  // ---------------------------------------------------------------------------
+
   @override
   Future<void> saveUser(UserProfileModel user) async {
-    await _firestore.collection(FirestorePaths.users).doc(user.uid).set(
-          user.toMap(),
-          SetOptions(merge: true),
-        );
+    await _firestore
+        .collection(FirestorePaths.users)
+        .doc(user.uid)
+        .set(user.toMap(), SetOptions(merge: true));
   }
+
+  // ---------------------------------------------------------------------------
+  // Get User
+  // ---------------------------------------------------------------------------
 
   @override
   Future<UserProfileModel?> getUser(String uid) async {
-    final DocumentSnapshot<Map<String, dynamic>> snapshot =
-        await _firestore.collection(FirestorePaths.users).doc(uid).get();
+    final DocumentSnapshot<Map<String, dynamic>> snapshot = await _firestore
+        .collection(FirestorePaths.users)
+        .doc(uid)
+        .get();
 
     if (!snapshot.exists) {
       return null;
@@ -62,14 +64,15 @@ class FirebaseProfileRemoteDataSource implements ProfileRemoteDataSource {
     return UserProfileModel.fromMap(data);
   }
 
+  // ---------------------------------------------------------------------------
+  // Get User by CAMO ID
+  // ---------------------------------------------------------------------------
+
   @override
   Future<UserProfileModel?> getUserByCamoId(String camoId) async {
     final QuerySnapshot<Map<String, dynamic>> query = await _firestore
         .collection(FirestorePaths.users)
-        .where(
-          'camoId',
-          isEqualTo: camoId,
-        )
+        .where('camoId', isEqualTo: camoId)
         .limit(1)
         .get();
 
@@ -77,50 +80,6 @@ class FirebaseProfileRemoteDataSource implements ProfileRemoteDataSource {
       return null;
     }
 
-    return UserProfileModel.fromMap(
-      query.docs.first.data(),
-    );
-  }
-
-  // ---------------------------------------------------------------------------
-  // User Crypto
-  // ---------------------------------------------------------------------------
-
-  @override
-  Future<void> saveUserCrypto({
-    required String uid,
-    required UserCryptoModel crypto,
-  }) async {
-    await _firestore
-        .collection(FirestorePaths.users)
-        .doc(uid)
-        .collection('security')
-        .doc('current')
-        .set(
-          crypto.toMap(),
-          SetOptions(merge: true),
-        );
-  }
-
-  @override
-  Future<UserCryptoModel?> getUserCrypto(String uid) async {
-    final DocumentSnapshot<Map<String, dynamic>> snapshot = await _firestore
-        .collection(FirestorePaths.users)
-        .doc(uid)
-        .collection('security')
-        .doc('current')
-        .get();
-
-    if (!snapshot.exists) {
-      return null;
-    }
-
-    final Map<String, dynamic>? data = snapshot.data();
-
-    if (data == null) {
-      return null;
-    }
-
-    return UserCryptoModel.fromMap(data);
+    return UserProfileModel.fromMap(query.docs.first.data());
   }
 }

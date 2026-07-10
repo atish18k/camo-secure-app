@@ -9,9 +9,9 @@ import '../../../features/auth/domain/repositories/auth_repository.dart';
 import '../../../features/pairing/domain/entities/pairing_entity.dart';
 import '../../../features/pairing/domain/repositories/pairing_repository.dart';
 import '../../../features/pairing/security/device_key_manager.dart';
-import '../../../features/profile/domain/entities/user_crypto_entity.dart';
-import '../../../features/profile/domain/repositories/profile_repository.dart';
 import '../cache/camo_key_cache.dart';
+import '../keys/camo_remote_public_key_provider.dart';
+import '../trust/camo_local_device_trust_guard.dart';
 import 'camo_key_agreement.dart';
 import 'camo_key_derivation.dart';
 import 'camo_message_crypto_service.dart';
@@ -21,25 +21,43 @@ import 'camo_message_crypto_service.dart';
 // ---------------------------------------------------------------------------
 
 class CamoCryptoFacade {
-  const CamoCryptoFacade({
+  CamoCryptoFacade({
     required this.authRepository,
     required this.pairingRepository,
-    required this.profileRepository,
     required this.deviceKeyManager,
     required this.keyAgreement,
     required this.keyDerivation,
     required this.keyCache,
+    required this.localDeviceTrustGuard,
+    required this.remotePublicKeyProvider,
     required this.messageCryptoService,
   });
 
+  // ---------------------------------------------------------------------------
+  // Dependencies
+  // ---------------------------------------------------------------------------
+
   final AuthRepository authRepository;
   final PairingRepository pairingRepository;
-  final ProfileRepository profileRepository;
   final DeviceKeyManager deviceKeyManager;
   final CamoKeyAgreement keyAgreement;
   final CamoKeyDerivation keyDerivation;
   final CamoKeyCache keyCache;
+  final CamoLocalDeviceTrustGuard localDeviceTrustGuard;
+  final CamoRemotePublicKeyProvider remotePublicKeyProvider;
   final CamoMessageCryptoService messageCryptoService;
+
+  // ---------------------------------------------------------------------------
+  // Cache Binding
+  // ---------------------------------------------------------------------------
+
+  /// Binds each cached conversation key to the exact authenticated users and
+  /// remote public key from which it was derived.
+  final Map<String, String> _conversationKeyBindings = <String, String>{};
+
+  // ---------------------------------------------------------------------------
+  // Encode
+  // ---------------------------------------------------------------------------
 
   Future<String> encodeForPair({
     required String pairingId,
@@ -47,6 +65,8 @@ class CamoCryptoFacade {
     String? subject,
     bool camouflageEnabled = false,
   }) async {
+    await localDeviceTrustGuard.ensureTrusted();
+
     final Uint8List key = await _getConversationKey(pairingId);
 
     return messageCryptoService.encode(
@@ -57,85 +77,129 @@ class CamoCryptoFacade {
     );
   }
 
+  // ---------------------------------------------------------------------------
+  // Decode
+  // ---------------------------------------------------------------------------
+
   Future<String> decodeForPair({
     required String pairingId,
     required String encodedText,
   }) async {
+    await localDeviceTrustGuard.ensureTrusted();
+
     final Uint8List key = await _getConversationKey(pairingId);
 
-    return messageCryptoService.decode(
-      encodedText: encodedText,
-      key: key,
-    );
+    return messageCryptoService.decode(encodedText: encodedText, key: key);
   }
 
-  Future<Uint8List> _getConversationKey(
-    String pairingId,
-  ) async {
-    final String? currentUserId = authRepository.currentUserId;
+  // ---------------------------------------------------------------------------
+  // Conversation Key
+  // ---------------------------------------------------------------------------
 
-    if (currentUserId == null || currentUserId.isEmpty) {
+  Future<Uint8List> _getConversationKey(String pairingId) async {
+    final String normalizedPairingId = pairingId.trim();
+
+    if (normalizedPairingId.isEmpty) {
+      throw StateError('Pairing identifier is required.');
+    }
+
+    final String? currentUserIdValue = authRepository.currentUserId;
+
+    final String currentUserId = currentUserIdValue?.trim() ?? '';
+
+    if (currentUserId.isEmpty) {
+      _removeCachedConversationKey(normalizedPairingId);
+
       throw StateError('Authenticated user not found.');
     }
 
-    final PairingEntity? pairing =
-        await pairingRepository.getPairingById(pairingId);
+    final PairingEntity? pairing = await pairingRepository.getPairingById(
+      normalizedPairingId,
+    );
 
     if (pairing == null) {
+      _removeCachedConversationKey(normalizedPairingId);
+
       throw StateError('Pairing not found.');
     }
 
     if (pairing.status != PairingStatus.accepted) {
-      keyCache.remove(pairingId);
+      _removeCachedConversationKey(normalizedPairingId);
+
       throw StateError('Pairing is not accepted.');
     }
 
-    final cachedEntry = keyCache.get(pairingId);
-
-    if (cachedEntry != null) {
-      return Uint8List.fromList(cachedEntry.key);
-    }
-
-    final Uint8List key = await _deriveConversationKey(
-      pairing: pairing,
-      currentUserId: currentUserId,
-    );
-
-    keyCache.put(
-      pairId: pairingId,
-      key: key,
-    );
-
-    return key;
-  }
-
-  Future<Uint8List> _deriveConversationKey({
-    required PairingEntity pairing,
-    required String currentUserId,
-  }) async {
     final String remoteUserId = _resolveRemoteUserId(
       pairing: pairing,
       currentUserId: currentUserId,
     );
 
-    final keyPair = await deviceKeyManager.loadKeyPair();
+    // This call is memory-backed after the initial realtime listener state.
+    // It also fails closed immediately when the remote device becomes blocked,
+    // revoked, deleted or otherwise unavailable.
+    final Uint8List remotePublicKey = await remotePublicKeyProvider
+        .getPublicKey(remoteUserId: remoteUserId);
 
-    if (keyPair == null) {
-      throw StateError('Device key pair not found.');
+    if (remotePublicKey.isEmpty) {
+      _removeCachedConversationKey(normalizedPairingId);
+
+      throw StateError('Remote public key not found.');
     }
 
-    final UserCryptoEntity? remoteCrypto =
-        await profileRepository.getUserCrypto(remoteUserId);
+    final String cacheBinding = _buildCacheBinding(
+      currentUserId: currentUserId,
+      remoteUserId: remoteUserId,
+      remotePublicKey: remotePublicKey,
+    );
 
-    if (remoteCrypto == null || remoteCrypto.publicKey.isEmpty) {
-      throw StateError('Remote public key not found.');
+    final cachedEntry = keyCache.get(normalizedPairingId);
+
+    final String? existingBinding =
+        _conversationKeyBindings[normalizedPairingId];
+
+    if (cachedEntry != null && existingBinding == cacheBinding) {
+      return Uint8List.fromList(cachedEntry.key);
+    }
+
+    if (cachedEntry != null || existingBinding != null) {
+      _removeCachedConversationKey(normalizedPairingId);
+    }
+
+    final Uint8List key = await _deriveConversationKey(
+      pairing: pairing,
+      currentUserId: currentUserId,
+      remoteUserId: remoteUserId,
+      remotePublicKey: remotePublicKey,
+    );
+
+    keyCache.put(pairId: normalizedPairingId, key: key);
+
+    _conversationKeyBindings[normalizedPairingId] = cacheBinding;
+
+    return key;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Key Derivation
+  // ---------------------------------------------------------------------------
+
+  Future<Uint8List> _deriveConversationKey({
+    required PairingEntity pairing,
+    required String currentUserId,
+    required String remoteUserId,
+    required Uint8List remotePublicKey,
+  }) async {
+    final keyPair = await deviceKeyManager.loadKeyPair();
+
+    if (keyPair == null ||
+        keyPair.privateKey.isEmpty ||
+        keyPair.publicKey.isEmpty) {
+      throw StateError('Device key pair not found.');
     }
 
     final Uint8List sharedSecret = await keyAgreement.createSharedSecret(
       privateKey: keyPair.privateKey,
-      remotePublicKey: Uint8List.fromList(
-        base64Decode(remoteCrypto.publicKey),
-      ),
+      remotePublicKey: remotePublicKey,
     );
 
     return keyDerivation.deriveKey(
@@ -145,6 +209,30 @@ class CamoCryptoFacade {
       salt: utf8.encode(pairing.id),
     );
   }
+
+  // ---------------------------------------------------------------------------
+  // Cache Binding
+  // ---------------------------------------------------------------------------
+
+  String _buildCacheBinding({
+    required String currentUserId,
+    required String remoteUserId,
+    required Uint8List remotePublicKey,
+  }) {
+    return '$currentUserId'
+        '|$remoteUserId'
+        '|${base64Encode(remotePublicKey)}';
+  }
+
+  void _removeCachedConversationKey(String pairingId) {
+    keyCache.remove(pairingId);
+
+    _conversationKeyBindings.remove(pairingId);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Remote User
+  // ---------------------------------------------------------------------------
 
   String _resolveRemoteUserId({
     required PairingEntity pairing,

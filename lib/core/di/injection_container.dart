@@ -1,4 +1,4 @@
-﻿// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 // Imports
 // ---------------------------------------------------------------------------
 
@@ -21,6 +21,10 @@ import '../../core/crypto/encryption/camo_payload_formatter.dart';
 import '../../core/crypto/encryption/camo_secure_nonce_generator.dart';
 import '../../core/crypto/encryption/camo_secure_random.dart';
 import '../../core/crypto/encryption/camo_x25519_key_agreement.dart';
+import '../../core/crypto/keys/camo_remote_device_resolver.dart';
+import '../../core/crypto/keys/camo_remote_public_key_provider.dart';
+import '../../core/crypto/keys/firestore_remote_public_key_provider.dart';
+import '../../core/crypto/trust/camo_local_device_trust_guard.dart';
 
 import '../../features/auth/data/datasources/auth_remote_datasource.dart';
 import '../../features/auth/data/repositories/auth_repository_impl.dart';
@@ -54,6 +58,8 @@ import '../../features/policy/data/datasources/camo_message_policy_remote_dataso
 import '../../features/policy/data/repositories/camo_device_identity_service_impl.dart';
 import '../../features/policy/data/repositories/camo_device_registration_service_impl.dart';
 import '../../features/policy/data/repositories/camo_device_registry_repository_impl.dart';
+import '../../features/policy/data/repositories/firestore_remote_device_resolver.dart';
+import '../../features/policy/data/repositories/realtime_local_device_trust_guard.dart';
 import '../../features/policy/data/repositories/camo_message_policy_service_impl.dart';
 import '../../features/policy/data/repositories/camo_policy_evaluator_impl.dart';
 import '../../features/policy/data/repositories/camo_secure_device_id_generator.dart';
@@ -93,74 +99,50 @@ Future<void> initDependencies() async {
   // External
   // ---------------------------------------------------------------------------
 
-  sl.registerLazySingleton<FirebaseAuth>(
-    () => FirebaseAuth.instance,
-  );
+  sl.registerLazySingleton<FirebaseAuth>(() => FirebaseAuth.instance);
 
-  sl.registerLazySingleton<FirebaseFirestore>(
-    () => FirebaseFirestore.instance,
-  );
+  sl.registerLazySingleton<FirebaseFirestore>(() => FirebaseFirestore.instance);
 
-  sl.registerLazySingleton<FlutterSecureStorage>(
-    FlutterSecureStorage.new,
-  );
+  sl.registerLazySingleton<FlutterSecureStorage>(FlutterSecureStorage.new);
 
   // ---------------------------------------------------------------------------
   // Core Services
   // ---------------------------------------------------------------------------
 
-  sl.registerLazySingleton<CamoIdGenerator>(
-    CamoIdGenerator.new,
-  );
+  sl.registerLazySingleton<CamoIdGenerator>(CamoIdGenerator.new);
 
   sl.registerLazySingleton<SecureStorageService>(
     () => FlutterSecureStorageService(sl()),
   );
 
-  sl.registerLazySingleton<CamoSecureRandom>(
-    CamoSecureRandom.new,
-  );
+  sl.registerLazySingleton<CamoSecureRandom>(CamoSecureRandom.new);
 
-  sl.registerLazySingleton<CamoKeyCache>(
-    CamoMemoryKeyCache.new,
-  );
+  sl.registerLazySingleton<CamoKeyCache>(CamoMemoryKeyCache.new);
 
   sl.registerLazySingleton<DeviceKeyManager>(
-    () => FlutterSecureDeviceKeyManager(
-      sl(),
-      sl(),
-    ),
+    () => FlutterSecureDeviceKeyManager(sl(), sl()),
   );
 
   sl.registerLazySingleton<CamoNonceGenerator>(
-    () => CamoSecureNonceGenerator(
-      sl(),
-    ),
+    () => CamoSecureNonceGenerator(sl()),
   );
 
-  sl.registerLazySingleton<CamoCryptoEngine>(
-    CamoAesGcmEngine.new,
-  );
+  sl.registerLazySingleton<CamoCryptoEngine>(CamoAesGcmEngine.new);
 
-  sl.registerLazySingleton<CamoKeyAgreement>(
-    CamoX25519KeyAgreement.new,
-  );
+  sl.registerLazySingleton<CamoKeyAgreement>(CamoX25519KeyAgreement.new);
 
-  sl.registerLazySingleton<CamoKeyDerivation>(
-    CamoHkdfKeyDerivation.new,
+  sl.registerLazySingleton<CamoKeyDerivation>(CamoHkdfKeyDerivation.new);
+  sl.registerLazySingleton<CamoRemotePublicKeyProvider>(
+    () => FirestoreRemotePublicKeyProvider(sl()),
   );
 
   sl.registerLazySingleton<CamoPayloadSerializer>(
     CamoCompactPayloadSerializer.new,
   );
 
-  sl.registerLazySingleton<CamoPayloadParser>(
-    CamoCompactPayloadParser.new,
-  );
+  sl.registerLazySingleton<CamoPayloadParser>(CamoCompactPayloadParser.new);
 
-  sl.registerLazySingleton<CamoPayloadFormatter>(
-    CamoPayloadFormatter.new,
-  );
+  sl.registerLazySingleton<CamoPayloadFormatter>(CamoPayloadFormatter.new);
 
   sl.registerLazySingleton<CamoMessageCryptoService>(
     () => CamoMessageCryptoService(
@@ -181,10 +163,7 @@ Future<void> initDependencies() async {
   );
 
   sl.registerLazySingleton<CamoDeviceIdentityService>(
-    () => CamoDeviceIdentityServiceImpl(
-      sl(),
-      sl(),
-    ),
+    () => CamoDeviceIdentityServiceImpl(sl(), sl()),
   );
 
   sl.registerLazySingleton<CamoPlatformInfoProvider>(
@@ -192,33 +171,21 @@ Future<void> initDependencies() async {
   );
 
   sl.registerLazySingleton<CamoDeviceRegistrationService>(
-    () => CamoDeviceRegistrationServiceImpl(
-      sl(),
-      sl(),
-      sl(),
-      sl(),
-      sl(),
-    ),
+    () => CamoDeviceRegistrationServiceImpl(sl(), sl(), sl(), sl(), sl()),
   );
 
   // ---------------------------------------------------------------------------
   // Policy
   // ---------------------------------------------------------------------------
 
-  sl.registerLazySingleton<CamoPolicyEvaluator>(
-    CamoPolicyEvaluatorImpl.new,
-  );
+  sl.registerLazySingleton<CamoPolicyEvaluator>(CamoPolicyEvaluatorImpl.new);
 
   sl.registerLazySingleton<EvaluateCamoPolicyUseCase>(
-    () => EvaluateCamoPolicyUseCase(
-      sl(),
-    ),
+    () => EvaluateCamoPolicyUseCase(sl()),
   );
 
   sl.registerLazySingleton<CamoMessagePolicyService>(
-    () => CamoMessagePolicyServiceImpl(
-      sl(),
-    ),
+    () => CamoMessagePolicyServiceImpl(sl()),
   );
 
   // ---------------------------------------------------------------------------
@@ -238,50 +205,48 @@ Future<void> initDependencies() async {
   );
 
   sl.registerLazySingleton<CamoDeviceRegistryRemoteDataSource>(
-    () => FirebaseCamoDeviceRegistryRemoteDataSource(
-      sl(),
-    ),
+    () => FirebaseCamoDeviceRegistryRemoteDataSource(sl()),
   );
 
   sl.registerLazySingleton<CamoMessagePolicyRemoteDataSource>(
-    () => FirebaseCamoMessagePolicyRemoteDataSource(
-      sl(),
-    ),
+    () => FirebaseCamoMessagePolicyRemoteDataSource(sl()),
   );
 
   // ---------------------------------------------------------------------------
   // Repositories
   // ---------------------------------------------------------------------------
 
-  sl.registerLazySingleton<AuthRepository>(
-    () => AuthRepositoryImpl(sl()),
-  );
+  sl.registerLazySingleton<AuthRepository>(() => AuthRepositoryImpl(sl()));
 
   sl.registerLazySingleton<ProfileRepository>(
     () => ProfileRepositoryImpl(sl()),
   );
 
   sl.registerLazySingleton<PairingRepository>(
-    () => PairingRepositoryImpl(
-      remoteDataSource: sl(),
-    ),
+    () => PairingRepositoryImpl(remoteDataSource: sl()),
   );
 
   sl.registerLazySingleton<CamoDeviceRegistryRepository>(
-    () => CamoDeviceRegistryRepositoryImpl(
-      sl(),
-    ),
+    () => CamoDeviceRegistryRepositoryImpl(sl()),
+  );
+  sl.registerLazySingleton<CamoRemoteDeviceResolver>(
+    () => FirestoreRemoteDeviceResolver(sl()),
+  );
+
+  sl.registerLazySingleton<CamoLocalDeviceTrustGuard>(
+    () => RealtimeLocalDeviceTrustGuard(sl(), sl(), sl(), sl()),
   );
 
   sl.registerLazySingleton<CamoCryptoFacade>(
     () => CamoCryptoFacade(
       authRepository: sl(),
       pairingRepository: sl(),
-      profileRepository: sl(),
       deviceKeyManager: sl(),
       keyAgreement: sl(),
       keyDerivation: sl(),
       keyCache: sl(),
+      localDeviceTrustGuard: sl(),
+      remotePublicKeyProvider: sl(),
       messageCryptoService: sl(),
     ),
   );
@@ -290,12 +255,7 @@ Future<void> initDependencies() async {
   // Auth Use Cases
   // ---------------------------------------------------------------------------
 
-  sl.registerLazySingleton<LoginUseCase>(
-    () => LoginUseCase(
-      sl(),
-      sl(),
-    ),
-  );
+  sl.registerLazySingleton<LoginUseCase>(() => LoginUseCase(sl(), sl()));
 
   sl.registerLazySingleton<CheckAuthStatusUseCase>(
     () => CheckAuthStatusUseCase(sl()),
@@ -310,10 +270,7 @@ Future<void> initDependencies() async {
   // ---------------------------------------------------------------------------
 
   sl.registerLazySingleton<CreateUserProfileUseCase>(
-    () => CreateUserProfileUseCase(
-      sl(),
-      sl(),
-    ),
+    () => CreateUserProfileUseCase(sl(), sl()),
   );
 
   sl.registerLazySingleton<GetUserProfileUseCase>(
@@ -332,9 +289,7 @@ Future<void> initDependencies() async {
     () => CreatePairingUseCase(sl()),
   );
 
-  sl.registerLazySingleton<GetPairingUseCase>(
-    () => GetPairingUseCase(sl()),
-  );
+  sl.registerLazySingleton<GetPairingUseCase>(() => GetPairingUseCase(sl()));
 
   sl.registerLazySingleton<GetPairingBetweenUsersUseCase>(
     () => GetPairingBetweenUsersUseCase(sl()),
@@ -364,4 +319,3 @@ Future<void> initDependencies() async {
     () => FindPairingUserUseCase(sl()),
   );
 }
-
