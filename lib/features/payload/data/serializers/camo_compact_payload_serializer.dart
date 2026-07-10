@@ -4,6 +4,7 @@ import '../../domain/entities/camo_payload_packet.dart';
 import '../../domain/repositories/camo_payload_serializer.dart';
 
 class CamoCompactPayloadSerializer implements CamoPayloadSerializer {
+  static const int nonceLength = 12;
   static const int headerLength = 4;
 
   @override
@@ -11,25 +12,30 @@ class CamoCompactPayloadSerializer implements CamoPayloadSerializer {
     final Uint8List metadata = packet.metadata ?? Uint8List(0);
     final int metadataLength = metadata.length;
 
-    final int totalLength = headerLength +
-        metadataLength +
-        packet.nonce.length +
-        packet.cipherText.length;
+    final int totalLength =
+        packet.nonce.length + headerLength + metadataLength + packet.cipherText.length;
 
     final Uint8List bytes = Uint8List(totalLength);
 
-    bytes[0] = packet.version;
-    bytes[1] = packet.flags;
-    bytes[2] = metadataLength >> 8;
-    bytes[3] = metadataLength & 0xff;
-
-    int offset = headerLength;
-
-    bytes.setRange(offset, offset + metadataLength, metadata);
-    offset += metadataLength;
+    int offset = 0;
 
     bytes.setRange(offset, offset + packet.nonce.length, packet.nonce);
     offset += packet.nonce.length;
+
+    bytes[offset] = packet.version;
+    offset++;
+
+    bytes[offset] = packet.flags;
+    offset++;
+
+    bytes[offset] = metadataLength >> 8;
+    offset++;
+
+    bytes[offset] = metadataLength & 0xff;
+    offset++;
+
+    bytes.setRange(offset, offset + metadataLength, metadata);
+    offset += metadataLength;
 
     bytes.setRange(offset, offset + packet.cipherText.length, packet.cipherText);
 

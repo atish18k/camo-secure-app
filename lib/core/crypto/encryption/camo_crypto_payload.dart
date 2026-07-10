@@ -1,5 +1,16 @@
 // ---------------------------------------------------------------------------
-// Crypto Payload
+// Legacy Crypto Payload
+// ---------------------------------------------------------------------------
+//
+// NOTE:
+// This entity represents the legacy CAMO payload model used by the CM1
+// formatter.
+//
+// New compact binary payloads use:
+// features/payload/domain/entities/camo_payload_packet.dart
+//
+// Keep this file for backward compatibility until legacy decode migration
+// is fully removed in a future stable version.
 // ---------------------------------------------------------------------------
 
 class CamoCryptoPayload {
@@ -22,27 +33,27 @@ class CamoCryptoPayload {
   // Properties
   // ---------------------------------------------------------------------------
 
-  /// Payload format version.
+  /// Legacy payload format version.
   final int version;
 
-  /// Encryption algorithm identifier.
+  /// Legacy encryption algorithm identifier.
   final String algorithm;
 
-  /// Base64 encoded nonce / IV.
+  /// Base64Url encoded nonce / IV.
   final String nonce;
 
-  /// Base64 encoded encrypted message.
+  /// Base64Url encoded encrypted message.
   final String cipherText;
 
-  /// Base64 encoded authentication tag / MAC.
+  /// Base64Url encoded authentication tag / MAC.
   final String authenticationTag;
 
-  /// UTC timestamp.
+  /// UTC timestamp for the legacy payload.
   final DateTime createdAt;
 
-  /// Optional camouflage subject.
+  /// Optional legacy camouflage subject.
   final String? subject;
 
-  /// Indicates whether camouflage mode was enabled.
+  /// Indicates whether legacy camouflage mode was enabled.
   final bool camouflageEnabled;
 }

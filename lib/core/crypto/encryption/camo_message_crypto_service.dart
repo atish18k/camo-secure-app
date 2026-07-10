@@ -5,6 +5,9 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import '../../../features/payload/domain/entities/camo_payload_packet.dart';
+import '../../../features/payload/domain/repositories/camo_payload_parser.dart';
+import '../../../features/payload/domain/repositories/camo_payload_serializer.dart';
 import 'camo_crypto_engine.dart';
 import 'camo_crypto_payload.dart';
 import 'camo_nonce_generator.dart';
@@ -15,27 +18,19 @@ import 'camo_payload_formatter.dart';
 // ---------------------------------------------------------------------------
 
 class CamoMessageCryptoService {
-  // ---------------------------------------------------------------------------
-  // Constructor
-  // ---------------------------------------------------------------------------
-
   const CamoMessageCryptoService({
     required this.cryptoEngine,
     required this.nonceGenerator,
     required this.payloadFormatter,
+    required this.payloadSerializer,
+    required this.payloadParser,
   });
-
-  // ---------------------------------------------------------------------------
-  // Dependencies
-  // ---------------------------------------------------------------------------
 
   final CamoCryptoEngine cryptoEngine;
   final CamoNonceGenerator nonceGenerator;
   final CamoPayloadFormatter payloadFormatter;
-
-  // ---------------------------------------------------------------------------
-  // Encode
-  // ---------------------------------------------------------------------------
+  final CamoPayloadSerializer payloadSerializer;
+  final CamoPayloadParser payloadParser;
 
   Future<String> encode({
     required String plainText,
@@ -53,36 +48,55 @@ class CamoMessageCryptoService {
       nonce: nonce,
     );
 
-    final int tagStartIndex = encryptedBytes.length - 16;
-
-    final Uint8List cipherText = encryptedBytes.sublist(
-      0,
-      tagStartIndex,
-    );
-
-    final Uint8List authenticationTag = encryptedBytes.sublist(
-      tagStartIndex,
-    );
-
-    final CamoCryptoPayload payload = CamoCryptoPayload(
+    final CamoPayloadPacket packet = CamoPayloadPacket(
       version: 1,
-      algorithm: 'AES-256-GCM',
-      nonce: base64UrlEncode(nonce),
-      cipherText: base64UrlEncode(cipherText),
-      authenticationTag: base64UrlEncode(authenticationTag),
-      createdAt: DateTime.now().toUtc(),
-      subject: subject,
-      camouflageEnabled: camouflageEnabled,
+      flags: 0,
+      nonce: nonce,
+      cipherText: encryptedBytes,
     );
 
-    return payloadFormatter.encode(payload);
+    final Uint8List packetBytes = payloadSerializer.serialize(packet);
+
+    return base64UrlEncode(packetBytes);
   }
 
-  // ---------------------------------------------------------------------------
-  // Decode
-  // ---------------------------------------------------------------------------
-
   Future<String> decode({
+    required String encodedText,
+    required Uint8List key,
+  }) async {
+    if (encodedText.startsWith('${CamoPayloadFormatter.protocolPrefix}|')) {
+      return _decodeLegacy(
+        encodedText: encodedText,
+        key: key,
+      );
+    }
+
+    return _decodeCompact(
+      encodedText: encodedText,
+      key: key,
+    );
+  }
+
+  Future<String> _decodeCompact({
+    required String encodedText,
+    required Uint8List key,
+  }) async {
+    final Uint8List packetBytes = Uint8List.fromList(
+      base64Url.decode(encodedText),
+    );
+
+    final CamoPayloadPacket packet = payloadParser.parse(packetBytes);
+
+    final Uint8List plainTextBytes = await cryptoEngine.decrypt(
+      cipherText: packet.cipherText,
+      key: key,
+      nonce: packet.nonce,
+    );
+
+    return utf8.decode(plainTextBytes);
+  }
+
+  Future<String> _decodeLegacy({
     required String encodedText,
     required Uint8List key,
   }) async {

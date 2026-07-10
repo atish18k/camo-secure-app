@@ -8,18 +8,31 @@ import 'dart:typed_data';
 import 'camo_crypto_payload.dart';
 
 // ---------------------------------------------------------------------------
-// Binary Serializer
+// Legacy Binary Serializer
+// ---------------------------------------------------------------------------
+//
+// NOTE:
+// This serializer is legacy-compatible only.
+//
+// Despite the historical name, this is NOT the new compact binary packet
+// serializer. It converts the legacy CM1 payload model into JSON bytes.
+//
+// New compact binary payloads use:
+// features/payload/data/serializers/camo_compact_payload_serializer.dart
+//
+// Keep this file until legacy decode migration is fully removed in a future
+// stable version.
 // ---------------------------------------------------------------------------
 
 class CamoBinarySerializer {
   // ---------------------------------------------------------------------------
-  // Serialize
+  // Serialize Legacy Payload
   // ---------------------------------------------------------------------------
 
   Uint8List serialize(
     CamoCryptoPayload payload,
   ) {
-    final Map<String, dynamic> map = {
+    final Map<String, dynamic> map = <String, dynamic>{
       'v': payload.version,
       'alg': payload.algorithm,
       'n': payload.nonce,
@@ -38,7 +51,7 @@ class CamoBinarySerializer {
   }
 
   // ---------------------------------------------------------------------------
-  // Deserialize
+  // Deserialize Legacy Payload
   // ---------------------------------------------------------------------------
 
   CamoCryptoPayload deserialize(

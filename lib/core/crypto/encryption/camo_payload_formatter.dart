@@ -9,7 +9,15 @@ import 'camo_binary_serializer.dart';
 import 'camo_crypto_payload.dart';
 
 // ---------------------------------------------------------------------------
-// Payload Formatter
+// Legacy Payload Formatter
+// ---------------------------------------------------------------------------
+//
+// NOTE:
+// This formatter is kept only for backward compatibility with older CAMO
+// payloads that use the legacy CM1 text format.
+//
+// New compact payload production format will be handled by the Payload Engine.
+// Do not remove this file until legacy decode migration is complete.
 // ---------------------------------------------------------------------------
 
 class CamoPayloadFormatter {
@@ -34,21 +42,20 @@ class CamoPayloadFormatter {
   final CamoBinarySerializer _serializer;
 
   // ---------------------------------------------------------------------------
-  // Encode
+  // Encode Legacy Payload
   // ---------------------------------------------------------------------------
 
   String encode(
     CamoCryptoPayload payload,
   ) {
     final Uint8List bytes = _serializer.serialize(payload);
-
     final String encoded = base64UrlEncode(bytes);
 
     return '$protocolPrefix|$encoded';
   }
 
   // ---------------------------------------------------------------------------
-  // Decode
+  // Decode Legacy Payload
   // ---------------------------------------------------------------------------
 
   CamoCryptoPayload decode(
@@ -58,7 +65,7 @@ class CamoPayloadFormatter {
 
     if (parts.length != 2 || parts.first != protocolPrefix) {
       throw const FormatException(
-        'Invalid CAMO payload format.',
+        'Invalid legacy CAMO payload format.',
       );
     }
 

@@ -4,26 +4,37 @@ import '../../domain/entities/camo_payload_packet.dart';
 import '../../domain/repositories/camo_payload_parser.dart';
 
 class CamoCompactPayloadParser implements CamoPayloadParser {
-  static const int headerLength = 4;
   static const int nonceLength = 12;
+  static const int headerLength = 4;
 
   @override
   CamoPayloadPacket parse(Uint8List bytes) {
-    if (bytes.length < headerLength + nonceLength) {
+    if (bytes.length < nonceLength + headerLength) {
       throw const FormatException('Invalid CAMO payload packet.');
     }
 
-    final int version = bytes[0];
-    final int flags = bytes[1];
-    final int metadataLength = (bytes[2] << 8) | bytes[3];
+    int offset = 0;
 
-    final int minimumLength = headerLength + metadataLength + nonceLength;
+    final Uint8List nonce = Uint8List.fromList(
+      bytes.sublist(offset, offset + nonceLength),
+    );
+
+    offset += nonceLength;
+
+    final int version = bytes[offset];
+    offset++;
+
+    final int flags = bytes[offset];
+    offset++;
+
+    final int metadataLength = (bytes[offset] << 8) | bytes[offset + 1];
+    offset += 2;
+
+    final int minimumLength = nonceLength + headerLength + metadataLength;
 
     if (bytes.length < minimumLength) {
       throw const FormatException('Invalid CAMO payload metadata length.');
     }
-
-    int offset = headerLength;
 
     final Uint8List? metadata = metadataLength == 0
         ? null
@@ -32,12 +43,6 @@ class CamoCompactPayloadParser implements CamoPayloadParser {
           );
 
     offset += metadataLength;
-
-    final Uint8List nonce = Uint8List.fromList(
-      bytes.sublist(offset, offset + nonceLength),
-    );
-
-    offset += nonceLength;
 
     final Uint8List cipherText = Uint8List.fromList(
       bytes.sublist(offset),
@@ -50,9 +55,9 @@ class CamoCompactPayloadParser implements CamoPayloadParser {
     return CamoPayloadPacket(
       version: version,
       flags: flags,
-      metadata: metadata,
       nonce: nonce,
       cipherText: cipherText,
+      metadata: metadata,
     );
   }
 }

@@ -144,6 +144,8 @@ Future<void> initDependencies() async {
       cryptoEngine: sl(),
       nonceGenerator: sl(),
       payloadFormatter: sl(),
+      payloadSerializer: sl(),
+      payloadParser: sl(),
     ),
   );
 
