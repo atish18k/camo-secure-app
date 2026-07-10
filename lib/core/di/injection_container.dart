@@ -1,4 +1,4 @@
-// ---------------------------------------------------------------------------
+﻿// ---------------------------------------------------------------------------
 // Imports
 // ---------------------------------------------------------------------------
 
@@ -49,7 +49,21 @@ import '../../features/payload/data/serializers/camo_compact_payload_serializer.
 import '../../features/payload/domain/repositories/camo_payload_parser.dart';
 import '../../features/payload/domain/repositories/camo_payload_serializer.dart';
 
+import '../../features/policy/data/datasources/camo_device_registry_remote_datasource.dart';
+import '../../features/policy/data/datasources/camo_message_policy_remote_datasource.dart';
+import '../../features/policy/data/repositories/camo_device_identity_service_impl.dart';
+import '../../features/policy/data/repositories/camo_device_registration_service_impl.dart';
+import '../../features/policy/data/repositories/camo_device_registry_repository_impl.dart';
+import '../../features/policy/data/repositories/camo_message_policy_service_impl.dart';
 import '../../features/policy/data/repositories/camo_policy_evaluator_impl.dart';
+import '../../features/policy/data/repositories/camo_secure_device_id_generator.dart';
+import '../../features/policy/data/repositories/flutter_camo_platform_info_provider.dart';
+import '../../features/policy/domain/repositories/camo_device_id_generator.dart';
+import '../../features/policy/domain/repositories/camo_device_identity_service.dart';
+import '../../features/policy/domain/repositories/camo_device_registration_service.dart';
+import '../../features/policy/domain/repositories/camo_device_registry_repository.dart';
+import '../../features/policy/domain/repositories/camo_message_policy_service.dart';
+import '../../features/policy/domain/repositories/camo_platform_info_provider.dart';
 import '../../features/policy/domain/repositories/camo_policy_evaluator.dart';
 import '../../features/policy/domain/usecases/evaluate_camo_policy_usecase.dart';
 
@@ -92,7 +106,7 @@ Future<void> initDependencies() async {
   );
 
   // ---------------------------------------------------------------------------
-  // Services
+  // Core Services
   // ---------------------------------------------------------------------------
 
   sl.registerLazySingleton<CamoIdGenerator>(
@@ -159,6 +173,35 @@ Future<void> initDependencies() async {
   );
 
   // ---------------------------------------------------------------------------
+  // Device Identity and Registration
+  // ---------------------------------------------------------------------------
+
+  sl.registerLazySingleton<CamoDeviceIdGenerator>(
+    CamoSecureDeviceIdGenerator.new,
+  );
+
+  sl.registerLazySingleton<CamoDeviceIdentityService>(
+    () => CamoDeviceIdentityServiceImpl(
+      sl(),
+      sl(),
+    ),
+  );
+
+  sl.registerLazySingleton<CamoPlatformInfoProvider>(
+    FlutterCamoPlatformInfoProvider.new,
+  );
+
+  sl.registerLazySingleton<CamoDeviceRegistrationService>(
+    () => CamoDeviceRegistrationServiceImpl(
+      sl(),
+      sl(),
+      sl(),
+      sl(),
+      sl(),
+    ),
+  );
+
+  // ---------------------------------------------------------------------------
   // Policy
   // ---------------------------------------------------------------------------
 
@@ -168,6 +211,12 @@ Future<void> initDependencies() async {
 
   sl.registerLazySingleton<EvaluateCamoPolicyUseCase>(
     () => EvaluateCamoPolicyUseCase(
+      sl(),
+    ),
+  );
+
+  sl.registerLazySingleton<CamoMessagePolicyService>(
+    () => CamoMessagePolicyServiceImpl(
       sl(),
     ),
   );
@@ -188,6 +237,18 @@ Future<void> initDependencies() async {
     () => FirebasePairingRemoteDataSource(sl()),
   );
 
+  sl.registerLazySingleton<CamoDeviceRegistryRemoteDataSource>(
+    () => FirebaseCamoDeviceRegistryRemoteDataSource(
+      sl(),
+    ),
+  );
+
+  sl.registerLazySingleton<CamoMessagePolicyRemoteDataSource>(
+    () => FirebaseCamoMessagePolicyRemoteDataSource(
+      sl(),
+    ),
+  );
+
   // ---------------------------------------------------------------------------
   // Repositories
   // ---------------------------------------------------------------------------
@@ -203,6 +264,12 @@ Future<void> initDependencies() async {
   sl.registerLazySingleton<PairingRepository>(
     () => PairingRepositoryImpl(
       remoteDataSource: sl(),
+    ),
+  );
+
+  sl.registerLazySingleton<CamoDeviceRegistryRepository>(
+    () => CamoDeviceRegistryRepositoryImpl(
+      sl(),
     ),
   );
 
@@ -224,7 +291,10 @@ Future<void> initDependencies() async {
   // ---------------------------------------------------------------------------
 
   sl.registerLazySingleton<LoginUseCase>(
-    () => LoginUseCase(sl()),
+    () => LoginUseCase(
+      sl(),
+      sl(),
+    ),
   );
 
   sl.registerLazySingleton<CheckAuthStatusUseCase>(
@@ -294,3 +364,4 @@ Future<void> initDependencies() async {
     () => FindPairingUserUseCase(sl()),
   );
 }
+

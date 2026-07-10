@@ -1,19 +1,21 @@
-// ---------------------------------------------------------------------------
+﻿// ---------------------------------------------------------------------------
 // File: failure.dart
 // Module: Core Errors
 // Purpose:
 //   Defines failure types used across CAMO repositories, services,
 //   and business logic.
-//
-// Sprint:
-//   Sprint-003 (v0.3.0)
 // ---------------------------------------------------------------------------
+
 abstract class Failure {
+  const Failure({
+    required this.message,
+    this.code,
+    this.cause,
+  });
+
   final String message;
   final String? code;
   final Object? cause;
-
-  const Failure({required this.message, this.code, this.cause});
 
   @override
   String toString() {
@@ -49,6 +51,14 @@ class AuthFailure extends Failure {
   const AuthFailure({
     super.message = 'Authentication failed.',
     super.code,
+    super.cause,
+  });
+}
+
+class DeviceRegistrationFailure extends Failure {
+  const DeviceRegistrationFailure({
+    super.message = 'Secure device registration failed.',
+    super.code = 'device-registration-failed',
     super.cause,
   });
 }
