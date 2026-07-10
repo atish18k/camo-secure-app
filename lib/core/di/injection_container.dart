@@ -21,12 +21,14 @@ import '../../core/crypto/encryption/camo_payload_formatter.dart';
 import '../../core/crypto/encryption/camo_secure_nonce_generator.dart';
 import '../../core/crypto/encryption/camo_secure_random.dart';
 import '../../core/crypto/encryption/camo_x25519_key_agreement.dart';
+
 import '../../features/auth/data/datasources/auth_remote_datasource.dart';
 import '../../features/auth/data/repositories/auth_repository_impl.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
 import '../../features/auth/domain/usecases/check_auth_status_usecase.dart';
 import '../../features/auth/domain/usecases/get_current_user_id_usecase.dart';
 import '../../features/auth/domain/usecases/login_usecase.dart';
+
 import '../../features/pairing/data/datasources/pairing_remote_datasource.dart';
 import '../../features/pairing/data/repositories/pairing_repository_impl.dart';
 import '../../features/pairing/domain/repositories/pairing_repository.dart';
@@ -41,16 +43,23 @@ import '../../features/pairing/domain/usecases/watch_accepted_pairings_usecase.d
 import '../../features/pairing/domain/usecases/watch_pending_pair_requests_usecase.dart';
 import '../../features/pairing/security/device_key_manager.dart';
 import '../../features/pairing/security/flutter_secure_device_key_manager.dart';
+
 import '../../features/payload/data/parsers/camo_compact_payload_parser.dart';
 import '../../features/payload/data/serializers/camo_compact_payload_serializer.dart';
 import '../../features/payload/domain/repositories/camo_payload_parser.dart';
 import '../../features/payload/domain/repositories/camo_payload_serializer.dart';
+
+import '../../features/policy/data/repositories/camo_policy_evaluator_impl.dart';
+import '../../features/policy/domain/repositories/camo_policy_evaluator.dart';
+import '../../features/policy/domain/usecases/evaluate_camo_policy_usecase.dart';
+
 import '../../features/profile/data/datasources/profile_remote_datasource.dart';
 import '../../features/profile/data/repositories/profile_repository_impl.dart';
 import '../../features/profile/domain/repositories/profile_repository.dart';
 import '../../features/profile/domain/usecases/create_user_profile_usecase.dart';
 import '../../features/profile/domain/usecases/get_user_by_camo_id_usecase.dart';
 import '../../features/profile/domain/usecases/get_user_profile_usecase.dart';
+
 import '../../services/identity/camo_id_generator.dart';
 import '../../services/secure_storage/flutter_secure_storage_service.dart';
 import '../../services/secure_storage/secure_storage_service.dart';
@@ -146,6 +155,20 @@ Future<void> initDependencies() async {
       payloadFormatter: sl(),
       payloadSerializer: sl(),
       payloadParser: sl(),
+    ),
+  );
+
+  // ---------------------------------------------------------------------------
+  // Policy
+  // ---------------------------------------------------------------------------
+
+  sl.registerLazySingleton<CamoPolicyEvaluator>(
+    CamoPolicyEvaluatorImpl.new,
+  );
+
+  sl.registerLazySingleton<EvaluateCamoPolicyUseCase>(
+    () => EvaluateCamoPolicyUseCase(
+      sl(),
     ),
   );
 
