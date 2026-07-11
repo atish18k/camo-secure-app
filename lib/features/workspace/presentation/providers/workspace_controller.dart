@@ -5,7 +5,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/crypto/encryption/camo_crypto_facade.dart';
+import '../../domain/services/camo_authorized_workspace_service.dart';
 import '../../../../core/di/injection_container.dart';
 import 'workspace_state.dart';
 
@@ -15,8 +15,8 @@ import 'workspace_state.dart';
 
 final workspaceControllerProvider =
     NotifierProvider<WorkspaceController, WorkspaceState>(
-  WorkspaceController.new,
-);
+      WorkspaceController.new,
+    );
 
 // ---------------------------------------------------------------------------
 // Workspace Controller
@@ -38,15 +38,13 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     String? subject,
     bool camouflageEnabled = false,
   }) async {
-    state = state.copyWith(
-      isLoading: true,
-      errorMessage: null,
-    );
+    state = state.copyWith(isLoading: true, errorMessage: null);
 
     try {
-      final CamoCryptoFacade cryptoFacade = sl<CamoCryptoFacade>();
+      final CamoAuthorizedWorkspaceService workspaceService =
+          sl<CamoAuthorizedWorkspaceService>();
 
-      final String output = await cryptoFacade.encodeForPair(
+      final String output = await workspaceService.encode(
         pairingId: pairingId,
         plainText: plainText,
         subject: subject,
@@ -77,15 +75,13 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     required String pairingId,
     required String encodedText,
   }) async {
-    state = state.copyWith(
-      isLoading: true,
-      errorMessage: null,
-    );
+    state = state.copyWith(isLoading: true, errorMessage: null);
 
     try {
-      final CamoCryptoFacade cryptoFacade = sl<CamoCryptoFacade>();
+      final CamoAuthorizedWorkspaceService workspaceService =
+          sl<CamoAuthorizedWorkspaceService>();
 
-      final String output = await cryptoFacade.decodeForPair(
+      final String output = await workspaceService.decode(
         pairingId: pairingId,
         encodedText: encodedText,
       );
@@ -111,9 +107,6 @@ class WorkspaceController extends Notifier<WorkspaceState> {
   // ---------------------------------------------------------------------------
 
   void clearOutput() {
-    state = state.copyWith(
-      output: '',
-      errorMessage: null,
-    );
+    state = state.copyWith(output: '', errorMessage: null);
   }
 }

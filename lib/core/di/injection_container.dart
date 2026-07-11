@@ -73,6 +73,14 @@ import '../../features/policy/domain/repositories/camo_platform_info_provider.da
 import '../../features/policy/domain/repositories/camo_policy_evaluator.dart';
 import '../../features/policy/domain/usecases/evaluate_camo_policy_usecase.dart';
 
+import '../../core/operation_coordinator/domain/services/camo_authorized_operation_executor.dart';
+import '../../features/workspace/domain/services/camo_workspace_crypto_port.dart';
+import '../../features/workspace/domain/repositories/camo_workspace_operation_payload_store.dart';
+import '../../features/workspace/data/services/default_camo_authorized_operation_executor.dart';
+import '../../features/workspace/data/services/camo_crypto_facade_workspace_port.dart';
+import '../../features/workspace/data/repositories/camo_memory_workspace_operation_payload_store.dart';
+import '../../features/workspace/data/services/fail_closed_camo_authorized_workspace_service.dart';
+import '../../features/workspace/domain/services/camo_authorized_workspace_service.dart';
 import '../../features/profile/data/datasources/profile_remote_datasource.dart';
 import '../../features/profile/data/repositories/profile_repository_impl.dart';
 import '../../features/profile/domain/repositories/profile_repository.dart';
@@ -317,5 +325,31 @@ Future<void> initDependencies() async {
 
   sl.registerLazySingleton<FindPairingUserUseCase>(
     () => FindPairingUserUseCase(sl()),
+  );
+  // ---------------------------------------------------------------------------
+  // Authorized Workspace Execution Boundary
+  // ---------------------------------------------------------------------------
+  // ---------------------------------------------------------------------------
+  // Authorized Crypto Executor Infrastructure
+  // ---------------------------------------------------------------------------
+
+  sl.registerLazySingleton<CamoWorkspaceOperationPayloadStore>(
+    CamoMemoryWorkspaceOperationPayloadStore.new,
+  );
+
+  sl.registerLazySingleton<CamoWorkspaceCryptoPort>(
+    () => CamoCryptoFacadeWorkspacePort(sl()),
+  );
+
+  sl.registerLazySingleton<CamoAuthorizedOperationExecutor>(
+    () => DefaultCamoAuthorizedOperationExecutor(
+      payloadStore: sl(),
+      cryptoPort: sl(),
+      clock: DateTime.now,
+    ),
+  );
+
+  sl.registerLazySingleton<CamoAuthorizedWorkspaceService>(
+    FailClosedCamoAuthorizedWorkspaceService.new,
   );
 }
