@@ -1,0 +1,61 @@
+// ---------------------------------------------------------------------------
+// Imports
+// ---------------------------------------------------------------------------
+
+import 'package:flutter/material.dart';
+
+import '../../../core/theme/camo_colors.dart';
+import '../../../core/theme/camo_radius.dart';
+import '../../../core/theme/camo_shadows.dart';
+import '../../../core/theme/camo_spacing.dart';
+
+// ---------------------------------------------------------------------------
+// Widget
+// ---------------------------------------------------------------------------
+
+class CamoWorkspaceBox extends StatelessWidget {
+  // ---------------------------------------------------------------------------
+  // Constructor
+  // ---------------------------------------------------------------------------
+
+  const CamoWorkspaceBox({
+    super.key,
+    required this.title,
+    required this.child,
+  });
+
+  // ---------------------------------------------------------------------------
+  // Properties
+  // ---------------------------------------------------------------------------
+
+  final String title;
+  final Widget child;
+
+  // ---------------------------------------------------------------------------
+  // Build
+  // ---------------------------------------------------------------------------
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: CamoSpacing.card,
+      decoration: BoxDecoration(
+        color: CamoColors.surface,
+        borderRadius: BorderRadius.circular(CamoRadius.xl),
+        boxShadow: CamoShadows.card,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          CamoSpacing.gapMd,
+          child,
+        ],
+      ),
+    );
+  }
+}

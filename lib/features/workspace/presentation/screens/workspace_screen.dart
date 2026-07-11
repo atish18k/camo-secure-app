@@ -36,9 +36,7 @@ import '../widgets/workspace_pair_header.dart';
 // ---------------------------------------------------------------------------
 
 class WorkspaceScreen extends ConsumerStatefulWidget {
-  const WorkspaceScreen({
-    super.key,
-  });
+  const WorkspaceScreen({super.key});
 
   @override
   ConsumerState<WorkspaceScreen> createState() => _WorkspaceScreenState();
@@ -95,7 +93,8 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
     final workspaceState = ref.watch(workspaceControllerProvider);
     final acceptedPairings = ref.watch(acceptedPairingsProvider);
 
-    final bool canRun = _selectedPair != null &&
+    final bool canRun =
+        _selectedPair != null &&
         _inputController.text.trim().isNotEmpty &&
         !workspaceState.isLoading;
 
@@ -122,18 +121,14 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                   onMenuTap: () {
                     Scaffold.of(context).openDrawer();
                   },
-                  onPairTap: () => Navigator.pushNamed(
-                    context,
-                    AppRoutes.pairRequest,
-                  ),
+                  onPairTap: () =>
+                      Navigator.pushNamed(context, AppRoutes.pairRequest),
                   onPendingTap: () => Navigator.pushNamed(
                     context,
                     AppRoutes.pendingPairRequests,
                   ),
-                  onScanQrTap: () => Navigator.pushNamed(
-                    context,
-                    AppRoutes.qrScanner,
-                  ),
+                  onScanQrTap: () =>
+                      Navigator.pushNamed(context, AppRoutes.qrScanner),
                   onSentTap: _showComingSoon,
                 );
               },
@@ -169,9 +164,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
     );
   }
 
-  Widget _buildPairSelector(
-    AsyncValue<List<PairingEntity>> acceptedPairings,
-  ) {
+  Widget _buildPairSelector(AsyncValue<List<PairingEntity>> acceptedPairings) {
     if (_selectedPair == null) {
       return WorkspacePairHeader(
         displayName: '',
@@ -215,9 +208,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
         ),
         CamoSpacing.gapLg,
         CamoActionButton(
-          label: _selectedTab == CamoWorkspaceTab.encoder
-              ? 'Encode'
-              : 'Decode',
+          label: _selectedTab == CamoWorkspaceTab.encoder ? 'Encode' : 'Decode',
           icon: _selectedTab == CamoWorkspaceTab.encoder
               ? CamoIcons.encode
               : CamoIcons.decode,
@@ -234,19 +225,14 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
     );
   }
 
-  Widget _buildPairOption({
-    required PairingEntity pairing,
-  }) {
+  Widget _buildPairOption({required PairingEntity pairing}) {
     return FutureBuilder<UserEntity?>(
       future: _loadRemoteUser(pairing),
       builder: (BuildContext context, AsyncSnapshot<UserEntity?> snapshot) {
         return ListTile(
           leading: const CircleAvatar(
             backgroundColor: CamoColors.background,
-            child: Icon(
-              CamoIcons.profile,
-              color: CamoColors.primary,
-            ),
+            child: Icon(CamoIcons.profile, color: CamoColors.primary),
           ),
           title: Text(_resolveDisplayName(snapshot.data)),
           subtitle: Text(_pairCamoId(pairing)),
@@ -306,18 +292,15 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                     ),
                     CamoSpacing.gapMd,
                     ...pairings.map(
-                      (PairingEntity pairing) => _buildPairOption(
-                        pairing: pairing,
-                      ),
+                      (PairingEntity pairing) =>
+                          _buildPairOption(pairing: pairing),
                     ),
                     CamoSpacing.gapSm,
                     _buildNewPairButton(),
                   ],
                 );
               },
-              loading: () => const Center(
-                child: CircularProgressIndicator(),
-              ),
+              loading: () => const Center(child: CircularProgressIndicator()),
               error: (_, _) => _buildPairErrorSheet(),
             ),
           ),
@@ -358,10 +341,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
     return OutlinedButton.icon(
       onPressed: () {
         Navigator.pop(context);
-        Navigator.pushNamed(
-          context,
-          AppRoutes.pairRequest,
-        );
+        Navigator.pushNamed(context, AppRoutes.pairRequest);
       },
       icon: const Icon(CamoIcons.pair),
       label: const Text('New Pair'),
@@ -369,9 +349,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
   }
 
   Future<void> _pasteInput() async {
-    final ClipboardData? data = await Clipboard.getData(
-      Clipboard.kTextPlain,
-    );
+    final ClipboardData? data = await Clipboard.getData(Clipboard.kTextPlain);
 
     final String text = data?.text ?? '';
 
@@ -396,9 +374,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
       return;
     }
 
-    await Clipboard.setData(
-      ClipboardData(text: camoId),
-    );
+    await Clipboard.setData(ClipboardData(text: camoId));
 
     _showMessage('CAMO ID copied.');
   }
@@ -411,9 +387,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
       return;
     }
 
-    await Clipboard.setData(
-      ClipboardData(text: text),
-    );
+    await Clipboard.setData(ClipboardData(text: text));
 
     _showMessage('Output copied.');
   }
@@ -429,16 +403,13 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
       return;
     }
 
-    final workspaceController =
-        ref.read(workspaceControllerProvider.notifier);
+    final workspaceController = ref.read(workspaceControllerProvider.notifier);
 
     if (_selectedTab == CamoWorkspaceTab.encoder) {
       await workspaceController.encode(
         pairingId: _selectedPair!.id,
         plainText: input,
-        subject: _isCamouflageEnabled
-            ? _subjectController.text.trim()
-            : null,
+        subject: _isCamouflageEnabled ? _subjectController.text.trim() : null,
         camouflageEnabled: _isCamouflageEnabled,
       );
     } else {
@@ -505,9 +476,9 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
   }
 
   void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   Future<UserEntity?> _loadRemoteUser(PairingEntity pairing) {
