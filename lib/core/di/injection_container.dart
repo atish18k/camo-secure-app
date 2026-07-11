@@ -73,6 +73,36 @@ import '../../features/policy/domain/repositories/camo_platform_info_provider.da
 import '../../features/policy/domain/repositories/camo_policy_evaluator.dart';
 import '../../features/policy/domain/usecases/evaluate_camo_policy_usecase.dart';
 
+import '../../core/authorization_gateway/data/repositories/fail_closed_camo_single_use_authorization_store.dart';
+import '../../core/authorization_gateway/data/services/default_camo_authorization_response_acceptance_service.dart';
+import '../../core/authorization_gateway/data/services/default_camo_authorization_response_canonicalizer.dart';
+import '../../core/authorization_gateway/data/services/default_camo_signed_authorization_response_service.dart';
+import '../../core/authorization_gateway/data/services/default_camo_single_use_authorization_artifact_factory.dart';
+import '../../core/authorization_gateway/data/services/default_camo_single_use_authorization_service.dart';
+import '../../core/authorization_gateway/data/services/fail_closed_camo_authorization_gateway.dart';
+import '../../core/authorization_gateway/data/services/fail_closed_camo_production_authorization_gateway_adapter.dart';
+import '../../core/authorization_gateway/data/services/fail_closed_camo_authorization_response_signature_verifier.dart';
+import '../../core/authorization_gateway/domain/repositories/camo_single_use_authorization_store.dart';
+import '../../core/authorization_gateway/domain/services/camo_authorization_gateway.dart';
+import '../../core/authorization_gateway/domain/services/camo_production_authorization_gateway_adapter.dart';
+import '../../core/authorization_gateway/domain/services/camo_authorization_response_acceptance_service.dart';
+import '../../core/authorization_gateway/domain/services/camo_authorization_response_canonicalizer.dart';
+import '../../core/authorization_gateway/domain/services/camo_authorization_response_signature_verifier.dart';
+import '../../core/authorization_gateway/domain/services/camo_signed_authorization_response_service.dart';
+import '../../core/authorization_gateway/domain/services/camo_single_use_authorization_artifact_factory.dart';
+import '../../core/authorization_gateway/domain/services/camo_single_use_authorization_service.dart';
+import '../../core/authorization_gateway/domain/services/camo_authorization_transport_mapper.dart';
+import '../../core/authorization_gateway/domain/services/camo_authorization_transport.dart';
+import '../../core/authorization_gateway/data/services/fail_closed_camo_authorization_transport.dart';
+import '../../core/authorization_gateway/data/services/default_camo_authorization_transport_mapper.dart';
+import '../../core/authorization_gateway/data/services/default_camo_authorization_gateway_switch.dart';
+import '../../core/authorization_gateway/domain/services/camo_authorization_gateway_switch.dart';
+import '../../core/operation_coordinator/data/services/default_camo_production_activation_guard.dart';
+import '../../core/operation_coordinator/data/services/default_camo_production_activation_readiness_service.dart';
+import '../../core/operation_coordinator/domain/services/camo_production_activation_guard.dart';
+import '../../core/operation_coordinator/domain/services/camo_production_activation_readiness_service.dart';
+import '../../core/authorization_gateway/data/services/default_camo_production_authorization_gateway_resolver.dart';
+import '../../core/authorization_gateway/domain/services/camo_production_authorization_gateway_resolver.dart';
 import '../../core/operation_coordinator/domain/services/camo_authorized_operation_executor.dart';
 import '../../features/workspace/domain/services/camo_workspace_crypto_port.dart';
 import '../../features/workspace/domain/repositories/camo_workspace_operation_payload_store.dart';
@@ -332,6 +362,76 @@ Future<void> initDependencies() async {
   // ---------------------------------------------------------------------------
   // Authorized Crypto Executor Infrastructure
   // ---------------------------------------------------------------------------
+  // ---------------------------------------------------------------------------
+  // Authorization Gateway Security Boundary
+  // ---------------------------------------------------------------------------
+
+  sl.registerLazySingleton<CamoAuthorizationTransportMapper>(
+    DefaultCamoAuthorizationTransportMapper.new,
+  );
+
+  sl.registerLazySingleton<CamoAuthorizationTransport>(
+    FailClosedCamoAuthorizationTransport.new,
+  );
+  sl.registerLazySingleton<CamoAuthorizationResponseCanonicalizer>(
+    DefaultCamoAuthorizationResponseCanonicalizer.new,
+  );
+
+  sl.registerLazySingleton<CamoAuthorizationResponseSignatureVerifier>(
+    FailClosedCamoAuthorizationResponseSignatureVerifier.new,
+  );
+
+  sl.registerLazySingleton<CamoSignedAuthorizationResponseService>(
+    () => DefaultCamoSignedAuthorizationResponseService(
+      canonicalizer: sl(),
+      verifier: sl(),
+    ),
+  );
+
+  sl.registerLazySingleton<CamoSingleUseAuthorizationStore>(
+    FailClosedCamoSingleUseAuthorizationStore.new,
+  );
+
+  sl.registerLazySingleton<CamoSingleUseAuthorizationService>(
+    () => DefaultCamoSingleUseAuthorizationService(
+      store: sl(),
+      clock: DateTime.now,
+    ),
+  );
+
+  sl.registerLazySingleton<CamoAuthorizationResponseAcceptanceService>(
+    () => DefaultCamoAuthorizationResponseAcceptanceService(
+      singleUseService: sl(),
+    ),
+  );
+
+  sl.registerLazySingleton<CamoSingleUseAuthorizationArtifactFactory>(
+    DefaultCamoSingleUseAuthorizationArtifactFactory.new,
+  );
+  sl.registerLazySingleton<CamoProductionActivationReadinessService>(
+    DefaultCamoProductionActivationReadinessService.new,
+  );
+
+  sl.registerLazySingleton<CamoProductionActivationGuard>(
+    () => DefaultCamoProductionActivationGuard(readinessService: sl()),
+  );
+
+  sl.registerLazySingleton<CamoAuthorizationGatewaySwitch>(
+    () => DefaultCamoAuthorizationGatewaySwitch(activationGuard: sl()),
+  );
+  sl.registerLazySingleton<CamoProductionAuthorizationGatewayResolver>(
+    () => DefaultCamoProductionAuthorizationGatewayResolver(
+      gatewaySwitch: sl(),
+      failClosedGateway: sl<CamoAuthorizationGateway>(),
+    ),
+  );
+
+  sl.registerLazySingleton<CamoProductionAuthorizationGatewayAdapter>(
+    FailClosedCamoProductionAuthorizationGatewayAdapter.new,
+  );
+  sl.registerLazySingleton<CamoAuthorizationGateway>(
+    FailClosedCamoAuthorizationGateway.new,
+  );
 
   sl.registerLazySingleton<CamoWorkspaceOperationPayloadStore>(
     CamoMemoryWorkspaceOperationPayloadStore.new,
