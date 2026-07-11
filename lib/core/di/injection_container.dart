@@ -81,6 +81,7 @@ import '../../core/authorization_gateway/data/services/default_camo_single_use_a
 import '../../core/authorization_gateway/data/services/default_camo_single_use_authorization_service.dart';
 import '../../core/authorization_gateway/data/services/fail_closed_camo_authorization_gateway.dart';
 import '../../core/authorization_gateway/data/services/fail_closed_camo_production_authorization_gateway_adapter.dart';
+import '../../core/authorization_gateway/data/services/transport_backed_camo_production_authorization_gateway_adapter.dart';
 import '../../core/authorization_gateway/data/services/fail_closed_camo_authorization_response_signature_verifier.dart';
 import '../../core/authorization_gateway/domain/repositories/camo_single_use_authorization_store.dart';
 import '../../core/authorization_gateway/domain/services/camo_authorization_gateway.dart';
@@ -425,9 +426,17 @@ Future<void> initDependencies() async {
       failClosedGateway: sl<CamoAuthorizationGateway>(),
     ),
   );
-
   sl.registerLazySingleton<CamoProductionAuthorizationGatewayAdapter>(
     FailClosedCamoProductionAuthorizationGatewayAdapter.new,
+  );
+
+  sl.registerLazySingleton<
+    TransportBackedCamoProductionAuthorizationGatewayAdapter
+  >(
+    () => TransportBackedCamoProductionAuthorizationGatewayAdapter(
+      transport: sl(),
+      mapper: sl(),
+    ),
   );
   sl.registerLazySingleton<CamoAuthorizationGateway>(
     FailClosedCamoAuthorizationGateway.new,
