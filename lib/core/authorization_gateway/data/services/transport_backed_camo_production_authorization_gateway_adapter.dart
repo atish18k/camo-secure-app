@@ -6,9 +6,12 @@ import '../../../shared/failures/camo_failure.dart';
 import '../../../shared/result/camo_result.dart';
 import '../../domain/entities/camo_authorization_gateway_request.dart';
 import '../../domain/entities/camo_authorization_gateway_response.dart';
+import '../../domain/services/camo_authorization_response_acceptance_service.dart';
 import '../../domain/services/camo_authorization_transport.dart';
 import '../../domain/services/camo_authorization_transport_mapper.dart';
 import '../../domain/services/camo_production_authorization_gateway_adapter.dart';
+import '../../domain/services/camo_signed_authorization_response_service.dart';
+import '../../domain/services/camo_single_use_authorization_artifact_factory.dart';
 
 // -----------------------------------------------------------------------------
 // Class
@@ -19,10 +22,16 @@ final class TransportBackedCamoProductionAuthorizationGatewayAdapter
   const TransportBackedCamoProductionAuthorizationGatewayAdapter({
     required this._transport,
     required this._mapper,
+    this._signedResponseService,
+    this._artifactFactory,
+    this._acceptanceService,
   });
 
   final CamoAuthorizationTransport _transport;
   final CamoAuthorizationTransportMapper _mapper;
+  final CamoSignedAuthorizationResponseService? _signedResponseService;
+  final CamoSingleUseAuthorizationArtifactFactory? _artifactFactory;
+  final CamoAuthorizationResponseAcceptanceService? _acceptanceService;
 
   @override
   Future<CamoResult<CamoAuthorizationGatewayResponse>> authorize(
@@ -83,13 +92,82 @@ final class TransportBackedCamoProductionAuthorizationGatewayAdapter
         );
       }
 
-      return const CamoError<CamoAuthorizationGatewayResponse>(
-        CamoSecurityFailure(
-          code: 'authorization_response_acceptance_not_integrated',
-          message:
-              'Production authorization response acceptance is not active.',
-        ),
+      final signedResponseService = _signedResponseService;
+
+      if (signedResponseService == null) {
+        return const CamoError<CamoAuthorizationGatewayResponse>(
+          CamoSecurityFailure(
+            code: 'authorization_signature_service_unavailable',
+            message:
+                'Authorization response signature verification is unavailable.',
+          ),
+        );
+      }
+
+      final signatureDecision = await signedResponseService.verifyResponse(
+        gatewayResponse,
       );
+
+      if (!signatureDecision.permitsResponseUse) {
+        return CamoError<CamoAuthorizationGatewayResponse>(
+          CamoSecurityFailure(
+            code: signatureDecision.reasonCode.trim().isEmpty
+                ? 'authorization_response_signature_denied'
+                : signatureDecision.reasonCode.trim(),
+            message:
+                'Authorization response signature verification was denied.',
+          ),
+        );
+      }
+
+      final artifactFactory = _artifactFactory;
+      final acceptanceService = _acceptanceService;
+
+      if (artifactFactory == null || acceptanceService == null) {
+        return const CamoError<CamoAuthorizationGatewayResponse>(
+          CamoSecurityFailure(
+            code: 'authorization_response_acceptance_service_unavailable',
+            message:
+                'Authorization response acceptance services are unavailable.',
+          ),
+        );
+      }
+
+      final singleUseArtifact = artifactFactory.create(
+        operationId: request.authorizationRequest.operationId,
+        authorizationId: gatewayResponse.responseId,
+        challengeId: request.challenge.challengeId,
+        issuedAt: gatewayResponse.serverTime,
+        expiresAt: request.challenge.expiresAt,
+      );
+
+      if (!singleUseArtifact.isStructurallyValid) {
+        return const CamoError<CamoAuthorizationGatewayResponse>(
+          CamoSecurityFailure(
+            code: 'single_use_authorization_artifact_invalid',
+            message: 'Single-use authorization artifact is invalid.',
+          ),
+        );
+      }
+
+      final acceptanceDecision = await acceptanceService.accept(
+        signatureDecision: signatureDecision,
+        singleUseArtifact: singleUseArtifact,
+      );
+
+      if (!acceptanceDecision.permitsCoordinatorUse) {
+        return CamoError<CamoAuthorizationGatewayResponse>(
+          CamoSecurityFailure(
+            code: acceptanceDecision.reasonCode.trim().isEmpty
+                ? 'authorization_response_acceptance_denied'
+                : acceptanceDecision.reasonCode.trim(),
+            message:
+                'Authorization response acceptance and replay protection failed.',
+          ),
+        );
+      }
+
+      return CamoSuccess<CamoAuthorizationGatewayResponse>(gatewayResponse);
     } on Object catch (error) {
       return CamoError<CamoAuthorizationGatewayResponse>(
         CamoUnexpectedFailure(

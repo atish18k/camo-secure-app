@@ -100,8 +100,10 @@ import '../../core/authorization_gateway/data/services/default_camo_authorizatio
 import '../../core/authorization_gateway/domain/services/camo_authorization_gateway_switch.dart';
 import '../../core/operation_coordinator/data/services/default_camo_production_activation_guard.dart';
 import '../../core/operation_coordinator/data/services/default_camo_production_activation_readiness_service.dart';
+import '../../core/operation_coordinator/data/services/fail_closed_camo_production_readiness_probe.dart';
 import '../../core/operation_coordinator/domain/services/camo_production_activation_guard.dart';
 import '../../core/operation_coordinator/domain/services/camo_production_activation_readiness_service.dart';
+import '../../core/operation_coordinator/domain/services/camo_production_readiness_probe.dart';
 import '../../core/authorization_gateway/data/services/default_camo_production_authorization_gateway_resolver.dart';
 import '../../core/authorization_gateway/domain/services/camo_production_authorization_gateway_resolver.dart';
 import '../../core/operation_coordinator/domain/services/camo_authorized_operation_executor.dart';
@@ -409,8 +411,12 @@ Future<void> initDependencies() async {
   sl.registerLazySingleton<CamoSingleUseAuthorizationArtifactFactory>(
     DefaultCamoSingleUseAuthorizationArtifactFactory.new,
   );
+  sl.registerLazySingleton<CamoProductionReadinessProbe>(
+    FailClosedCamoProductionReadinessProbe.new,
+  );
+
   sl.registerLazySingleton<CamoProductionActivationReadinessService>(
-    DefaultCamoProductionActivationReadinessService.new,
+    () => DefaultCamoProductionActivationReadinessService(probe: sl()),
   );
 
   sl.registerLazySingleton<CamoProductionActivationGuard>(
@@ -436,6 +442,9 @@ Future<void> initDependencies() async {
     () => TransportBackedCamoProductionAuthorizationGatewayAdapter(
       transport: sl(),
       mapper: sl(),
+      signedResponseService: sl(),
+      artifactFactory: sl(),
+      acceptanceService: sl(),
     ),
   );
   sl.registerLazySingleton<CamoAuthorizationGateway>(

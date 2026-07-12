@@ -32,8 +32,8 @@ void main() {
         challenge: CamoAuthorizationChallenge(
           challengeId: 'challenge-001',
           challenge: 'challenge-value',
-          issuedAt: now,
-          expiresAt: now.add(const Duration(minutes: 5)),
+          issuedAt: DateTime.now().toUtc().subtract(const Duration(minutes: 1)),
+          expiresAt: DateTime.now().toUtc().add(const Duration(minutes: 10)),
         ),
         nonce: CamoAuthorizationNonce(value: 'nonce-001', createdAt: now),
         timestamp: CamoAuthorizationTimestamp(
@@ -73,8 +73,8 @@ void main() {
         challenge: CamoAuthorizationChallenge(
           challengeId: 'challenge-001',
           challenge: 'challenge-value',
-          issuedAt: now,
-          expiresAt: now.add(const Duration(minutes: 5)),
+          issuedAt: DateTime.now().toUtc().subtract(const Duration(minutes: 1)),
+          expiresAt: DateTime.now().toUtc().add(const Duration(minutes: 10)),
         ),
         nonce: CamoAuthorizationNonce(value: 'nonce-001', createdAt: now),
         timestamp: CamoAuthorizationTimestamp(
