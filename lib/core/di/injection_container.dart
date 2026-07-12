@@ -125,6 +125,12 @@ import '../../services/identity/camo_id_generator.dart';
 import '../../services/secure_storage/flutter_secure_storage_service.dart';
 import '../../services/secure_storage/secure_storage_service.dart';
 
+import '../../core/authorization/data/services/fail_closed_camo_enterprise_authorization_service.dart';
+import '../../core/authorization/domain/services/camo_enterprise_authorization_service.dart';
+import '../../features/workspace/data/services/fail_closed_camo_workspace_message_context_resolver.dart';
+import '../../features/workspace/domain/services/camo_workspace_message_context_resolver.dart';
+import '../../features/workspace/data/services/secure_camo_workspace_request_id_generator.dart';
+import '../../features/workspace/domain/services/camo_workspace_request_id_generator.dart';
 // ---------------------------------------------------------------------------
 // Service Locator
 // ---------------------------------------------------------------------------
@@ -465,6 +471,18 @@ Future<void> initDependencies() async {
       cryptoPort: sl(),
       clock: DateTime.now,
     ),
+  );
+
+  sl.registerLazySingleton<CamoEnterpriseAuthorizationService>(
+    FailClosedCamoEnterpriseAuthorizationService.new,
+  );
+
+  sl.registerLazySingleton<CamoWorkspaceMessageContextResolver>(
+    FailClosedCamoWorkspaceMessageContextResolver.new,
+  );
+
+  sl.registerLazySingleton<CamoWorkspaceRequestIdGenerator>(
+    SecureCamoWorkspaceRequestIdGenerator.new,
   );
 
   sl.registerLazySingleton<CamoAuthorizedWorkspaceService>(
