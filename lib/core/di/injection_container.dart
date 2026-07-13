@@ -133,6 +133,7 @@ import '../../features/workspace/data/services/secure_camo_workspace_request_id_
 import '../../features/workspace/domain/services/camo_workspace_request_id_generator.dart';
 import '../../core/kms/data/repositories/fail_closed_camo_kms_repository.dart';
 import '../../core/kms/domain/repositories/camo_kms_repository.dart';
+import '../../core/operation_coordinator/domain/services/default_camo_enterprise_operation_coordinator.dart';
 // ---------------------------------------------------------------------------
 // Service Locator
 // ---------------------------------------------------------------------------
@@ -472,6 +473,13 @@ Future<void> initDependencies() async {
       payloadStore: sl(),
       cryptoPort: sl(),
       clock: DateTime.now,
+    ),
+  );
+  sl.registerLazySingleton<DefaultCamoEnterpriseOperationCoordinator>(
+    () => DefaultCamoEnterpriseOperationCoordinator(
+      authorizationService: sl(),
+      kmsRepository: sl(),
+      executor: sl(),
     ),
   );
 
