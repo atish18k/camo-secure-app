@@ -10,7 +10,7 @@
     "scripts":  {
                     "clean":  "node -e \"require(\u0027fs\u0027).rmSync(\u0027lib\u0027,{recursive:true,force:true})\"",
                     "build":  "npm run clean \u0026\u0026 tsc",
-                    "test":  "node --test lib/test/authorize_operation.test.js",
+                    "test":  "node --test lib/test/*.test.js",
                     "verify":  "npm run build \u0026\u0026 npm test"
                 },
     "dependencies":  {
