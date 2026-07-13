@@ -539,7 +539,8 @@ Future<void> initDependencies() async {
   );
   sl.registerLazySingleton<DefaultCamoEnterpriseOperationCoordinator>(
     () => DefaultCamoEnterpriseOperationCoordinator(
-      authorizationService: sl(),
+      authorizationService:
+          sl<PipelineBackedCamoEnterpriseAuthorizationService>(),
       kmsRepository: sl(),
       executor: sl(),
     ),
