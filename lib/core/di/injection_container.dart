@@ -131,6 +131,8 @@ import '../../features/workspace/data/services/fail_closed_camo_workspace_messag
 import '../../features/workspace/domain/services/camo_workspace_message_context_resolver.dart';
 import '../../features/workspace/data/services/secure_camo_workspace_request_id_generator.dart';
 import '../../features/workspace/domain/services/camo_workspace_request_id_generator.dart';
+import '../../core/kms/data/repositories/fail_closed_camo_kms_repository.dart';
+import '../../core/kms/domain/repositories/camo_kms_repository.dart';
 // ---------------------------------------------------------------------------
 // Service Locator
 // ---------------------------------------------------------------------------
@@ -476,6 +478,7 @@ Future<void> initDependencies() async {
   sl.registerLazySingleton<CamoEnterpriseAuthorizationService>(
     FailClosedCamoEnterpriseAuthorizationService.new,
   );
+  sl.registerLazySingleton<CamoKmsRepository>(FailClosedCamoKmsRepository.new);
 
   sl.registerLazySingleton<CamoWorkspaceMessageContextResolver>(
     FailClosedCamoWorkspaceMessageContextResolver.new,
