@@ -139,6 +139,11 @@ import '../../features/workspace/data/services/coordinator_backed_camo_authorize
 import '../../core/operation_coordinator/data/services/fail_closed_camo_enterprise_security_pipeline_ports.dart';
 import '../../core/operation_coordinator/domain/services/camo_enterprise_security_pipeline_ports.dart';
 import '../../core/operation_coordinator/domain/services/default_camo_enterprise_security_pipeline.dart';
+import '../../core/authorization/data/services/default_camo_enterprise_authorization_operation_request_mapper.dart';
+import '../../core/authorization/data/services/fail_closed_camo_authorization_pipeline_decision_factory.dart';
+import '../../core/authorization/data/services/pipeline_backed_camo_enterprise_authorization_service.dart';
+import '../../core/authorization/domain/services/camo_authorization_pipeline_decision_factory.dart';
+import '../../core/authorization/domain/services/camo_enterprise_authorization_operation_request_mapper.dart';
 // ---------------------------------------------------------------------------
 // Service Locator
 // ---------------------------------------------------------------------------
@@ -540,6 +545,25 @@ Future<void> initDependencies() async {
     ),
   );
 
+  sl.registerLazySingleton<CamoEnterpriseAuthorizationOperationRequestMapper>(
+    () => DefaultCamoEnterpriseAuthorizationOperationRequestMapper(
+      requestIdGenerator:
+          sl<CamoWorkspaceRequestIdGenerator>().generateRequestId,
+      clock: DateTime.now,
+    ),
+  );
+
+  sl.registerLazySingleton<CamoAuthorizationPipelineDecisionFactory>(
+    FailClosedCamoAuthorizationPipelineDecisionFactory.new,
+  );
+
+  sl.registerLazySingleton<PipelineBackedCamoEnterpriseAuthorizationService>(
+    () => PipelineBackedCamoEnterpriseAuthorizationService(
+      pipeline: sl<DefaultCamoEnterpriseSecurityPipeline>(),
+      requestMapper: sl(),
+      decisionFactory: sl(),
+    ),
+  );
   sl.registerLazySingleton<CamoEnterpriseAuthorizationService>(
     FailClosedCamoEnterpriseAuthorizationService.new,
   );
