@@ -134,6 +134,8 @@ import '../../features/workspace/domain/services/camo_workspace_request_id_gener
 import '../../core/kms/data/repositories/fail_closed_camo_kms_repository.dart';
 import '../../core/kms/domain/repositories/camo_kms_repository.dart';
 import '../../core/operation_coordinator/domain/services/default_camo_enterprise_operation_coordinator.dart';
+import '../../features/workspace/data/services/default_camo_workspace_enterprise_request_builder.dart';
+import '../../features/workspace/data/services/coordinator_backed_camo_authorized_workspace_service.dart';
 // ---------------------------------------------------------------------------
 // Service Locator
 // ---------------------------------------------------------------------------
@@ -496,6 +498,24 @@ Future<void> initDependencies() async {
     SecureCamoWorkspaceRequestIdGenerator.new,
   );
 
+  sl.registerLazySingleton<DefaultCamoWorkspaceEnterpriseRequestBuilder>(
+    () => DefaultCamoWorkspaceEnterpriseRequestBuilder(
+      authRepository: sl(),
+      deviceIdentityService: sl(),
+      messageContextResolver: sl(),
+      requestIdGenerator: sl(),
+      clock: DateTime.now,
+    ),
+  );
+  sl.registerLazySingleton<CoordinatorBackedCamoAuthorizedWorkspaceService>(
+    () => CoordinatorBackedCamoAuthorizedWorkspaceService(
+      coordinator: sl<DefaultCamoEnterpriseOperationCoordinator>(),
+      requestBuilder: sl<DefaultCamoWorkspaceEnterpriseRequestBuilder>(),
+      payloadStore: sl(),
+      operationIdGenerator:
+          sl<CamoWorkspaceRequestIdGenerator>().generateOperationId,
+    ),
+  );
   sl.registerLazySingleton<CamoAuthorizedWorkspaceService>(
     FailClosedCamoAuthorizedWorkspaceService.new,
   );
