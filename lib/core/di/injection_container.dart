@@ -136,6 +136,9 @@ import '../../core/kms/domain/repositories/camo_kms_repository.dart';
 import '../../core/operation_coordinator/domain/services/default_camo_enterprise_operation_coordinator.dart';
 import '../../features/workspace/data/services/default_camo_workspace_enterprise_request_builder.dart';
 import '../../features/workspace/data/services/coordinator_backed_camo_authorized_workspace_service.dart';
+import '../../core/operation_coordinator/data/services/fail_closed_camo_enterprise_security_pipeline_ports.dart';
+import '../../core/operation_coordinator/domain/services/camo_enterprise_security_pipeline_ports.dart';
+import '../../core/operation_coordinator/domain/services/default_camo_enterprise_security_pipeline.dart';
 // ---------------------------------------------------------------------------
 // Service Locator
 // ---------------------------------------------------------------------------
@@ -475,6 +478,58 @@ Future<void> initDependencies() async {
       payloadStore: sl(),
       cryptoPort: sl(),
       clock: DateTime.now,
+    ),
+  );
+  sl.registerLazySingleton<CamoSecuritySessionCoordinatorPort>(
+    FailClosedCamoSecuritySessionCoordinatorPort.new,
+  );
+
+  sl.registerLazySingleton<CamoAuthorizationGatewayCoordinatorPort>(
+    FailClosedCamoAuthorizationGatewayCoordinatorPort.new,
+  );
+
+  sl.registerLazySingleton<CamoAuthorizationCoordinatorPort>(
+    FailClosedCamoAuthorizationCoordinatorPort.new,
+  );
+
+  sl.registerLazySingleton<CamoPolicyCoordinatorPort>(
+    FailClosedCamoPolicyCoordinatorPort.new,
+  );
+
+  sl.registerLazySingleton<CamoDeviceTrustCoordinatorPort>(
+    FailClosedCamoDeviceTrustCoordinatorPort.new,
+  );
+
+  sl.registerLazySingleton<CamoRiskCoordinatorPort>(
+    FailClosedCamoRiskCoordinatorPort.new,
+  );
+
+  sl.registerLazySingleton<CamoLicensingCoordinatorPort>(
+    FailClosedCamoLicensingCoordinatorPort.new,
+  );
+
+  sl.registerLazySingleton<CamoKmsCoordinatorPort>(
+    FailClosedCamoKmsCoordinatorPort.new,
+  );
+
+  sl.registerLazySingleton<CamoAuditCoordinatorPort>(
+    FailClosedCamoAuditCoordinatorPort.new,
+  );
+
+  sl.registerLazySingleton<DefaultCamoEnterpriseSecurityPipeline>(
+    () => DefaultCamoEnterpriseSecurityPipeline(
+      securitySessionPort: sl(),
+      authorizationGatewayPort: sl(),
+      authorizationPort: sl(),
+      policyPort: sl(),
+      deviceTrustPort: sl(),
+      riskPort: sl(),
+      licensingPort: sl(),
+      kmsPort: sl(),
+      auditPort: sl(),
+      clock: DateTime.now,
+      authorizationReferenceGenerator:
+          sl<CamoWorkspaceRequestIdGenerator>().generateRequestId,
     ),
   );
   sl.registerLazySingleton<DefaultCamoEnterpriseOperationCoordinator>(
