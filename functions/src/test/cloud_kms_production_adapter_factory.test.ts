@@ -2,19 +2,30 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
-  CamoCrc32cCalculator,
-} from "../kms/cloud_kms_authorization_response_signer";
+  CamoCloudKmsClient,
+} from "../kms/camo_cloud_kms_client";
+import {
+  DefaultCamoCrc32cCalculator,
+} from "../kms/camo_crc32c_calculator";
 import {
   createCamoCloudKmsProductionAdapters,
 } from "../kms/cloud_kms_production_adapter_factory";
 
-const crc32c:
-  CamoCrc32cCalculator = {
-  calculate: () => "0",
-  verify: () => false,
+const fakeClient: CamoCloudKmsClient = {
+  asymmetricSign: async () => {
+    throw new Error("not called");
+  },
+
+  getPublicKey: async () => {
+    throw new Error("not called");
+  },
+
+  getKeyVersion: async () => {
+    throw new Error("not called");
+  },
 };
 
-test("factory creates concrete inactive adapters", () => {
+test("factory uses injected client without metadata lookup", () => {
   const result =
     createCamoCloudKmsProductionAdapters({
       keyVersionName:
@@ -22,21 +33,17 @@ test("factory creates concrete inactive adapters", () => {
         "keyRings/camo-enterprise/cryptoKeys/" +
         "authorization-signing/cryptoKeyVersions/1",
 
-      crc32c,
+      crc32c:
+        new DefaultCamoCrc32cCalculator(),
+
+      client: fakeClient,
 
       releaseIdGenerator:
         () => "release-001",
     });
 
   assert.ok(result.signer);
-
-  assert.ok(
-    result.keyAuthorizationService,
-  );
-
-  assert.ok(
-    result.publicKeyMetadataProvider,
-  );
-
+  assert.ok(result.keyAuthorizationService);
+  assert.ok(result.publicKeyMetadataProvider);
   assert.ok(result.inspector);
 });

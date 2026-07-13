@@ -5,6 +5,9 @@ import {
   CamoCloudKmsClient,
 } from "../kms/camo_cloud_kms_client";
 import {
+  DefaultCamoCrc32cCalculator,
+} from "../kms/camo_crc32c_calculator";
+import {
   CloudKmsCamoPublicKeyMetadataProvider,
 } from "../kms/cloud_kms_public_key_metadata_provider";
 
@@ -12,6 +15,21 @@ const keyName =
   "projects/camo-b3cab/locations/global/" +
   "keyRings/camo-enterprise/cryptoKeys/" +
   "authorization-signing/cryptoKeyVersions/1";
+
+const pem =
+  "-----BEGIN PUBLIC KEY-----\n" +
+  "TEST\n" +
+  "-----END PUBLIC KEY-----";
+
+const calculator =
+  new DefaultCamoCrc32cCalculator();
+
+const validPemCrc32c =
+  calculator.calculate(
+    Uint8Array.from(
+      Buffer.from(pem, "utf8"),
+    ),
+  );
 
 const client:
   CamoCloudKmsClient = {
@@ -26,20 +44,19 @@ const client:
   getPublicKey:
     async (name) => ({
       name,
-      pem:
-        "-----BEGIN PUBLIC KEY-----\n" +
-        "TEST\n" +
-        "-----END PUBLIC KEY-----",
+      pem,
       algorithm:
         "EC_SIGN_P256_SHA256",
-      pemCrc32c: "12345",
+      pemCrc32c:
+        validPemCrc32c,
     }),
 };
 
-test("public-key metadata is returned", async () => {
+test("integrity-verified public-key metadata is returned", async () => {
   const provider =
     new CloudKmsCamoPublicKeyMetadataProvider(
       client,
+      calculator,
     );
 
   const result =
@@ -53,22 +70,44 @@ test("public-key metadata is returned", async () => {
   );
 
   assert.equal(
-    result.algorithm,
-    "EC_SIGN_P256_SHA256",
+    result.publicKeyPemCrc32c,
+    validPemCrc32c,
   );
 
   assert.match(
     result.publicKeyPem,
     /BEGIN PUBLIC KEY/,
   );
+});
 
-  assert.match(
-    result.signingKeyId,
-    /authorization-signing:1$/,
+test("public-key checksum mismatch is rejected", async () => {
+  const invalidClient:
+    CamoCloudKmsClient = {
+    ...client,
+
+    getPublicKey:
+      async (name) => ({
+        name,
+        pem,
+        algorithm:
+          "EC_SIGN_P256_SHA256",
+        pemCrc32c: "1",
+      }),
+  };
+
+  const provider =
+    new CloudKmsCamoPublicKeyMetadataProvider(
+      invalidClient,
+      calculator,
+    );
+
+  await assert.rejects(
+    provider.getMetadata(keyName),
+    /cloud_kms_public_key_integrity_failed/,
   );
 });
 
-test("invalid public-key metadata is rejected", async () => {
+test("incomplete public-key metadata is rejected", async () => {
   const invalidClient:
     CamoCloudKmsClient = {
     ...client,
@@ -85,6 +124,7 @@ test("invalid public-key metadata is rejected", async () => {
   const provider =
     new CloudKmsCamoPublicKeyMetadataProvider(
       invalidClient,
+      calculator,
     );
 
   await assert.rejects(

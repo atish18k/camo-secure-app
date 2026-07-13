@@ -3,6 +3,9 @@ import {
 } from "node:crypto";
 
 import {
+  CamoCloudKmsClient,
+} from "./camo_cloud_kms_client";
+import {
   CloudKmsCamoAuthorizationResponseSigner,
   CamoCrc32cCalculator,
 } from "./cloud_kms_authorization_response_signer";
@@ -35,10 +38,9 @@ export interface CamoCloudKmsProductionAdapters {
 
 export interface CamoCloudKmsProductionAdapterOptions {
   readonly keyVersionName: string;
-  readonly crc32c:
-    CamoCrc32cCalculator;
-  readonly releaseIdGenerator?:
-    () => string;
+  readonly crc32c: CamoCrc32cCalculator;
+  readonly client?: CamoCloudKmsClient;
+  readonly releaseIdGenerator?: () => string;
 }
 
 export function createCamoCloudKmsProductionAdapters(
@@ -46,6 +48,7 @@ export function createCamoCloudKmsProductionAdapters(
     CamoCloudKmsProductionAdapterOptions,
 ): CamoCloudKmsProductionAdapters {
   const client =
+    options.client ??
     new GoogleCloudCamoKmsClient();
 
   const inspector =
@@ -72,6 +75,7 @@ export function createCamoCloudKmsProductionAdapters(
     publicKeyMetadataProvider:
       new CloudKmsCamoPublicKeyMetadataProvider(
         client,
+        options.crc32c,
       ),
 
     inspector,

@@ -2,6 +2,9 @@ import {
   CamoCloudKmsClient,
 } from "./camo_cloud_kms_client";
 import {
+  CamoCrc32cCalculator,
+} from "./cloud_kms_authorization_response_signer";
+import {
   cloudKmsSigningKeyId,
   normalizeCloudKmsKeyVersionName,
 } from "./cloud_kms_key_version_name";
@@ -16,8 +19,8 @@ export interface CamoPublicVerificationKeyMetadata {
 
 export class CloudKmsCamoPublicKeyMetadataProvider {
   constructor(
-    private readonly client:
-      CamoCloudKmsClient,
+    private readonly client: CamoCloudKmsClient,
+    private readonly crc32c: CamoCrc32cCalculator,
   ) {}
 
   async getMetadata(
@@ -44,11 +47,24 @@ export class CloudKmsCamoPublicKeyMetadataProvider {
       );
     }
 
+    const pemBytes = Uint8Array.from(
+      Buffer.from(response.pem, "utf8"),
+    );
+
+    if (
+      !this.crc32c.verify(
+        pemBytes,
+        response.pemCrc32c,
+      )
+    ) {
+      throw new Error(
+        "cloud_kms_public_key_integrity_failed",
+      );
+    }
+
     return Object.freeze({
       signingKeyId:
-        cloudKmsSigningKeyId(
-          normalized,
-        ),
+        cloudKmsSigningKeyId(normalized),
       keyVersionName: normalized,
       algorithm: response.algorithm,
       publicKeyPem: response.pem,
