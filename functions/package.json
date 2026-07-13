@@ -1,0 +1,24 @@
+{
+    "name":  "camo-enterprise-functions",
+    "version":  "0.1.0",
+    "private":  true,
+    "description":  "CAMO online-authorized enterprise backend foundation.",
+    "main":  "lib/index.js",
+    "engines":  {
+                    "node":  "22"
+                },
+    "scripts":  {
+                    "clean":  "node -e \"require(\u0027fs\u0027).rmSync(\u0027lib\u0027,{recursive:true,force:true})\"",
+                    "build":  "npm run clean \u0026\u0026 tsc",
+                    "test":  "node --test lib/test/authorize_operation.test.js",
+                    "verify":  "npm run build \u0026\u0026 npm test"
+                },
+    "dependencies":  {
+                         "firebase-admin":  "13.10.0",
+                         "firebase-functions":  "7.2.5"
+                     },
+    "devDependencies":  {
+                            "@types/node":  "22",
+                            "typescript":  "5.9.3"
+                        }
+}

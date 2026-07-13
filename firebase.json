@@ -1,1 +1,33 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"camo-b3cab","appId":"1:224858679064:android:33fd2511500ea0f50d206d","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"camo-b3cab","configurations":{"android":"1:224858679064:android:33fd2511500ea0f50d206d","ios":"1:224858679064:ios:31d70ca6d9a8ae3e0d206d","macos":"1:224858679064:ios:31d70ca6d9a8ae3e0d206d","web":"1:224858679064:web:5a838b5b5d765dea0d206d","windows":"1:224858679064:web:59b5b688136853490d206d"}}}}}}
+{
+    "flutter":  {
+                    "platforms":  {
+                                      "android":  {
+                                                      "default":  {
+                                                                      "projectId":  "camo-b3cab",
+                                                                      "appId":  "1:224858679064:android:33fd2511500ea0f50d206d",
+                                                                      "fileOutput":  "android/app/google-services.json"
+                                                                  }
+                                                  },
+                                      "dart":  {
+                                                   "lib/firebase_options.dart":  {
+                                                                                     "projectId":  "camo-b3cab",
+                                                                                     "configurations":  {
+                                                                                                            "android":  "1:224858679064:android:33fd2511500ea0f50d206d",
+                                                                                                            "ios":  "1:224858679064:ios:31d70ca6d9a8ae3e0d206d",
+                                                                                                            "macos":  "1:224858679064:ios:31d70ca6d9a8ae3e0d206d",
+                                                                                                            "web":  "1:224858679064:web:5a838b5b5d765dea0d206d",
+                                                                                                            "windows":  "1:224858679064:web:59b5b688136853490d206d"
+                                                                                                        }
+                                                                                 }
+                                               }
+                                  }
+                },
+    "functions":  {
+                      "source":  "functions",
+                      "codebase":  "default",
+                      "runtime":  "nodejs22",
+                      "predeploy":  [
+                                        "npm --prefix \"$RESOURCE_DIR\" run build"
+                                    ]
+                  }
+}
