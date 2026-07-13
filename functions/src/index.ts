@@ -1,4 +1,7 @@
+import {randomUUID} from "node:crypto";
+
 import {initializeApp} from "firebase-admin/app";
+import {getFirestore} from "firebase-admin/firestore";
 import {setGlobalOptions} from "firebase-functions/v2";
 import {HttpsError, onCall} from "firebase-functions/v2/https";
 
@@ -6,6 +9,12 @@ import {
   createFailClosedDenial,
   parseAuthorizationInput,
 } from "./authorization_contract";
+import {
+  CamoServerAuthorizationContext,
+} from "./domain/authorization_types";
+import {
+  createCamoProductionServerAuthorizationOrchestrator,
+} from "./services/production_server_authorization_factory";
 
 initializeApp();
 
@@ -16,6 +25,14 @@ setGlobalOptions({
   timeoutSeconds: 30,
   memory: "256MiB",
 });
+
+const firestore = getFirestore();
+
+const authorizationOrchestrator =
+  createCamoProductionServerAuthorizationOrchestrator({
+    firestore,
+    idGenerator: randomUUID,
+  });
 
 export const authorizeOperation = onCall(
   {
@@ -55,12 +72,57 @@ export const authorizeOperation = onCall(
       );
     }
 
-    const denial = createFailClosedDenial();
+    const context: CamoServerAuthorizationContext =
+      Object.freeze({
+        requestId: input.requestId,
+        operationId: input.operationId,
+        userId: input.userId,
+        deviceId: input.deviceId,
+        operationType: input.operationType,
+        pairId: input.pairId,
+        messageId: input.messageId,
+        keyPurpose: input.keyPurpose,
+        keyScope: input.keyScope,
+        requiredEntitlements: input.requiredEntitlements,
+        requestedAt: input.requestedAt,
+        serverReceivedAt: new Date().toISOString(),
+      });
+
+    let result;
+
+    try {
+      result = await authorizationOrchestrator.authorize(context);
+    } catch {
+      const denial = createFailClosedDenial();
+
+      throw new HttpsError(
+        "internal",
+        "CAMO authorization pipeline failed closed.",
+        denial,
+      );
+    }
+
+    if (
+      !result.authorized ||
+      result.signedResponse === undefined
+    ) {
+      throw new HttpsError(
+        "permission-denied",
+        "CAMO server authorization was denied.",
+        {
+          authorized: false,
+          reasonCode:
+            result.reasonCode.trim() ||
+            "server_authorization_denied",
+          serverTime: new Date().toISOString(),
+        },
+      );
+    }
 
     throw new HttpsError(
       "failed-precondition",
-      "CAMO production authorization is not activated.",
-      denial,
+      "CAMO production authorization activation remains blocked.",
+      createFailClosedDenial(),
     );
   },
 );
