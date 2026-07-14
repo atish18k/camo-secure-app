@@ -3,17 +3,23 @@ import {
 } from "firebase-admin/firestore";
 
 import {
+  CamoCloudKmsClient,
+} from "../kms/camo_cloud_kms_client";
+import {
   FirebaseAdminCamoAuthorizationDocumentReader,
 } from "../infrastructure/firebase_admin_authorization_document_reader";
 import {
   FirestoreCamoAuthorizationReplayStore,
 } from "../replay/firestore_authorization_replay_store";
 import {
-  FailClosedCamoAuthorizationResponseSigner,
-} from "../security/fail_closed_authorization_response_signer";
+  camoProductionSecurityConfig,
+} from "../config/production_security_config";
 import {
-  FailClosedCamoKmsAuthorizationService,
-} from "../security/fail_closed_kms_authorization_service";
+  DefaultCamoCrc32cCalculator,
+} from "../kms/camo_crc32c_calculator";
+import {
+  createCamoCloudKmsProductionAdapters,
+} from "../kms/cloud_kms_production_adapter_factory";
 import {
   CamoServerAuthorizationOrchestrator,
 } from "./server_authorization_orchestrator";
@@ -40,12 +46,22 @@ export interface CamoProductionServerAuthorizationFactoryOptions {
   readonly firestore: Firestore;
   readonly idGenerator: () => string;
   readonly clock?: () => Date;
+  readonly kmsClient?: CamoCloudKmsClient;
 }
 
 export function createCamoProductionServerAuthorizationOrchestrator(
   options: CamoProductionServerAuthorizationFactoryOptions,
 ): CamoServerAuthorizationOrchestrator {
   const clock = options.clock ?? (() => new Date());
+
+  const kmsAdapters =
+    createCamoCloudKmsProductionAdapters({
+      keyVersionName:
+        camoProductionSecurityConfig.kmsKeyVersionName,
+      crc32c:
+        new DefaultCamoCrc32cCalculator(),
+      client: options.kmsClient,
+    });
 
   const reader =
     new FirebaseAdminCamoAuthorizationDocumentReader(
@@ -63,13 +79,14 @@ export function createCamoProductionServerAuthorizationOrchestrator(
         reader,
         clock,
       ),
-    kmsPort: new FailClosedCamoKmsAuthorizationService(),
+    kmsPort:
+      kmsAdapters.keyAuthorizationService,
     replayStore: new FirestoreCamoAuthorizationReplayStore(
       options.firestore,
       "enterpriseAuthorizationConsumptions",
       clock,
     ),
-    signer: new FailClosedCamoAuthorizationResponseSigner(),
+    signer: kmsAdapters.signer,
     idGenerator: options.idGenerator,
     clock,
   });

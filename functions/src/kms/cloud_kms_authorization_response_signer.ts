@@ -6,6 +6,8 @@ import {
   CamoAuthorizationResponseSigner,
 } from "../domain/authorization_ports";
 import {
+  camoAuthorizationSignatureAlgorithm,
+  camoAuthorizationSignatureEncoding,
   CamoSignedAuthorizationResponse,
   CamoUnsignedAuthorizationResponse,
 } from "../domain/authorization_types";
@@ -97,7 +99,9 @@ export class CloudKmsCamoAuthorizationResponseSigner
     return Object.freeze({
       ...response,
       signatureAlgorithm:
-        "CLOUD_KMS_SHA256",
+        camoAuthorizationSignatureAlgorithm,
+      signatureEncoding:
+        camoAuthorizationSignatureEncoding,
       signingKeyId:
         cloudKmsSigningKeyId(keyName),
       signature:

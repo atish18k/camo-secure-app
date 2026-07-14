@@ -44,10 +44,6 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
 
     if (value == null || value.isEmpty) return;
 
-    debugPrint('==============================');
-    debugPrint('SCANNED_QR_VALUE:');
-    debugPrint(value);
-    debugPrint('==============================');
 
     _isProcessing = true;
 

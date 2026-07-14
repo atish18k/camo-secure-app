@@ -15,11 +15,16 @@ import {
 import {
   createCamoProductionServerAuthorizationOrchestrator,
 } from "./services/production_server_authorization_factory";
+import {
+  camoProductionSecurityConfig,
+} from "./config/production_security_config";
 
 initializeApp();
 
 setGlobalOptions({
-  region: "us-central1",
+  region: camoProductionSecurityConfig.region,
+  serviceAccount:
+    camoProductionSecurityConfig.runtimeServiceAccount,
   maxInstances: 10,
   concurrency: 20,
   timeoutSeconds: 30,

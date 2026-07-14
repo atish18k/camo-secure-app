@@ -77,7 +77,9 @@ test("orchestrator stops at first denied domain", async () => {
         signerCalls++;
         return {
           ...response,
-          signatureAlgorithm: "test",
+          signatureAlgorithm:
+            "EC_SIGN_P256_SHA256",
+          signatureEncoding: "DER_BASE64",
           signingKeyId: "test-key",
           signature: "test-signature",
         };
@@ -126,7 +128,9 @@ test("orchestrator remains denied when KMS is unavailable", async () => {
         signerCalls++;
         return {
           ...response,
-          signatureAlgorithm: "test",
+          signatureAlgorithm:
+            "EC_SIGN_P256_SHA256",
+          signatureEncoding: "DER_BASE64",
           signingKeyId: "test-key",
           signature: "test-signature",
         };

@@ -2,7 +2,6 @@
 // Imports
 // ---------------------------------------------------------------------------
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/di/injection_container.dart';
@@ -57,10 +56,7 @@ class AuthController extends Notifier<AuthState> {
         case app_result.Error<void>(failure: final Failure failure):
           state = AuthState.failure(failure);
       }
-    } catch (error, stackTrace) {
-      debugPrint('AUTH: Exception -> $error');
-      debugPrintStack(stackTrace: stackTrace);
-
+    } catch (_) {
       state = const AuthState.failure(
         AuthFailure(
           message:
@@ -103,10 +99,7 @@ class AuthController extends Notifier<AuthState> {
       // Legacy profile crypto metadata is intentionally no longer written.
 
       state = const AuthState.authenticated();
-    } catch (error, stackTrace) {
-      debugPrint('PROFILE: Sync exception -> $error');
-      debugPrintStack(stackTrace: stackTrace);
-
+    } catch (_) {
       state = const AuthState.failure(
         AuthFailure(
           message: 'Profile sync failed. Check Firestore database/rules.',

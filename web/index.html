@@ -41,6 +41,19 @@
     For more details:
     * https://docs.flutter.dev/platform-integration/web/initialization
   -->
+  <script>
+    (() => {
+      const controlledPorts = new Set(['52102', '52103', '52104']);
+      const isControlledLoopback =
+        (window.location.hostname === 'localhost' ||
+          window.location.hostname === '127.0.0.1') &&
+        controlledPorts.has(window.location.port);
+
+      if (isControlledLoopback) {
+        self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+      }
+    })();
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

@@ -36,6 +36,9 @@ test("fail-closed signer never produces a signature", async () => {
 
   await assert.rejects(
     signer.sign({
+      schemaVersion: 1,
+      canonicalizationVersion: "CAMO_AUTHORIZATION_V1",
+      requestId: "fail-closed-signer-test-request",
       authorized: true,
       authorizationId: "authorization-001",
       operationId: "operation-001",

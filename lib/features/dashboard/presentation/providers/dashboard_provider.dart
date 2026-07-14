@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/di/injection_container.dart';
@@ -11,8 +10,7 @@ import '../../../pairing/domain/usecases/watch_accepted_pairings_usecase.dart';
 import '../../../profile/domain/usecases/get_user_profile_usecase.dart';
 import 'dashboard_state.dart';
 
-final dashboardProvider =
-    NotifierProvider<DashboardController, DashboardState>(
+final dashboardProvider = NotifierProvider<DashboardController, DashboardState>(
   DashboardController.new,
 );
 
@@ -39,10 +37,7 @@ class DashboardController extends Notifier<DashboardState> {
   }
 
   Future<void> loadDashboard() async {
-    state = state.copyWith(
-      isLoading: true,
-      failure: null,
-    );
+    state = state.copyWith(isLoading: true, failure: null);
 
     try {
       final String? uid = _getCurrentUserIdUseCase();
@@ -68,16 +63,12 @@ class DashboardController extends Notifier<DashboardState> {
 
       await _pairingsSubscription?.cancel();
 
-      _pairingsSubscription =
-          _watchAcceptedPairingsUseCase(uid).listen((pairings) {
-        state = state.copyWith(
-          isPaired: pairings.isNotEmpty,
-        );
+      _pairingsSubscription = _watchAcceptedPairingsUseCase(uid).listen((
+        pairings,
+      ) {
+        state = state.copyWith(isPaired: pairings.isNotEmpty);
       });
-    } catch (error, stackTrace) {
-      debugPrint('DASHBOARD: Load failed -> $error');
-      debugPrintStack(stackTrace: stackTrace);
-
+    } catch (_) {
       state = state.copyWith(
         isLoading: false,
         failure: const UnknownFailure(

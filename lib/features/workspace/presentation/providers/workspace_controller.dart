@@ -2,7 +2,6 @@
 // Imports
 // ---------------------------------------------------------------------------
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/services/camo_authorized_workspace_service.dart';
@@ -56,10 +55,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         output: output,
         errorMessage: null,
       );
-    } catch (error, stackTrace) {
-      debugPrint('WORKSPACE ENCODE ERROR: $error');
-      debugPrintStack(stackTrace: stackTrace);
-
+    } catch (_) {
       state = state.copyWith(
         isLoading: false,
         errorMessage: 'Encoding failed.',
@@ -91,10 +87,7 @@ class WorkspaceController extends Notifier<WorkspaceState> {
         output: output,
         errorMessage: null,
       );
-    } catch (error, stackTrace) {
-      debugPrint('WORKSPACE DECODE ERROR: $error');
-      debugPrintStack(stackTrace: stackTrace);
-
+    } catch (_) {
       state = state.copyWith(
         isLoading: false,
         errorMessage: 'Decoding failed.',

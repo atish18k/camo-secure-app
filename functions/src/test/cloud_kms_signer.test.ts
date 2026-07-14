@@ -50,6 +50,10 @@ const client: CamoCloudKmsClient = {
 };
 
 const unsignedResponse = {
+  schemaVersion: 1,
+  canonicalizationVersion:
+    "CAMO_AUTHORIZATION_V1",
+  requestId: "request-001",
   authorized: true,
   authorizationId:
     "authorization-001",
@@ -87,7 +91,12 @@ test("signer returns verified signature", async () => {
 
   assert.equal(
     result.signatureAlgorithm,
-    "CLOUD_KMS_SHA256",
+    "EC_SIGN_P256_SHA256",
+  );
+
+  assert.equal(
+    result.signatureEncoding,
+    "DER_BASE64",
   );
 
   assert.match(

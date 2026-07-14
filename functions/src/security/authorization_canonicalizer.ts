@@ -10,6 +10,9 @@ export function canonicalizeAuthorizationResponse(
   response: CamoUnsignedAuthorizationResponse,
 ): string {
   return [
+    `schemaVersion=${response.schemaVersion}`,
+    `canonicalizationVersion=${response.canonicalizationVersion}`,
+    `requestId=${response.requestId.trim()}`,
     `authorized=${response.authorized ? "true" : "false"}`,
     `authorizationId=${response.authorizationId.trim()}`,
     `operationId=${response.operationId.trim()}`,

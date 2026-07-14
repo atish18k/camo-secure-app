@@ -10,6 +10,10 @@ import {
   CamoUserAuthorizationPort,
 } from "../domain/authorization_ports";
 import {
+  camoAuthorizationCanonicalizationVersion,
+  camoAuthorizationSchemaVersion,
+  camoAuthorizationSignatureAlgorithm,
+  camoAuthorizationSignatureEncoding,
   CamoAuthorizationExecutionResult,
   CamoDomainDecision,
   CamoReplayArtifact,
@@ -106,6 +110,11 @@ export class CamoServerAuthorizationOrchestrator {
 
     const unsignedResponse: CamoUnsignedAuthorizationResponse =
       Object.freeze({
+        schemaVersion:
+          camoAuthorizationSchemaVersion,
+        canonicalizationVersion:
+          camoAuthorizationCanonicalizationVersion,
+        requestId: context.requestId,
         authorized: true,
         authorizationId,
         operationId: context.operationId,
@@ -127,9 +136,18 @@ export class CamoServerAuthorizationOrchestrator {
         await this.dependencies.signer.sign(unsignedResponse);
 
       if (
+        signedResponse.schemaVersion !==
+          camoAuthorizationSchemaVersion ||
+        signedResponse.canonicalizationVersion !==
+          camoAuthorizationCanonicalizationVersion ||
+        signedResponse.requestId.trim() !==
+          context.requestId.trim() ||
+        signedResponse.signatureAlgorithm !==
+          camoAuthorizationSignatureAlgorithm ||
+        signedResponse.signatureEncoding !==
+          camoAuthorizationSignatureEncoding ||
         signedResponse.signature.trim().length === 0 ||
-        signedResponse.signingKeyId.trim().length === 0 ||
-        signedResponse.signatureAlgorithm.trim().length === 0
+        signedResponse.signingKeyId.trim().length === 0
       ) {
         return this.denied("server_signature_invalid");
       }

@@ -1,3 +1,14 @@
+export const camoAuthorizationSchemaVersion = 1 as const;
+
+export const camoAuthorizationCanonicalizationVersion =
+  "CAMO_AUTHORIZATION_V1" as const;
+
+export const camoAuthorizationSignatureAlgorithm =
+  "EC_SIGN_P256_SHA256" as const;
+
+export const camoAuthorizationSignatureEncoding =
+  "DER_BASE64" as const;
+
 export type CamoOperationType = "encode" | "decode";
 
 export interface CamoServerAuthorizationContext {
@@ -30,6 +41,11 @@ export interface CamoReplayArtifact {
 }
 
 export interface CamoUnsignedAuthorizationResponse {
+  readonly schemaVersion:
+    typeof camoAuthorizationSchemaVersion;
+  readonly canonicalizationVersion:
+    typeof camoAuthorizationCanonicalizationVersion;
+  readonly requestId: string;
   readonly authorized: boolean;
   readonly authorizationId: string;
   readonly operationId: string;
@@ -48,7 +64,10 @@ export interface CamoUnsignedAuthorizationResponse {
 
 export interface CamoSignedAuthorizationResponse
   extends CamoUnsignedAuthorizationResponse {
-  readonly signatureAlgorithm: string;
+  readonly signatureAlgorithm:
+    typeof camoAuthorizationSignatureAlgorithm;
+  readonly signatureEncoding:
+    typeof camoAuthorizationSignatureEncoding;
   readonly signingKeyId: string;
   readonly signature: string;
 }

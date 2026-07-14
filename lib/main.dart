@@ -4,20 +4,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app/app.dart';
 import 'core/di/injection_container.dart';
+import 'core/security/app_check/camo_app_check_bootstrap.dart';
 import 'firebase_options.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  await initializeCamoAppCheck();
 
   await initDependencies();
 
-  runApp(
-    const ProviderScope(
-      child: CamoApp(),
-    ),
-  );
+  runApp(const ProviderScope(child: CamoApp()));
 }
