@@ -1,0 +1,151 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // -----------------------------------------------------------------------
+    // Helpers
+    // -----------------------------------------------------------------------
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // -----------------------------------------------------------------------
+    // Users
+    // -----------------------------------------------------------------------
+
+    match /users/{userId} {
+      allow read: if isSignedIn();
+
+      allow create, update: if isOwner(userId);
+
+      // ---------------------------------------------------------------------
+      // Security
+      // ---------------------------------------------------------------------
+
+      match /security/{docId} {
+        allow read: if isSignedIn();
+
+        allow create, update: if isOwner(userId);
+
+        allow delete: if false;
+      }
+
+      // ---------------------------------------------------------------------
+      // Trusted Devices
+      // ---------------------------------------------------------------------
+
+      match /devices/{deviceId} {
+
+        // Owner may directly read any device registration belonging to them.
+        //
+        // Remote users do not receive unrestricted direct document access.
+        // Remote cryptographic resolution must use the controlled active-device
+        // collection query defined by the list rule below.
+        allow get: if isOwner(userId);
+
+        // Allows the current crypto query:
+        //
+        // users/{remoteUserId}/devices
+        //   .where('status', isEqualTo: 'active')
+        //   .limit(1)
+        //
+        // Firestore Rules are not filters. The client query must include the
+        // matching status constraint and limit, otherwise this rule fails.
+        allow list: if isOwner(userId)
+          || (
+            isSignedIn()
+            && request.query.limit != null
+            && request.query.limit <= 1
+            && resource.data.status == 'active'
+          );
+
+        // Device registration may be created only by its owner.
+        //
+        // Only approved public device metadata may be stored.
+        allow create: if isOwner(userId)
+          && request.resource.data.keys().hasAll([
+            'publicKey',
+            'platform',
+            'status',
+            'keyVersion',
+            'createdAt',
+            'lastSeenAt'
+          ])
+          && request.resource.data.keys().hasOnly([
+            'publicKey',
+            'platform',
+            'status',
+            'keyVersion',
+            'createdAt',
+            'lastSeenAt'
+          ])
+          && request.resource.data.publicKey is string
+          && request.resource.data.publicKey.size() > 0
+          && request.resource.data.platform is string
+          && request.resource.data.platform.size() > 0
+          && request.resource.data.status == 'active'
+          && request.resource.data.keyVersion is int
+          && request.resource.data.keyVersion == 1
+          && request.resource.data.createdAt is string
+          && request.resource.data.createdAt.size() > 0
+          && request.resource.data.lastSeenAt is string
+          && request.resource.data.lastSeenAt.size() > 0;
+
+        // Client may refresh only lastSeenAt.
+        //
+        // Public key, platform, status, key version and registration timestamp
+        // remain immutable through the normal client update path.
+        allow update: if isOwner(userId)
+          && resource.data.status == 'active'
+          && request.resource.data
+              .diff(resource.data)
+              .affectedKeys()
+              .hasOnly(['lastSeenAt'])
+          && request.resource.data.lastSeenAt is string
+          && request.resource.data.lastSeenAt.size() > 0;
+
+        allow delete: if false;
+      }
+    }
+
+    // -----------------------------------------------------------------------
+    // Pairings — Existing Behavior Preserved
+    // -----------------------------------------------------------------------
+
+    match /pairings/{pairingId} {
+      allow read, create, update, delete: if isSignedIn();
+    }
+    // CAMO EA-002 Sequence 13: client may submit only its own immutable
+    // pending registration request. Approval uses the privileged callable.
+    match /deviceRegistrationRequests/{requestId} {
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly([
+          'schemaVersion', 'requestId', 'userId', 'deviceId',
+          'publicKey', 'keyVersion', 'platform', 'status', 'requestedAt'
+        ])
+        && request.resource.data.schemaVersion == 1
+        && request.resource.data.requestId == requestId
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.deviceId is string
+        && request.resource.data.deviceId.size() > 0
+        && request.resource.data.deviceId.size() <= 128
+        && request.resource.data.publicKey is string
+        && request.resource.data.publicKey.size() == 44
+        && request.resource.data.keyVersion is int
+        && request.resource.data.keyVersion > 0
+        && request.resource.data.platform is string
+        && request.resource.data.platform.size() > 0
+        && request.resource.data.platform.size() <= 64
+        && request.resource.data.status == 'pending'
+        && request.resource.data.requestedAt is string
+        && request.resource.data.requestedAt.size() >= 20
+        && request.resource.data.requestedAt.size() <= 35;
+    }
+  }
+}
