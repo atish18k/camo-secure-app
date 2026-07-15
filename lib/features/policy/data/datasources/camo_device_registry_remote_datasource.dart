@@ -7,6 +7,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../core/constants/firestore_paths.dart';
 import '../../domain/entities/camo_device_registry_entity.dart';
 import '../models/camo_device_registry_model.dart';
+import '../models/camo_device_registration_request_model.dart';
 
 // ---------------------------------------------------------------------------
 // CAMO Device Registry Remote Data Source
@@ -52,6 +53,10 @@ abstract class CamoDeviceRegistryRemoteDataSource {
   // ---------------------------------------------------------------------------
 
   Future<void> registerDevice(CamoDeviceRegistryEntity device);
+
+  Future<void> submitRegistrationRequest(
+    CamoDeviceRegistrationRequestModel request,
+  );
 
   // ---------------------------------------------------------------------------
   // Update Last Seen
@@ -207,6 +212,17 @@ class FirebaseCamoDeviceRegistryRemoteDataSource
     ).set(model.toMap(), SetOptions(merge: false));
   }
 
+  @override
+  Future<void> submitRegistrationRequest(
+    CamoDeviceRegistrationRequestModel request,
+  ) async {
+    await _firestore
+        .collection(FirestorePaths.users)
+        .doc(request.userId)
+        .collection('deviceRegistrationRequests')
+        .doc(request.requestId)
+        .set(request.toMap(), SetOptions(merge: false));
+  }
   // ---------------------------------------------------------------------------
   // Update Last Seen
   // ---------------------------------------------------------------------------

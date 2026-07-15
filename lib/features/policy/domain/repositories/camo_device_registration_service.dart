@@ -1,4 +1,4 @@
-﻿// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 // Imports
 // ---------------------------------------------------------------------------
 
@@ -22,4 +22,7 @@ abstract class CamoDeviceRegistrationService {
   /// A revoked, blocked or cryptographically mismatched registration must
   /// fail closed and must never be silently overwritten.
   Future<CamoDeviceRegistryEntity> registerCurrentDevice();
+
+  /// Submits only client-owned facts for server-side device approval.
+  Future<void> submitCurrentDeviceRegistrationRequest();
 }

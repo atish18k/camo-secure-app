@@ -67,4 +67,17 @@ abstract class CamoDeviceRegistryRepository {
     required String deviceId,
     required DateTime lastSeenAt,
   });
+
+  /// Submits a pending client-fact request; never creates a trusted device.
+  Future<void> submitRegistrationRequest({
+    required String requestId,
+    required String userId,
+    required String deviceId,
+    required String publicKey,
+    required int keyVersion,
+    required String platform,
+    required DateTime requestedAt,
+  }) {
+    throw StateError('Registration request submission is not implemented.');
+  }
 }

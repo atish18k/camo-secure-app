@@ -269,6 +269,16 @@ class _FakeDeviceRegistryRepository implements CamoDeviceRegistryRepository {
   }
 
   @override
+  Future<void> submitRegistrationRequest({
+    required String requestId,
+    required String userId,
+    required String deviceId,
+    required String publicKey,
+    required int keyVersion,
+    required String platform,
+    required DateTime requestedAt,
+  }) async {}
+  @override
   Future<void> updateLastSeen({
     required String userId,
     required String deviceId,

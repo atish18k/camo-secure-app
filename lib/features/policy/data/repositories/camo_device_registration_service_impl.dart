@@ -1,4 +1,4 @@
-﻿// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 // Imports
 // ---------------------------------------------------------------------------
 
@@ -11,6 +11,7 @@ import '../../domain/repositories/camo_device_identity_service.dart';
 import '../../domain/repositories/camo_device_registration_service.dart';
 import '../../domain/repositories/camo_device_registry_repository.dart';
 import '../../domain/repositories/camo_platform_info_provider.dart';
+import '../models/camo_device_registration_request_model.dart';
 
 // ---------------------------------------------------------------------------
 // CAMO Device Registration Service Implementation
@@ -33,8 +34,9 @@ class CamoDeviceRegistrationServiceImpl
     this._deviceIdentityService,
     this._platformInfoProvider,
     this._deviceKeyManager,
-    this._deviceRegistryRepository,
-  );
+    this._deviceRegistryRepository, [
+    this._requestIdGenerator,
+  ]);
 
   // ---------------------------------------------------------------------------
   // Dependencies
@@ -45,6 +47,7 @@ class CamoDeviceRegistrationServiceImpl
   final CamoPlatformInfoProvider _platformInfoProvider;
   final DeviceKeyManager _deviceKeyManager;
   final CamoDeviceRegistryRepository _deviceRegistryRepository;
+  final String Function()? _requestIdGenerator;
 
   // ---------------------------------------------------------------------------
   // Register Current Device
@@ -61,8 +64,7 @@ class CamoDeviceRegistrationServiceImpl
     }
 
     final String normalizedUserId = currentUserId.trim();
-    final String deviceId =
-        (await _deviceIdentityService.getDeviceId()).trim();
+    final String deviceId = (await _deviceIdentityService.getDeviceId()).trim();
 
     if (deviceId.isEmpty) {
       throw StateError('Trusted device identifier is unavailable.');
@@ -79,15 +81,13 @@ class CamoDeviceRegistrationServiceImpl
       throw StateError('Generated device key pair is invalid.');
     }
 
-    final String publicKey = base64Encode(
-      keyPair.publicKey,
-    );
+    final String publicKey = base64Encode(keyPair.publicKey);
 
     final CamoDeviceRegistryEntity? existingDevice =
         await _deviceRegistryRepository.getDevice(
-      userId: normalizedUserId,
-      deviceId: deviceId,
-    );
+          userId: normalizedUserId,
+          deviceId: deviceId,
+        );
 
     final DateTime now = DateTime.now().toUtc();
 
@@ -115,11 +115,11 @@ class CamoDeviceRegistrationServiceImpl
       );
     }
 
-    final String platform =
-        _platformInfoProvider.getPlatformInfo().registryValue;
+    final String platform = _platformInfoProvider
+        .getPlatformInfo()
+        .registryValue;
 
-    final CamoDeviceRegistryEntity newDevice =
-        CamoDeviceRegistryEntity(
+    final CamoDeviceRegistryEntity newDevice = CamoDeviceRegistryEntity(
       deviceId: deviceId,
       userId: normalizedUserId,
       publicKey: publicKey,
@@ -130,13 +130,73 @@ class CamoDeviceRegistrationServiceImpl
       lastSeenAt: now,
     );
 
-    await _deviceRegistryRepository.registerDevice(
-      newDevice,
-    );
+    await _deviceRegistryRepository.registerDevice(newDevice);
 
     return newDevice;
   }
 
+  @override
+  Future<void> submitCurrentDeviceRegistrationRequest() async {
+    final userId = _authRepository.currentUserId?.trim() ?? '';
+    if (userId.isEmpty) {
+      throw StateError(
+        'Authenticated user is required for device registration.',
+      );
+    }
+    final deviceId = (await _deviceIdentityService.getDeviceId()).trim();
+    if (deviceId.isEmpty) {
+      throw StateError('Trusted device identifier is unavailable.');
+    }
+    var keyPair = await _deviceKeyManager.loadKeyPair();
+    if (keyPair == null) {
+      keyPair = await _deviceKeyManager.createKeyPair();
+      await _deviceKeyManager.saveKeyPair(keyPair);
+    }
+    if (keyPair.publicKey.length != 32 || keyPair.privateKey.isEmpty) {
+      throw StateError('Generated device key pair is invalid.');
+    }
+    final publicKey = base64Encode(keyPair.publicKey);
+    final existingDevice = await _deviceRegistryRepository.getDevice(
+      userId: userId,
+      deviceId: deviceId,
+    );
+    if (existingDevice != null) {
+      _validateExistingRegistration(
+        existingDevice: existingDevice,
+        localPublicKey: publicKey,
+      );
+      await _deviceRegistryRepository.updateLastSeen(
+        userId: userId,
+        deviceId: deviceId,
+        lastSeenAt: DateTime.now().toUtc(),
+      );
+      return;
+    }
+    final generator = _requestIdGenerator;
+    if (generator == null) {
+      throw StateError(
+        'Secure registration request ID generator is unavailable.',
+      );
+    }
+    final request = CamoDeviceRegistrationRequestModel(
+      requestId: generator(),
+      userId: userId,
+      deviceId: deviceId,
+      publicKey: publicKey,
+      keyVersion: 1,
+      platform: _platformInfoProvider.getPlatformInfo().registryValue,
+      requestedAt: DateTime.now().toUtc(),
+    );
+    await _deviceRegistryRepository.submitRegistrationRequest(
+      requestId: request.requestId,
+      userId: request.userId,
+      deviceId: request.deviceId,
+      publicKey: request.publicKey,
+      keyVersion: request.keyVersion,
+      platform: request.platform,
+      requestedAt: request.requestedAt,
+    );
+  }
   // ---------------------------------------------------------------------------
   // Existing Registration Validation
   // ---------------------------------------------------------------------------

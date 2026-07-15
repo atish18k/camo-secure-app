@@ -5,6 +5,7 @@
 import '../../domain/entities/camo_device_registry_entity.dart';
 import '../../domain/repositories/camo_device_registry_repository.dart';
 import '../datasources/camo_device_registry_remote_datasource.dart';
+import '../models/camo_device_registration_request_model.dart';
 
 // ---------------------------------------------------------------------------
 // CAMO Device Registry Repository Implementation
@@ -77,6 +78,29 @@ class CamoDeviceRegistryRepositoryImpl implements CamoDeviceRegistryRepository {
       userId: userId,
       deviceId: deviceId,
       lastSeenAt: lastSeenAt,
+    );
+  }
+
+  @override
+  Future<void> submitRegistrationRequest({
+    required String requestId,
+    required String userId,
+    required String deviceId,
+    required String publicKey,
+    required int keyVersion,
+    required String platform,
+    required DateTime requestedAt,
+  }) {
+    return _remoteDataSource.submitRegistrationRequest(
+      CamoDeviceRegistrationRequestModel(
+        requestId: requestId,
+        userId: userId,
+        deviceId: deviceId,
+        publicKey: publicKey,
+        keyVersion: keyVersion,
+        platform: platform,
+        requestedAt: requestedAt,
+      ),
     );
   }
 }

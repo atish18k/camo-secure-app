@@ -1,4 +1,4 @@
-﻿// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 // Imports
 // ---------------------------------------------------------------------------
 
@@ -12,10 +12,7 @@ import '../repositories/auth_repository.dart';
 // ---------------------------------------------------------------------------
 
 class LoginUseCase {
-  const LoginUseCase(
-    this._repository,
-    this._deviceRegistrationService,
-  );
+  const LoginUseCase(this._repository, this._deviceRegistrationService);
 
   final AuthRepository _repository;
   final CamoDeviceRegistrationService _deviceRegistrationService;
@@ -24,8 +21,7 @@ class LoginUseCase {
     required String email,
     required String password,
   }) async {
-    final Result<void> authenticationResult =
-        await _repository.signIn(
+    final Result<void> authenticationResult = await _repository.signIn(
       email: email,
       password: password,
     );
@@ -35,7 +31,7 @@ class LoginUseCase {
     }
 
     try {
-      await _deviceRegistrationService.registerCurrentDevice();
+      await _deviceRegistrationService.submitCurrentDeviceRegistrationRequest();
 
       return const Success<void>(null);
     } catch (error) {
