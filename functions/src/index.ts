@@ -3,6 +3,7 @@ import {randomUUID} from "node:crypto";
 import {initializeApp} from "firebase-admin/app";
 import {getFirestore} from "firebase-admin/firestore";
 import {setGlobalOptions} from "firebase-functions/v2";
+import {provisionControlledCanaryPair} from "./services/canary_pair_provisioning_service";
 import {
   approveDeviceRegistration,
   parseDeviceApprovalInput,
@@ -159,5 +160,16 @@ export const approveDeviceRegistrationRequest = onCall(
     } catch {
       throw new HttpsError("failed-precondition", "Device approval failed closed.");
     }
+  },
+);
+
+export const provisionCanaryPair = onCall(
+  {enforceAppCheck: true, consumeAppCheckToken: true},
+  async (request) => {
+    if (request.auth === undefined) throw new HttpsError("unauthenticated", "Authentication required.");
+    if (request.app === undefined) throw new HttpsError("failed-precondition", "Valid App Check required.");
+    if (request.auth.token.camoPairProvisioner !== true) throw new HttpsError("permission-denied", "Canary provisioner claim required.");
+    try { return await provisionControlledCanaryPair(firestore, request.auth.uid); }
+    catch { throw new HttpsError("failed-precondition", "Canary provisioning failed closed."); }
   },
 );

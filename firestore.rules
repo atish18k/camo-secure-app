@@ -115,11 +115,13 @@ service cloud.firestore {
     }
 
     // -----------------------------------------------------------------------
-    // Pairings — Existing Behavior Preserved
+    // Pairings ΓÇö Existing Behavior Preserved
     // -----------------------------------------------------------------------
 
     match /pairings/{pairingId} {
-      allow read, create, update, delete: if isSignedIn();
+      allow read: if isSignedIn()
+        && request.auth.uid in resource.data.participantUserIds;
+      allow create, update, delete: if false;
     }
     // CAMO EA-002 Sequence 13: client may submit only its own immutable
     // pending registration request. Approval uses the privileged callable.
