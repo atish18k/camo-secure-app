@@ -112,6 +112,34 @@ service cloud.firestore {
 
         allow delete: if false;
       }
+
+      // Client may create only its own immutable pending registration request.
+      // Approval remains server-only through the privileged callable.
+      match /deviceRegistrationRequests/{requestId} {
+        allow create: if isOwner(userId)
+          && request.resource.data.keys().hasOnly([
+            'schemaVersion', 'requestId', 'userId', 'deviceId',
+            'publicKey', 'keyVersion', 'platform', 'status', 'requestedAt'
+          ])
+          && request.resource.data.schemaVersion == 1
+          && request.resource.data.requestId == requestId
+          && request.resource.data.userId == userId
+          && request.resource.data.deviceId is string
+          && request.resource.data.deviceId.size() > 0
+          && request.resource.data.deviceId.size() <= 128
+          && request.resource.data.publicKey is string
+          && request.resource.data.publicKey.size() == 44
+          && request.resource.data.keyVersion is int
+          && request.resource.data.keyVersion > 0
+          && request.resource.data.platform is string
+          && request.resource.data.platform.size() > 0
+          && request.resource.data.platform.size() <= 64
+          && request.resource.data.status == 'pending'
+          && request.resource.data.requestedAt is string
+          && request.resource.data.requestedAt.size() >= 20
+          && request.resource.data.requestedAt.size() <= 35;
+        allow read, update, delete: if false;
+      }
     }
 
     // -----------------------------------------------------------------------
@@ -123,31 +151,6 @@ service cloud.firestore {
         && request.auth.uid in resource.data.participantUserIds;
       allow create, update, delete: if false;
     }
-    // CAMO EA-002 Sequence 13: client may submit only its own immutable
-    // pending registration request. Approval uses the privileged callable.
-    match /deviceRegistrationRequests/{requestId} {
-      allow create: if request.auth != null
-        && request.resource.data.keys().hasOnly([
-          'schemaVersion', 'requestId', 'userId', 'deviceId',
-          'publicKey', 'keyVersion', 'platform', 'status', 'requestedAt'
-        ])
-        && request.resource.data.schemaVersion == 1
-        && request.resource.data.requestId == requestId
-        && request.resource.data.userId == request.auth.uid
-        && request.resource.data.deviceId is string
-        && request.resource.data.deviceId.size() > 0
-        && request.resource.data.deviceId.size() <= 128
-        && request.resource.data.publicKey is string
-        && request.resource.data.publicKey.size() == 44
-        && request.resource.data.keyVersion is int
-        && request.resource.data.keyVersion > 0
-        && request.resource.data.platform is string
-        && request.resource.data.platform.size() > 0
-        && request.resource.data.platform.size() <= 64
-        && request.resource.data.status == 'pending'
-        && request.resource.data.requestedAt is string
-        && request.resource.data.requestedAt.size() >= 20
-        && request.resource.data.requestedAt.size() <= 35;
-    }
+
   }
 }
