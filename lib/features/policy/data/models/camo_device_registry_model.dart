@@ -34,16 +34,10 @@ class CamoDeviceRegistryModel extends CamoDeviceRegistryEntity {
       userId: userId,
       publicKey: map['publicKey'] as String? ?? '',
       platform: map['platform'] as String? ?? 'unknown',
-      status: _statusFromString(
-        map['status'] as String? ?? 'active',
-      ),
+      status: _statusFromString(map['status']),
       keyVersion: map['keyVersion'] as int? ?? 1,
-      createdAt: DateTime.parse(
-        map['createdAt'] as String,
-      ),
-      lastSeenAt: DateTime.parse(
-        map['lastSeenAt'] as String,
-      ),
+      createdAt: DateTime.parse(map['createdAt'] as String),
+      lastSeenAt: DateTime.parse(map['lastSeenAt'] as String),
     );
   }
 
@@ -62,19 +56,18 @@ class CamoDeviceRegistryModel extends CamoDeviceRegistryEntity {
   // Helpers
   // ---------------------------------------------------------------------------
 
-  static CamoDeviceStatus _statusFromString(
-    String value,
-  ) {
+  static CamoDeviceStatus _statusFromString(Object? value) {
     switch (value) {
+      case 'active':
+        return CamoDeviceStatus.active;
       case 'revoked':
         return CamoDeviceStatus.revoked;
-
       case 'blocked':
         return CamoDeviceStatus.blocked;
-
-      case 'active':
       default:
-        return CamoDeviceStatus.active;
+        throw const FormatException(
+          'Device status is missing, invalid, or unsupported.',
+        );
     }
   }
 }
