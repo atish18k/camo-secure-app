@@ -3,6 +3,10 @@ import {randomUUID} from "node:crypto";
 import {initializeApp} from "firebase-admin/app";
 import {getFirestore} from "firebase-admin/firestore";
 import {setGlobalOptions} from "firebase-functions/v2";
+import {
+  approveDeviceRegistration,
+  parseDeviceApprovalInput,
+} from "./services/device_registration_approval_service";
 import {HttpsError, onCall} from "firebase-functions/v2/https";
 
 import {
@@ -129,5 +133,31 @@ export const authorizeOperation = onCall(
       "CAMO production authorization activation remains blocked.",
       createFailClosedDenial(),
     );
+  },
+);
+
+export const approveDeviceRegistrationRequest = onCall(
+  {enforceAppCheck: true, consumeAppCheckToken: true},
+  async (request) => {
+    if (request.auth === undefined) {
+      throw new HttpsError("unauthenticated", "Authenticated approver is required.");
+    }
+    if (request.app === undefined) {
+      throw new HttpsError("failed-precondition", "Valid App Check is required.");
+    }
+    if (request.auth.token.camoDeviceApprover !== true) {
+      throw new HttpsError("permission-denied", "Trusted device approver role is required.");
+    }
+    let input;
+    try {
+      input = parseDeviceApprovalInput(request.data);
+    } catch {
+      throw new HttpsError("invalid-argument", "Device approval payload is invalid.");
+    }
+    try {
+      return await approveDeviceRegistration(firestore, input, request.auth.uid);
+    } catch {
+      throw new HttpsError("failed-precondition", "Device approval failed closed.");
+    }
   },
 );
