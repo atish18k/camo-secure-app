@@ -51,4 +51,16 @@ void main() {
     expect(source, contains('request.toMap()'));
     expect(source, contains('SetOptions(merge: false)'));
   });
+
+  test('registration request identity is deterministic per device', () {
+    final source = File(
+      'lib/features/policy/data/repositories/camo_device_registration_service_impl.dart',
+    ).readAsStringSync();
+    final rules = File('firestore.rules').readAsStringSync();
+    expect(source, contains('requestId: deviceId'));
+    expect(source, isNot(contains('requestId: generator()')));
+    expect(rules, contains("resource.data.status == 'approved'"));
+    expect(rules, contains("hasOnly(['requestedAt'])"));
+    expect(rules, contains('allow create, update, delete: if false;'));
+  });
 }

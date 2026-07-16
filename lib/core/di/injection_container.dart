@@ -231,14 +231,7 @@ Future<void> initDependencies() async {
   );
 
   sl.registerLazySingleton<CamoDeviceRegistrationService>(
-    () => CamoDeviceRegistrationServiceImpl(
-      sl(),
-      sl(),
-      sl(),
-      sl(),
-      sl(),
-      sl<CamoDeviceIdGenerator>().generate,
-    ),
+    () => CamoDeviceRegistrationServiceImpl(sl(), sl(), sl(), sl(), sl()),
   );
 
   // ---------------------------------------------------------------------------

@@ -35,9 +35,8 @@ class CamoDeviceRegistrationServiceImpl
     this._deviceIdentityService,
     this._platformInfoProvider,
     this._deviceKeyManager,
-    this._deviceRegistryRepository, [
-    this._requestIdGenerator,
-  ]);
+    this._deviceRegistryRepository,
+  );
 
   // ---------------------------------------------------------------------------
   // Dependencies
@@ -48,7 +47,6 @@ class CamoDeviceRegistrationServiceImpl
   final CamoPlatformInfoProvider _platformInfoProvider;
   final DeviceKeyManager _deviceKeyManager;
   final CamoDeviceRegistryRepository _deviceRegistryRepository;
-  final String Function()? _requestIdGenerator;
 
   // ---------------------------------------------------------------------------
   // Register Current Device
@@ -153,14 +151,8 @@ class CamoDeviceRegistrationServiceImpl
       );
       return;
     }
-    final generator = _requestIdGenerator;
-    if (generator == null) {
-      throw StateError(
-        'Secure registration request ID generator is unavailable.',
-      );
-    }
     final request = CamoDeviceRegistrationRequestModel(
-      requestId: generator(),
+      requestId: deviceId,
       userId: userId,
       deviceId: deviceId,
       publicKey: publicKey,

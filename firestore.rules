@@ -41,79 +41,18 @@ service cloud.firestore {
       // ---------------------------------------------------------------------
 
       match /devices/{deviceId} {
-
-        // Owner may directly read any device registration belonging to them.
-        //
-        // Remote users do not receive unrestricted direct document access.
-        // Remote cryptographic resolution must use the controlled active-device
-        // collection query defined by the list rule below.
         allow get: if isOwner(userId);
-
-        // Allows the current crypto query:
-        //
-        // users/{remoteUserId}/devices
-        //   .where('status', isEqualTo: 'active')
-        //   .limit(1)
-        //
-        // Firestore Rules are not filters. The client query must include the
-        // matching status constraint and limit, otherwise this rule fails.
         allow list: if isOwner(userId)
           || (
             isSignedIn()
             && request.query.limit != null
             && request.query.limit <= 1
-            && resource.data.status == 'active'
+            && resource.data.status == 'approved'
           );
-
-        // Device registration may be created only by its owner.
-        //
-        // Only approved public device metadata may be stored.
-        allow create: if isOwner(userId)
-          && request.resource.data.keys().hasAll([
-            'publicKey',
-            'platform',
-            'status',
-            'keyVersion',
-            'createdAt',
-            'lastSeenAt'
-          ])
-          && request.resource.data.keys().hasOnly([
-            'publicKey',
-            'platform',
-            'status',
-            'keyVersion',
-            'createdAt',
-            'lastSeenAt'
-          ])
-          && request.resource.data.publicKey is string
-          && request.resource.data.publicKey.size() > 0
-          && request.resource.data.platform is string
-          && request.resource.data.platform.size() > 0
-          && request.resource.data.status == 'active'
-          && request.resource.data.keyVersion is int
-          && request.resource.data.keyVersion == 1
-          && request.resource.data.createdAt is string
-          && request.resource.data.createdAt.size() > 0
-          && request.resource.data.lastSeenAt is string
-          && request.resource.data.lastSeenAt.size() > 0;
-
-        // Client may refresh only lastSeenAt.
-        //
-        // Public key, platform, status, key version and registration timestamp
-        // remain immutable through the normal client update path.
-        allow update: if isOwner(userId)
-          && resource.data.status == 'active'
-          && request.resource.data
-              .diff(resource.data)
-              .affectedKeys()
-              .hasOnly(['lastSeenAt'])
-          && request.resource.data.lastSeenAt is string
-          && request.resource.data.lastSeenAt.size() > 0;
-
-        allow delete: if false;
+        allow create, update, delete: if false;
       }
 
-      // Client may create only its own immutable pending registration request.
+      // Client may create one deterministic pending request per device.
       // Approval remains server-only through the privileged callable.
       match /deviceRegistrationRequests/{requestId} {
         allow create: if isOwner(userId)
@@ -138,7 +77,23 @@ service cloud.firestore {
           && request.resource.data.requestedAt is string
           && request.resource.data.requestedAt.size() >= 20
           && request.resource.data.requestedAt.size() <= 35;
-        allow read, update, delete: if false;
+        allow update: if isOwner(userId)
+          && resource.data.status == 'pending'
+          && request.resource.data.status == 'pending'
+          && request.resource.data.requestId == resource.data.requestId
+          && request.resource.data.userId == resource.data.userId
+          && request.resource.data.deviceId == resource.data.deviceId
+          && request.resource.data.publicKey == resource.data.publicKey
+          && request.resource.data.keyVersion == resource.data.keyVersion
+          && request.resource.data.platform == resource.data.platform
+          && request.resource.data
+              .diff(resource.data)
+              .affectedKeys()
+              .hasOnly(['requestedAt'])
+          && request.resource.data.requestedAt is string
+          && request.resource.data.requestedAt.size() >= 20
+          && request.resource.data.requestedAt.size() <= 35;
+        allow get, list, delete: if false;
       }
     }
 

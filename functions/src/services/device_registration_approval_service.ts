@@ -13,14 +13,11 @@ export interface DeviceApprovalResult {
   readonly requestId: string;
   readonly deviceId: string;
   readonly status: "approved";
+  readonly supersededRequestCount: number;
 }
 
 function requiredSegment(value: unknown, name: string): string {
-  if (
-    typeof value !== "string" ||
-    value.trim().length === 0 ||
-    value.includes("/")
-  ) {
+  if (typeof value !== "string" || value.trim().length === 0 || value.includes("/")) {
     throw new Error("Invalid " + name + ".");
   }
   return value.trim();
@@ -51,9 +48,10 @@ export async function approveDeviceRegistration(
   approverUid: string,
 ): Promise<DeviceApprovalResult> {
   const approvedBy = requiredSegment(approverUid, "approverUid");
-  const requestPath = "users/" + input.userId +
-    "/deviceRegistrationRequests/" + input.requestId;
-  const requestReference = firestore.doc(requestPath);
+  const requestCollection = firestore.collection(
+    "users/" + input.userId + "/deviceRegistrationRequests",
+  );
+  const requestReference = requestCollection.doc(input.requestId);
 
   return firestore.runTransaction(async (transaction) => {
     const requestSnapshot = await transaction.get(requestReference);
@@ -76,6 +74,11 @@ export async function approveDeviceRegistration(
     if (!Number.isInteger(keyVersion) || (keyVersion as number) < 1) {
       throw new Error("Device key version is invalid.");
     }
+
+    const siblingQuery = requestCollection
+      .where("deviceId", "==", deviceId)
+      .where("status", "==", "pending");
+    const siblingSnapshot = await transaction.get(siblingQuery);
     const deviceReference = firestore.doc(
       "users/" + input.userId + "/devices/" + deviceId,
     );
@@ -83,6 +86,7 @@ export async function approveDeviceRegistration(
     if (existingDevice.exists) {
       throw new Error("Device approval replay or overwrite was rejected.");
     }
+
     transaction.create(deviceReference, {
       schemaVersion: 1,
       deviceId,
@@ -98,6 +102,19 @@ export async function approveDeviceRegistration(
       approved: true,
       revoked: false,
     });
+
+    let supersededRequestCount = 0;
+    for (const sibling of siblingSnapshot.docs) {
+      if (sibling.id === input.requestId) continue;
+      transaction.update(sibling.ref, {
+        status: "rejected",
+        resolutionReason: "superseded",
+        supersededByRequestId: input.requestId,
+        resolvedAt: FieldValue.serverTimestamp(),
+        resolvedBy: approvedBy,
+      });
+      supersededRequestCount++;
+    }
     transaction.update(requestReference, {
       status: "approved",
       resolvedAt: FieldValue.serverTimestamp(),
@@ -108,6 +125,7 @@ export async function approveDeviceRegistration(
       requestId: input.requestId,
       deviceId,
       status: "approved" as const,
+      supersededRequestCount,
     });
   });
 }
