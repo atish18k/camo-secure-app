@@ -33,6 +33,10 @@ import {
   FirestoreCamoPairAuthorizationPort,
 } from "../validators/firestore_pair_authorization_port";
 import {
+  FirestoreCamoMessageLifecycleAuthorizationPort,
+} from "../validators/firestore_message_lifecycle_authorization_port";
+
+import {
   FirestoreCamoPolicyAuthorizationPort,
 } from "../validators/firestore_policy_authorization_port";
 import {
@@ -72,6 +76,11 @@ export function createCamoProductionServerAuthorizationOrchestrator(
     userPort: new FirestoreCamoUserAuthorizationPort(reader),
     devicePort: new FirestoreCamoDeviceAuthorizationPort(reader),
     pairPort: new FirestoreCamoPairAuthorizationPort(reader),
+    messageLifecyclePort:
+      new FirestoreCamoMessageLifecycleAuthorizationPort(
+        reader,
+        clock,
+      ),
     policyPort: new FirestoreCamoPolicyAuthorizationPort(reader),
     riskPort: new FirestoreCamoRiskAuthorizationPort(reader),
     entitlementPort:

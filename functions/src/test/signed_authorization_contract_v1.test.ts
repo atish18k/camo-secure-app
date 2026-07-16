@@ -45,6 +45,7 @@ test("signed contract binds schema and request identity", async () => {
       userPort: {validateUser: allow},
       devicePort: {validateDevice: allow},
       pairPort: {validatePair: allow},
+      messageLifecyclePort: {validateMessageLifecycle: allow},
       policyPort: {evaluatePolicy: allow},
       riskPort: {evaluateRisk: allow},
       entitlementPort: {validateEntitlements: allow},

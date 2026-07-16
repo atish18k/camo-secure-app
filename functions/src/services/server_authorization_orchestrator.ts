@@ -4,6 +4,7 @@ import {
   CamoDeviceAuthorizationPort,
   CamoEntitlementAuthorizationPort,
   CamoKmsAuthorizationPort,
+  CamoMessageLifecycleAuthorizationPort,
   CamoPairAuthorizationPort,
   CamoPolicyAuthorizationPort,
   CamoRiskAuthorizationPort,
@@ -25,6 +26,7 @@ export interface CamoServerAuthorizationOrchestratorDependencies {
   readonly userPort: CamoUserAuthorizationPort;
   readonly devicePort: CamoDeviceAuthorizationPort;
   readonly pairPort: CamoPairAuthorizationPort;
+  readonly messageLifecyclePort: CamoMessageLifecycleAuthorizationPort;
   readonly policyPort: CamoPolicyAuthorizationPort;
   readonly riskPort: CamoRiskAuthorizationPort;
   readonly entitlementPort: CamoEntitlementAuthorizationPort;
@@ -54,6 +56,9 @@ export class CamoServerAuthorizationOrchestrator {
       () => this.dependencies.userPort.validateUser(context),
       () => this.dependencies.devicePort.validateDevice(context),
       () => this.dependencies.pairPort.validatePair(context),
+      () =>
+        this.dependencies.messageLifecyclePort
+          .validateMessageLifecycle(context),
       () => this.dependencies.policyPort.evaluatePolicy(context),
       () => this.dependencies.riskPort.evaluateRisk(context),
       () =>
