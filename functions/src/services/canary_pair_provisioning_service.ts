@@ -5,7 +5,7 @@ export const canaryPair = Object.freeze({
   requestedBy: "dQMhOUtVwjcl17KQgIa52pbETOn1",
 });
 export async function provisionControlledCanaryPair(firestore: Firestore, provisionerUid: string) {
-  if (provisionerUid !== "52WuVLqvCCYf89WApttFctDb1hc2") throw new Error("Unexpected canary provisioner.");
+  if (provisionerUid !== canaryPair.requestedBy) throw new Error("Unexpected canary provisioner.");
   const ref = firestore.doc("pairings/" + canaryPair.pairId);
   return firestore.runTransaction(async (tx) => {
     if ((await tx.get(ref)).exists) throw new Error("Canary pair already exists; replay rejected.");
