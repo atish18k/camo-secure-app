@@ -97,22 +97,7 @@ class CamoDeviceRegistrationServiceImpl
         localPublicKey: publicKey,
       );
 
-      await _deviceRegistryRepository.updateLastSeen(
-        userId: normalizedUserId,
-        deviceId: deviceId,
-        lastSeenAt: now,
-      );
-
-      return CamoDeviceRegistryEntity(
-        deviceId: existingDevice.deviceId,
-        userId: existingDevice.userId,
-        publicKey: existingDevice.publicKey,
-        platform: existingDevice.platform,
-        status: existingDevice.status,
-        keyVersion: existingDevice.keyVersion,
-        createdAt: existingDevice.createdAt,
-        lastSeenAt: now,
-      );
+      return existingDevice;
     }
 
     final String platform = _platformInfoProvider
@@ -164,11 +149,6 @@ class CamoDeviceRegistrationServiceImpl
       _validateExistingRegistration(
         existingDevice: existingDevice,
         localPublicKey: publicKey,
-      );
-      await _deviceRegistryRepository.updateLastSeen(
-        userId: userId,
-        deviceId: deviceId,
-        lastSeenAt: DateTime.now().toUtc(),
       );
       return;
     }

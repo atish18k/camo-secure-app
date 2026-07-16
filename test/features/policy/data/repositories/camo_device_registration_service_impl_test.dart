@@ -62,32 +62,35 @@ void main() {
       );
     });
 
-    test('reuses an existing matching active device', () async {
-      final CamoKeyPair keyPair = await deviceKeyManager.createKeyPair();
+    test(
+      'reuses an existing matching active device without a client write',
+      () async {
+        final CamoKeyPair keyPair = await deviceKeyManager.createKeyPair();
 
-      await deviceKeyManager.saveKeyPair(keyPair);
+        await deviceKeyManager.saveKeyPair(keyPair);
 
-      deviceRegistryRepository.existingDevice = CamoDeviceRegistryEntity(
-        deviceId: 'device-1',
-        userId: 'user-1',
-        publicKey: 'AQIDBA==',
-        platform: 'web',
-        status: CamoDeviceStatus.active,
-        keyVersion: 1,
-        createdAt: DateTime.utc(2026, 1, 1),
-        lastSeenAt: DateTime.utc(2026, 1, 1),
-      );
+        deviceRegistryRepository.existingDevice = CamoDeviceRegistryEntity(
+          deviceId: 'device-1',
+          userId: 'user-1',
+          publicKey: 'AQIDBA==',
+          platform: 'web',
+          status: CamoDeviceStatus.active,
+          keyVersion: 1,
+          createdAt: DateTime.utc(2026, 1, 1),
+          lastSeenAt: DateTime.utc(2026, 1, 1),
+        );
 
-      final CamoDeviceRegistryEntity device = await service
-          .registerCurrentDevice();
+        final CamoDeviceRegistryEntity device = await service
+            .registerCurrentDevice();
 
-      expect(device.deviceId, 'device-1');
-      expect(device.status, CamoDeviceStatus.active);
+        expect(device.deviceId, 'device-1');
+        expect(device.status, CamoDeviceStatus.active);
 
-      expect(deviceRegistryRepository.updateLastSeenInvocationCount, 1);
+        expect(deviceRegistryRepository.updateLastSeenInvocationCount, 0);
 
-      expect(deviceRegistryRepository.registerInvocationCount, 0);
-    });
+        expect(deviceRegistryRepository.registerInvocationCount, 0);
+      },
+    );
 
     test('denies registration when user is not authenticated', () async {
       authRepository.currentUserIdValue = null;

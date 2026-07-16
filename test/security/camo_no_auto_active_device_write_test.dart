@@ -22,6 +22,7 @@ void main() {
         .split('Existing Registration Validation')[0];
     expect(method, isNot(contains('CamoDeviceStatus.active')));
     expect(method, isNot(contains('registerDevice(')));
+    expect(method, isNot(contains('updateLastSeen(')));
   });
 
   test('datasource writes the pending registration request collection', () {
