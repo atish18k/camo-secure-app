@@ -168,6 +168,12 @@ export const provisionCanaryPair = onCall(
   async (request) => {
     if (request.auth === undefined) throw new HttpsError("unauthenticated", "Authentication required.");
     if (request.app === undefined) throw new HttpsError("failed-precondition", "Valid App Check required.");
+    if (request.app?.alreadyConsumed === true) {
+      throw new HttpsError(
+        "unauthenticated",
+        "Consumed App Check token rejected."
+      );
+    }
     if (request.auth.token.camoPairProvisioner !== true) throw new HttpsError("permission-denied", "Canary provisioner claim required.");
     try { return await provisionControlledCanaryPair(firestore, request.auth.uid); }
     catch { throw new HttpsError("failed-precondition", "Canary provisioning failed closed."); }
