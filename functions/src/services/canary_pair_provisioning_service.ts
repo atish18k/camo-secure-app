@@ -1,8 +1,8 @@
 import {FieldValue, Firestore} from "firebase-admin/firestore";
 export const canaryPair = Object.freeze({
   pairId: "ea002-seq15-controlled-canary-v1",
-  participantUserIds: ["mP72XpT0v8gq2USSXsFmSg8aFSw1", "sXl0ci9cO4WYJWxJmzycAznvBwz2"] as const,
-  requestedBy: "mP72XpT0v8gq2USSXsFmSg8aFSw1",
+  participantUserIds: ["LsSzAKvXZcUKzzkyFZLqN2fgdkm2", "dQMhOUtVwjcl17KQgIa52pbETOn1"] as const,
+  requestedBy: "dQMhOUtVwjcl17KQgIa52pbETOn1",
 });
 export async function provisionControlledCanaryPair(firestore: Firestore, provisionerUid: string) {
   if (provisionerUid !== "52WuVLqvCCYf89WApttFctDb1hc2") throw new Error("Unexpected canary provisioner.");
