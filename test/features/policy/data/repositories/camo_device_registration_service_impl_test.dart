@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:camo/core/crypto/encryption/camo_key_pair.dart';
+import 'package:camo/core/device_trust/domain/entities/camo_device_status.dart';
 import 'package:camo/core/errors/result.dart';
 import 'package:camo/features/auth/domain/repositories/auth_repository.dart';
 import 'package:camo/features/pairing/security/device_key_manager.dart';
@@ -48,7 +49,7 @@ void main() {
       expect(device.userId, 'user-1');
       expect(device.deviceId, 'device-1');
       expect(device.platform, 'web');
-      expect(device.status, CamoDeviceStatus.active);
+      expect(device.status, CamoDeviceStatus.approved);
       expect(device.keyVersion, 1);
 
       expect(deviceKeyManager.createInvocationCount, 1);
@@ -63,7 +64,7 @@ void main() {
     });
 
     test(
-      'reuses an existing matching active device without a client write',
+      'reuses an existing matching approved device without a client write',
       () async {
         final CamoKeyPair keyPair = await deviceKeyManager.createKeyPair();
 
@@ -74,7 +75,7 @@ void main() {
           userId: 'user-1',
           publicKey: 'AQIDBA==',
           platform: 'web',
-          status: CamoDeviceStatus.active,
+          status: CamoDeviceStatus.approved,
           keyVersion: 1,
           createdAt: DateTime.utc(2026, 1, 1),
           lastSeenAt: DateTime.utc(2026, 1, 1),
@@ -84,7 +85,7 @@ void main() {
             .registerCurrentDevice();
 
         expect(device.deviceId, 'device-1');
-        expect(device.status, CamoDeviceStatus.active);
+        expect(device.status, CamoDeviceStatus.approved);
 
         expect(deviceRegistryRepository.updateLastSeenInvocationCount, 0);
 
@@ -119,7 +120,7 @@ void main() {
       expect(deviceRegistryRepository.updateLastSeenInvocationCount, 0);
     });
 
-    test('denies a blocked existing device', () async {
+    test('denies a blacklisted existing device', () async {
       final CamoKeyPair keyPair = await deviceKeyManager.createKeyPair();
 
       await deviceKeyManager.saveKeyPair(keyPair);
@@ -129,7 +130,7 @@ void main() {
         userId: 'user-1',
         publicKey: 'AQIDBA==',
         platform: 'web',
-        status: CamoDeviceStatus.blocked,
+        status: CamoDeviceStatus.blacklisted,
         keyVersion: 1,
         createdAt: DateTime.utc(2026, 1, 1),
         lastSeenAt: DateTime.utc(2026, 1, 1),
@@ -148,7 +149,7 @@ void main() {
         userId: 'user-1',
         publicKey: 'different-public-key',
         platform: 'web',
-        status: CamoDeviceStatus.active,
+        status: CamoDeviceStatus.approved,
         keyVersion: 1,
         createdAt: DateTime.utc(2026, 1, 1),
         lastSeenAt: DateTime.utc(2026, 1, 1),

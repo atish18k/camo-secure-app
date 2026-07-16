@@ -25,6 +25,24 @@ void main() {
     expect(method, isNot(contains('updateLastSeen(')));
   });
 
+  test('trusted-device parser and query are canonical-only', () {
+    final model = File(
+      'lib/features/policy/data/models/camo_device_registry_model.dart',
+    ).readAsStringSync();
+    final datasource = File(
+      'lib/features/policy/data/datasources/camo_device_registry_remote_datasource.dart',
+    ).readAsStringSync();
+    expect(model, contains("case 'approved':"));
+    expect(model, isNot(contains("case 'active':")));
+    expect(model, isNot(contains("case 'blocked':")));
+    expect(datasource, contains('CamoDeviceStatus.approved.name'));
+    expect(
+      File(
+        'lib/features/policy/data/adapters/camo_legacy_device_status_adapter.dart',
+      ).existsSync(),
+      isFalse,
+    );
+  });
   test('datasource writes the pending registration request collection', () {
     final source = File(
       'lib/features/policy/data/datasources/camo_device_registry_remote_datasource.dart',

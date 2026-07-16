@@ -1,3 +1,4 @@
+import 'package:camo/core/device_trust/domain/entities/camo_device_status.dart';
 // ---------------------------------------------------------------------------
 // Imports
 // ---------------------------------------------------------------------------
@@ -109,7 +110,7 @@ class CamoDeviceRegistrationServiceImpl
       userId: normalizedUserId,
       publicKey: publicKey,
       platform: platform,
-      status: CamoDeviceStatus.active,
+      status: CamoDeviceStatus.approved,
       keyVersion: 1,
       createdAt: now,
       lastSeenAt: now,
@@ -193,7 +194,7 @@ class CamoDeviceRegistrationServiceImpl
       throw StateError('This CAMO device registration is blocked.');
     }
 
-    if (!existingDevice.isActive) {
+    if (!existingDevice.isApproved) {
       throw StateError('This CAMO device registration is not active.');
     }
 

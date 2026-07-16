@@ -1,4 +1,4 @@
-﻿// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 // Imports
 // ---------------------------------------------------------------------------
 
@@ -48,8 +48,7 @@ class CamoDevicePolicyServiceImpl implements CamoDevicePolicyService {
 
   @override
   Future<String> getCurrentDeviceId() async {
-    final String deviceId =
-        (await _deviceIdentityService.getDeviceId()).trim();
+    final String deviceId = (await _deviceIdentityService.getDeviceId()).trim();
 
     if (deviceId.isEmpty) {
       throw StateError('Trusted CAMO device identifier is unavailable.');
@@ -88,18 +87,17 @@ class CamoDevicePolicyServiceImpl implements CamoDevicePolicyService {
 
     final CamoDeviceRegistryEntity? registeredDevice =
         await _deviceRegistryRepository.getDevice(
-      userId: currentUserId.trim(),
-      deviceId: deviceId,
-    );
+          userId: currentUserId.trim(),
+          deviceId: deviceId,
+        );
 
     if (registeredDevice == null ||
-        !registeredDevice.isActive ||
+        !registeredDevice.isApproved ||
         registeredDevice.keyVersion < 1) {
       return false;
     }
 
-    final String registeredPublicKey =
-        registeredDevice.publicKey.trim();
+    final String registeredPublicKey = registeredDevice.publicKey.trim();
 
     if (registeredPublicKey.isEmpty) {
       return false;
@@ -108,27 +106,19 @@ class CamoDevicePolicyServiceImpl implements CamoDevicePolicyService {
     List<int> registeredPublicKeyBytes;
 
     try {
-      registeredPublicKeyBytes = base64Decode(
-        registeredPublicKey,
-      );
+      registeredPublicKeyBytes = base64Decode(registeredPublicKey);
     } on FormatException {
       return false;
     }
 
-    return _constantTimeEquals(
-      keyPair.publicKey,
-      registeredPublicKeyBytes,
-    );
+    return _constantTimeEquals(keyPair.publicKey, registeredPublicKeyBytes);
   }
 
   // ---------------------------------------------------------------------------
   // Constant-Time Comparison
   // ---------------------------------------------------------------------------
 
-  bool _constantTimeEquals(
-    List<int> first,
-    List<int> second,
-  ) {
+  bool _constantTimeEquals(List<int> first, List<int> second) {
     if (first.length != second.length) {
       return false;
     }

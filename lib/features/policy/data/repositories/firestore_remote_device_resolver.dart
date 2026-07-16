@@ -122,7 +122,7 @@ class FirestoreRemoteDeviceResolver implements CamoRemoteDeviceResolver {
       );
     }
 
-    if (!device.isActive) {
+    if (!device.isApproved) {
       throw StateError('Resolved remote device is not active.');
     }
 

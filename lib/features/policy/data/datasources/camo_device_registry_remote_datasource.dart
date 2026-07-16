@@ -1,3 +1,4 @@
+import 'package:camo/core/device_trust/domain/entities/camo_device_status.dart';
 // ---------------------------------------------------------------------------
 // Imports
 // ---------------------------------------------------------------------------
@@ -331,7 +332,7 @@ class FirebaseCamoDeviceRegistryRemoteDataSource
   Query<Map<String, dynamic>> _activeDeviceQuery({required String userId}) {
     return _deviceCollection(
       userId: userId,
-    ).where('status', isEqualTo: CamoDeviceStatus.active.name).limit(1);
+    ).where('status', isEqualTo: CamoDeviceStatus.approved.name).limit(1);
   }
 
   CollectionReference<Map<String, dynamic>> _deviceCollection({

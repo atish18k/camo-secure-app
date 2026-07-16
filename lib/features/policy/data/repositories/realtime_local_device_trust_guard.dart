@@ -92,7 +92,7 @@ class RealtimeLocalDeviceTrustGuard implements CamoLocalDeviceTrustGuard {
       throw StateError('Current device registration identity is invalid.');
     }
 
-    if (!device.isActive) {
+    if (!device.isApproved) {
       throw StateError('Current CAMO device is blocked or revoked.');
     }
 

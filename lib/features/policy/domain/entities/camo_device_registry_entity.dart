@@ -1,17 +1,9 @@
-// ---------------------------------------------------------------------------
-// CAMO Device Registry Entity
-// ---------------------------------------------------------------------------
+import '../../../../core/device_trust/domain/entities/camo_device_status.dart';
 
-/// Trusted device registration record.
+/// Canonical trusted-device registration record.
 ///
-/// This entity represents a registered device only.
-///
-/// It must never contain:
-///
-/// - private keys
-/// - shared secrets
-/// - derived encryption keys
-/// - plaintext
+/// Private keys, shared secrets, derived keys, plaintext, and decrypted
+/// content must never be stored in this entity.
 class CamoDeviceRegistryEntity {
   const CamoDeviceRegistryEntity({
     required this.deviceId,
@@ -24,43 +16,19 @@ class CamoDeviceRegistryEntity {
     required this.lastSeenAt,
   });
 
-  /// Random device identifier (UUID v4).
   final String deviceId;
-
-  /// Owner user id.
   final String userId;
-
-  /// Base64 encoded X25519 public key.
   final String publicKey;
-
-  /// Android / iOS / Windows / Linux / macOS / Web.
   final String platform;
-
-  /// Device lifecycle status.
   final CamoDeviceStatus status;
-
-  /// Public-key version.
   final int keyVersion;
-
-  /// Registration timestamp.
   final DateTime createdAt;
 
-  /// Last successful policy validation.
+  /// Internal view of the server-controlled canonical `updatedAt` timestamp.
+  /// The client never writes this value to a trusted-device document.
   final DateTime lastSeenAt;
 
-  bool get isActive => status == CamoDeviceStatus.active;
-
+  bool get isApproved => status == CamoDeviceStatus.approved;
   bool get isRevoked => status == CamoDeviceStatus.revoked;
-
-  bool get isBlocked => status == CamoDeviceStatus.blocked;
-}
-
-// ---------------------------------------------------------------------------
-// Device Status
-// ---------------------------------------------------------------------------
-
-enum CamoDeviceStatus {
-  active,
-  revoked,
-  blocked,
+  bool get isBlocked => status.isBlocked;
 }
