@@ -1,4 +1,4 @@
-export const camoAuthorizationSchemaVersion = 1 as const;
+﻿export const camoAuthorizationSchemaVersion = 1 as const;
 
 export const camoAuthorizationCanonicalizationVersion =
   "CAMO_AUTHORIZATION_V1" as const;
@@ -11,6 +11,8 @@ export const camoAuthorizationSignatureEncoding =
 
 export type CamoOperationType = "encode" | "decode";
 
+import {CamoMessageValidityV1} from "./message_policy_types";
+
 export interface CamoServerAuthorizationContext {
   readonly requestId: string;
   readonly operationId: string;
@@ -19,6 +21,8 @@ export interface CamoServerAuthorizationContext {
   readonly operationType: CamoOperationType;
   readonly pairId?: string;
   readonly messageId?: string;
+  readonly messageValidity?: CamoMessageValidityV1;
+  readonly oneTimeView?: false;
   readonly keyPurpose: string;
   readonly keyScope: string;
   readonly requiredEntitlements: readonly string[];
@@ -84,3 +88,4 @@ export interface CamoAuthorizationExecutionResult {
   readonly reasonCode: string;
   readonly signedResponse?: CamoSignedAuthorizationResponse;
 }
+

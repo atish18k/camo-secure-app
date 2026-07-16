@@ -1,4 +1,4 @@
-import {randomUUID} from "node:crypto";
+﻿import {randomUUID} from "node:crypto";
 
 import {initializeApp} from "firebase-admin/app";
 import {getFirestore} from "firebase-admin/firestore";
@@ -91,6 +91,8 @@ export const authorizeOperation = onCall(
         operationType: input.operationType,
         pairId: input.pairId,
         messageId: input.messageId,
+        messageValidity: input.messageValidity,
+        oneTimeView: input.oneTimeView,
         keyPurpose: input.keyPurpose,
         keyScope: input.keyScope,
         requiredEntitlements: input.requiredEntitlements,
