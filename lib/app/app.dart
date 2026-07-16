@@ -1,7 +1,3 @@
-// ---------------------------------------------------------------------------
-// Imports
-// ---------------------------------------------------------------------------
-
 import 'package:flutter/material.dart';
 
 import '../features/pairing/presentation/screens/pairing_hub_screen.dart';
@@ -9,14 +5,8 @@ import '../features/profile/presentation/screens/my_identity_screen.dart';
 import 'routes.dart';
 import 'theme.dart';
 
-// ---------------------------------------------------------------------------
-// Class
-// ---------------------------------------------------------------------------
-
 class CamoApp extends StatelessWidget {
-  const CamoApp({
-    super.key,
-  });
+  const CamoApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -37,15 +27,13 @@ class CamoApp extends StatelessWidget {
       case AppRoutes.myIdentity:
         return _camoPageRoute(
           settings: settings,
-          child: const MyIdentityScreen(),
+          child: AppRoutes.protect(const MyIdentityScreen()),
         );
-
       case AppRoutes.myPairings:
         return _camoPageRoute(
           settings: settings,
-          child: const PairingHubScreen(),
+          child: AppRoutes.protect(const PairingHubScreen()),
         );
-
       default:
         return null;
     }
@@ -59,40 +47,22 @@ class CamoApp extends StatelessWidget {
       settings: settings,
       transitionDuration: const Duration(milliseconds: 260),
       reverseTransitionDuration: const Duration(milliseconds: 220),
-      pageBuilder: (
-        BuildContext context,
-        Animation<double> animation,
-        Animation<double> secondaryAnimation,
-      ) {
-        return child;
-      },
-      transitionsBuilder: (
-        BuildContext context,
-        Animation<double> animation,
-        Animation<double> secondaryAnimation,
-        Widget child,
-      ) {
-        final Animation<Offset> slideAnimation = Tween<Offset>(
-          begin: const Offset(0.08, 0),
-          end: Offset.zero,
-        ).animate(
-          CurvedAnimation(
-            parent: animation,
-            curve: Curves.easeOutCubic,
-          ),
-        );
-
-        final Animation<double> fadeAnimation = CurvedAnimation(
+      pageBuilder: (context, animation, secondaryAnimation) => child,
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        final slideAnimation =
+            Tween<Offset>(
+              begin: const Offset(0.08, 0),
+              end: Offset.zero,
+            ).animate(
+              CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+            );
+        final fadeAnimation = CurvedAnimation(
           parent: animation,
           curve: Curves.easeOut,
         );
-
         return FadeTransition(
           opacity: fadeAnimation,
-          child: SlideTransition(
-            position: slideAnimation,
-            child: child,
-          ),
+          child: SlideTransition(position: slideAnimation, child: child),
         );
       },
     );
