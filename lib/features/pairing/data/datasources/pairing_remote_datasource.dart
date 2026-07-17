@@ -42,10 +42,7 @@ abstract class PairingRemoteDataSource {
   // Update
   // ---------------------------------------------------------------------------
 
-  Future<void> updatePairingStatus(
-    String id,
-    PairingStatus status,
-  );
+  Future<void> updatePairingStatus(String id, PairingStatus status);
 
   // ---------------------------------------------------------------------------
   // Delete
@@ -69,12 +66,13 @@ class FirebasePairingRemoteDataSource implements PairingRemoteDataSource {
 
   @override
   Future<void> savePairing(PairingModel pairing) async {
-    final DocumentReference<Map<String, dynamic>> pairingRef =
-        _firestore.collection(FirestorePaths.pairings).doc(pairing.id);
+    final DocumentReference<Map<String, dynamic>> pairingRef = _firestore
+        .collection(FirestorePaths.pairings)
+        .doc(pairing.id);
 
     await _firestore.runTransaction<void>((transaction) async {
-      final DocumentSnapshot<Map<String, dynamic>> snapshot =
-          await transaction.get(pairingRef);
+      final DocumentSnapshot<Map<String, dynamic>> snapshot = await transaction
+          .get(pairingRef);
 
       if (snapshot.exists) {
         throw const FormatException('Pairing request already exists.');
@@ -90,8 +88,10 @@ class FirebasePairingRemoteDataSource implements PairingRemoteDataSource {
 
   @override
   Future<PairingModel?> getPairing(String id) async {
-    final DocumentSnapshot<Map<String, dynamic>> snapshot =
-        await _firestore.collection(FirestorePaths.pairings).doc(id).get();
+    final DocumentSnapshot<Map<String, dynamic>> snapshot = await _firestore
+        .collection(FirestorePaths.pairings)
+        .doc(id)
+        .get();
 
     if (!snapshot.exists) {
       return null;
@@ -103,10 +103,7 @@ class FirebasePairingRemoteDataSource implements PairingRemoteDataSource {
       return null;
     }
 
-    return PairingModel.fromMap(
-      data,
-      id: snapshot.id,
-    );
+    return PairingModel.fromMap(data, id: snapshot.id);
   }
 
   @override
@@ -116,14 +113,8 @@ class FirebasePairingRemoteDataSource implements PairingRemoteDataSource {
   }) async {
     final QuerySnapshot<Map<String, dynamic>> snapshot = await _firestore
         .collection(FirestorePaths.pairings)
-        .where(
-          'requesterUid',
-          isEqualTo: requesterUid,
-        )
-        .where(
-          'receiverUid',
-          isEqualTo: receiverUid,
-        )
+        .where('requesterUid', isEqualTo: requesterUid)
+        .where('receiverUid', isEqualTo: receiverUid)
         .limit(1)
         .get();
 
@@ -134,24 +125,16 @@ class FirebasePairingRemoteDataSource implements PairingRemoteDataSource {
     final QueryDocumentSnapshot<Map<String, dynamic>> document =
         snapshot.docs.first;
 
-    return PairingModel.fromMap(
-      document.data(),
-      id: document.id,
-    );
+    return PairingModel.fromMap(document.data(), id: document.id);
   }
 
   @override
   Stream<List<PairingModel>> watchPendingRequests(String receiverUid) {
     return _firestore
         .collection(FirestorePaths.pairings)
-        .where(
-          'receiverUid',
-          isEqualTo: receiverUid,
-        )
-        .where(
-          'status',
-          isEqualTo: PairingStatus.pending.name,
-        )
+        .where('participantUserIds', arrayContains: receiverUid)
+        .where('receiverUid', isEqualTo: receiverUid)
+        .where('status', isEqualTo: PairingStatus.pending.name)
         .snapshots()
         .map(_mapSnapshotToPairings);
   }
@@ -160,14 +143,9 @@ class FirebasePairingRemoteDataSource implements PairingRemoteDataSource {
   Stream<List<PairingModel>> watchReceivedRequests(String receiverUid) {
     return _firestore
         .collection(FirestorePaths.pairings)
-        .where(
-          'receiverUid',
-          isEqualTo: receiverUid,
-        )
-        .where(
-          'status',
-          isEqualTo: PairingStatus.pending.name,
-        )
+        .where('participantUserIds', arrayContains: receiverUid)
+        .where('receiverUid', isEqualTo: receiverUid)
+        .where('status', isEqualTo: PairingStatus.pending.name)
         .snapshots()
         .map(_mapSnapshotToPairings);
   }
@@ -176,10 +154,8 @@ class FirebasePairingRemoteDataSource implements PairingRemoteDataSource {
   Stream<List<PairingModel>> watchSentRequests(String requesterUid) {
     return _firestore
         .collection(FirestorePaths.pairings)
-        .where(
-          'requesterUid',
-          isEqualTo: requesterUid,
-        )
+        .where('participantUserIds', arrayContains: requesterUid)
+        .where('requesterUid', isEqualTo: requesterUid)
         .snapshots()
         .map(_mapSnapshotToPairings);
   }
@@ -188,22 +164,8 @@ class FirebasePairingRemoteDataSource implements PairingRemoteDataSource {
   Stream<List<PairingModel>> watchAcceptedPairings(String userUid) {
     return _firestore
         .collection(FirestorePaths.pairings)
-        .where(
-          'status',
-          isEqualTo: PairingStatus.accepted.name,
-        )
-        .where(
-          Filter.or(
-            Filter(
-              'requesterUid',
-              isEqualTo: userUid,
-            ),
-            Filter(
-              'receiverUid',
-              isEqualTo: userUid,
-            ),
-          ),
-        )
+        .where('participantUserIds', arrayContains: userUid)
+        .where('status', isEqualTo: PairingStatus.accepted.name)
         .snapshots()
         .map(_mapSnapshotToPairings);
   }
@@ -213,10 +175,7 @@ class FirebasePairingRemoteDataSource implements PairingRemoteDataSource {
   // ---------------------------------------------------------------------------
 
   @override
-  Future<void> updatePairingStatus(
-    String id,
-    PairingStatus status,
-  ) async {
+  Future<void> updatePairingStatus(String id, PairingStatus status) async {
     final DateTime now = DateTime.now();
 
     await _firestore.collection(FirestorePaths.pairings).doc(id).update({
@@ -243,15 +202,10 @@ class FirebasePairingRemoteDataSource implements PairingRemoteDataSource {
   List<PairingModel> _mapSnapshotToPairings(
     QuerySnapshot<Map<String, dynamic>> snapshot,
   ) {
-    return snapshot.docs
-        .map(
-          (QueryDocumentSnapshot<Map<String, dynamic>> document) {
-            return PairingModel.fromMap(
-              document.data(),
-              id: document.id,
-            );
-          },
-        )
-        .toList();
+    return snapshot.docs.map((
+      QueryDocumentSnapshot<Map<String, dynamic>> document,
+    ) {
+      return PairingModel.fromMap(document.data(), id: document.id);
+    }).toList();
   }
 }
