@@ -14,6 +14,7 @@ import '../../../../core/theme/camo_icons.dart';
 import '../../../../core/theme/camo_spacing.dart';
 import '../../../../shared/layouts/responsive_container.dart';
 import '../../../../shared/widgets/header/camo_header.dart';
+import '../../../../shared/widgets/identity/camo_identity_panel.dart';
 import '../../../../shared/widgets/navigation/camo_drawer.dart';
 import '../../../../shared/widgets/navigation/camo_tabs.dart';
 import '../../../../shared/widgets/workspace/camo_action_button.dart';
@@ -26,8 +27,13 @@ import '../../../auth/domain/repositories/auth_repository.dart';
 import '../../../auth/domain/usecases/get_current_user_id_usecase.dart';
 import '../../../pairing/domain/entities/pairing_entity.dart';
 import '../../../pairing/presentation/providers/accepted_pairings_provider.dart';
+import '../../../pairing/presentation/providers/pending_pair_requests_provider.dart';
+import '../../../pairing/presentation/screens/pending_pair_requests_screen.dart';
+import '../../../dashboard/presentation/widgets/identity_qr_dialog.dart';
 import '../../../profile/domain/entities/user_entity.dart';
 import '../../../profile/domain/repositories/profile_repository.dart';
+import '../../../profile/presentation/providers/my_identity_controller.dart';
+import '../../../profile/presentation/providers/my_identity_state.dart';
 import '../providers/workspace_controller.dart';
 import '../widgets/workspace_pair_header.dart';
 
@@ -92,6 +98,12 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
   Widget build(BuildContext context) {
     final workspaceState = ref.watch(workspaceControllerProvider);
     final acceptedPairings = ref.watch(acceptedPairingsProvider);
+    final pendingRequests = ref.watch(pendingPairRequestsProvider);
+    final int pairRequestsCount = pendingRequests.when(
+      data: (List<PairingEntity> items) => items.length,
+      loading: () => 0,
+      error: (_, _) => 0,
+    );
 
     final bool canRun =
         _selectedPair != null &&
@@ -116,19 +128,16 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
             Builder(
               builder: (BuildContext context) {
                 return CamoHeader(
-                  pairRequestsCount: 1,
+                  pairRequestsCount: pairRequestsCount,
                   notificationCount: 0,
                   onMenuTap: () {
                     Scaffold.of(context).openDrawer();
                   },
-                  onPairRequestsTap: () => Navigator.pushNamed(
-                    context,
-                    AppRoutes.pendingPairRequests,
-                  ),
+                  onPairRequestsTap: _showPendingPairRequestsPanel,
                   onNotificationsTap: _showComingSoon,
                   onScanQrTap: () =>
                       Navigator.pushNamed(context, AppRoutes.qrScanner),
-                  onIdentityTap: _openMyIdentity,
+                  onIdentityTap: _showIdentityPanel,
                 );
               },
             ),
@@ -263,6 +272,69 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
         _subjectController.clear();
       }
     });
+  }
+
+  Future<void> _showPendingPairRequestsPanel() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      backgroundColor: CamoColors.surface,
+      builder: (BuildContext context) {
+        return const FractionallySizedBox(
+          heightFactor: 0.78,
+          child: PendingPairRequestsScreen(embedded: true),
+        );
+      },
+    );
+  }
+
+  Future<void> _showIdentityPanel() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      backgroundColor: CamoColors.surface,
+      builder: (BuildContext context) {
+        return Consumer(
+          builder: (BuildContext context, WidgetRef ref, Widget? child) {
+            final MyIdentityState state = ref.watch(
+              myIdentityControllerProvider,
+            );
+            final controller = ref.read(myIdentityControllerProvider.notifier);
+            final accepted = ref.watch(acceptedPairingsProvider);
+            final bool isPaired = accepted.when(
+              data: (List<PairingEntity> items) => items.isNotEmpty,
+              loading: () => false,
+              error: (_, _) => false,
+            );
+            return Padding(
+              padding: CamoSpacing.screen,
+              child: CamoIdentityPanel(
+                camoId: state.camoId,
+                isVisible: state.isVisible,
+                isPaired: isPaired,
+                onVisibilityTap: controller.toggleVisibility,
+                onCopyTap: () async {
+                  final bool copied = await controller.copyCamoId();
+                  if (copied && mounted) {
+                    _showMessage('CAMO ID copied.');
+                  }
+                },
+                onQrTap: () {
+                  if (state.camoId.trim().isEmpty) {
+                    return;
+                  }
+                  showDialog<void>(
+                    context: context,
+                    builder: (_) => IdentityQrDialog(camoId: state.camoId),
+                  );
+                },
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   Future<void> _showPairSelectionSheet(

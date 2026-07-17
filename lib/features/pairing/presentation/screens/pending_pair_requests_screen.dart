@@ -22,9 +22,9 @@ class PendingPairRequestsScreen extends ConsumerWidget {
   // Constructor
   // ---------------------------------------------------------------------------
 
-  const PendingPairRequestsScreen({
-    super.key,
-  });
+  const PendingPairRequestsScreen({super.key, this.embedded = false});
+
+  final bool embedded;
 
   // ---------------------------------------------------------------------------
   // Build
@@ -32,9 +32,27 @@ class PendingPairRequestsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final AsyncValue<List<PairingEntity>> requests =
-        ref.watch(pendingPairRequestsProvider);
+    final AsyncValue<List<PairingEntity>> requests = ref.watch(
+      pendingPairRequestsProvider,
+    );
 
+    final Widget content = SafeArea(
+      child: ResponsiveContainer(
+        child: requests.when(
+          loading: _buildLoading,
+          error: _buildError,
+          data: (List<PairingEntity> items) {
+            if (items.isEmpty) {
+              return _buildEmptyState();
+            }
+            return _buildRequestList(items: items, ref: ref);
+          },
+        ),
+      ),
+    );
+    if (embedded) {
+      return content;
+    }
     return Scaffold(
       backgroundColor: CamoColors.background,
       appBar: AppBar(
@@ -43,24 +61,7 @@ class PendingPairRequestsScreen extends ConsumerWidget {
         elevation: 0,
         title: const Text('Pending Requests'),
       ),
-      body: SafeArea(
-        child: ResponsiveContainer(
-          child: requests.when(
-            loading: _buildLoading,
-            error: _buildError,
-            data: (List<PairingEntity> items) {
-              if (items.isEmpty) {
-                return _buildEmptyState();
-              }
-
-              return _buildRequestList(
-                items: items,
-                ref: ref,
-              );
-            },
-          ),
-        ),
-      ),
+      body: content,
     );
   }
 
@@ -69,24 +70,15 @@ class PendingPairRequestsScreen extends ConsumerWidget {
   // ---------------------------------------------------------------------------
 
   Widget _buildLoading() {
-    return const Center(
-      child: CircularProgressIndicator(),
-    );
+    return const Center(child: CircularProgressIndicator());
   }
 
-  Widget _buildError(
-    Object error,
-    StackTrace stackTrace,
-  ) {
-    return const Center(
-      child: Text('Unable to load pending requests.'),
-    );
+  Widget _buildError(Object error, StackTrace stackTrace) {
+    return const Center(child: Text('Unable to load pending requests.'));
   }
 
   Widget _buildEmptyState() {
-    return const Center(
-      child: Text('No pending pair requests.'),
-    );
+    return const Center(child: Text('No pending pair requests.'));
   }
 
   Widget _buildRequestList({
@@ -105,14 +97,14 @@ class PendingPairRequestsScreen extends ConsumerWidget {
         return _PendingRequestCard(
           pairing: pairing,
           onReject: () {
-            ref.read(pairRequestProvider.notifier).rejectPairRequest(
-                  pairing.id,
-                );
+            ref
+                .read(pairRequestProvider.notifier)
+                .rejectPairRequest(pairing.id);
           },
           onAccept: () {
-            ref.read(pairRequestProvider.notifier).acceptPairRequest(
-                  pairing.id,
-                );
+            ref
+                .read(pairRequestProvider.notifier)
+                .acceptPairRequest(pairing.id);
           },
         );
       },
@@ -160,9 +152,9 @@ class _PendingRequestCard extends StatelessWidget {
           CamoSpacing.gapXs,
           Text(
             'Wants to pair with you',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: CamoColors.textSecondary,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: CamoColors.textSecondary),
           ),
           CamoSpacing.gapMd,
           Row(

@@ -16,9 +16,12 @@ import '../../../profile/domain/repositories/profile_repository.dart';
 import '../../domain/entities/pairing_entity.dart';
 import '../providers/pairing_hub_controller.dart';
 import '../providers/pairing_hub_state.dart';
+import '../providers/pair_request_provider.dart';
+import '../providers/pair_request_state.dart';
 import '../widgets/pairing_card.dart';
 import '../widgets/pairing_confirm_dialog.dart';
 import '../widgets/pairing_empty_state.dart';
+import '../widgets/pair_request_form.dart';
 import '../widgets/pairing_search_bar.dart';
 import '../widgets/pairing_tabs.dart';
 
@@ -27,15 +30,15 @@ import '../widgets/pairing_tabs.dart';
 // ---------------------------------------------------------------------------
 
 class PairingHubScreen extends ConsumerWidget {
-  const PairingHubScreen({
-    super.key,
-  });
+  const PairingHubScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final PairingHubState state = ref.watch(pairingHubControllerProvider);
-    final PairingHubController controller =
-        ref.read(pairingHubControllerProvider.notifier);
+    final PairingHubController controller = ref.read(
+      pairingHubControllerProvider.notifier,
+    );
+    final PairRequestState pairRequestState = ref.watch(pairRequestProvider);
 
     return Scaffold(
       backgroundColor: CamoColors.background,
@@ -51,8 +54,10 @@ class PairingHubScreen extends ConsumerWidget {
               ? const Center(child: CircularProgressIndicator())
               : _buildContent(
                   context: context,
+                  ref: ref,
                   state: state,
                   controller: controller,
+                  pairRequestState: pairRequestState,
                 ),
         ),
       ),
@@ -61,17 +66,16 @@ class PairingHubScreen extends ConsumerWidget {
 
   Widget _buildContent({
     required BuildContext context,
+    required WidgetRef ref,
     required PairingHubState state,
     required PairingHubController controller,
+    required PairRequestState pairRequestState,
   }) {
     if (state.errorMessage != null) {
       return Center(
         child: Padding(
           padding: CamoSpacing.screen,
-          child: Text(
-            state.errorMessage!,
-            textAlign: TextAlign.center,
-          ),
+          child: Text(state.errorMessage!, textAlign: TextAlign.center),
         ),
       );
     }
@@ -82,14 +86,19 @@ class PairingHubScreen extends ConsumerWidget {
           padding: CamoSpacing.screen,
           child: Column(
             children: [
-              PairingSearchBar(
-                onChanged: controller.updateSearchQuery,
+              PairRequestForm(
+                isLoading:
+                    pairRequestState.status == PairRequestUiStatus.loading,
+                onSubmit: (String camoId) {
+                  ref
+                      .read(pairRequestProvider.notifier)
+                      .createPairRequestByCamoId(camoId);
+                },
               ),
+              CamoSpacing.gapLg,
+              PairingSearchBar(onChanged: controller.updateSearchQuery),
               CamoSpacing.gapMd,
-              PairingTabs(
-                state: state,
-                onChanged: controller.selectTab,
-              ),
+              PairingTabs(state: state, onChanged: controller.selectTab),
             ],
           ),
         ),
@@ -156,9 +165,7 @@ class PairingHubScreen extends ConsumerWidget {
     required PairingHubController controller,
   }) {
     if (items.isEmpty) {
-      return PairingEmptyState(
-        message: emptyMessage,
-      );
+      return PairingEmptyState(message: emptyMessage);
     }
 
     return ListView.separated(
@@ -219,11 +226,7 @@ class PairingHubScreen extends ConsumerWidget {
         );
 
       case PairingCardMode.paired:
-        Navigator.pushNamed(
-          context,
-          AppRoutes.home,
-          arguments: pairing,
-        );
+        Navigator.pushNamed(context, AppRoutes.home, arguments: pairing);
         return;
     }
   }
@@ -274,11 +277,9 @@ class PairingHubScreen extends ConsumerWidget {
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Pairing successful.'),
-      ),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Pairing successful.')));
   }
 
   Future<void> _rejectRequest({
@@ -314,11 +315,7 @@ class PairingHubScreen extends ConsumerWidget {
         );
 
       case PairingStatus.accepted:
-        Navigator.pushNamed(
-          context,
-          AppRoutes.home,
-          arguments: pairing,
-        );
+        Navigator.pushNamed(context, AppRoutes.home, arguments: pairing);
         return;
 
       case PairingStatus.rejected:
