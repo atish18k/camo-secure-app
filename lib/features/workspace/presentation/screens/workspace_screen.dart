@@ -29,6 +29,9 @@ import '../../../pairing/domain/entities/pairing_entity.dart';
 import '../../../pairing/presentation/providers/accepted_pairings_provider.dart';
 import '../../../pairing/presentation/providers/pending_pair_requests_provider.dart';
 import '../../../pairing/presentation/screens/pending_pair_requests_screen.dart';
+import '../../../notifications/domain/entities/camo_notification_feed.dart';
+import '../../../notifications/presentation/providers/other_notifications_provider.dart';
+import '../../../notifications/presentation/screens/other_notifications_panel.dart';
 import '../../../dashboard/presentation/widgets/identity_qr_dialog.dart';
 import '../../../profile/domain/entities/user_entity.dart';
 import '../../../profile/domain/repositories/profile_repository.dart';
@@ -99,8 +102,16 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
     final workspaceState = ref.watch(workspaceControllerProvider);
     final acceptedPairings = ref.watch(acceptedPairingsProvider);
     final pendingRequests = ref.watch(pendingPairRequestsProvider);
+    final AsyncValue<CamoNotificationFeed> notifications = ref.watch(
+      otherNotificationsProvider,
+    );
     final int pairRequestsCount = pendingRequests.when(
       data: (List<PairingEntity> items) => items.length,
+      loading: () => 0,
+      error: (_, _) => 0,
+    );
+    final int notificationCount = notifications.when(
+      data: (CamoNotificationFeed feed) => feed.unreadCount,
       loading: () => 0,
       error: (_, _) => 0,
     );
@@ -129,12 +140,12 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
               builder: (BuildContext context) {
                 return CamoHeader(
                   pairRequestsCount: pairRequestsCount,
-                  notificationCount: 0,
+                  notificationCount: notificationCount,
                   onMenuTap: () {
                     Scaffold.of(context).openDrawer();
                   },
                   onPairRequestsTap: _showPendingPairRequestsPanel,
-                  onNotificationsTap: _showComingSoon,
+                  onNotificationsTap: _showOtherNotificationsPanel,
                   onScanQrTap: () =>
                       Navigator.pushNamed(context, AppRoutes.qrScanner),
                   onIdentityTap: _showIdentityPanel,
@@ -284,6 +295,21 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
         return const FractionallySizedBox(
           heightFactor: 0.78,
           child: PendingPairRequestsScreen(embedded: true),
+        );
+      },
+    );
+  }
+
+  Future<void> _showOtherNotificationsPanel() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      backgroundColor: CamoColors.surface,
+      builder: (BuildContext context) {
+        return const FractionallySizedBox(
+          heightFactor: 0.78,
+          child: OtherNotificationsPanel(),
         );
       },
     );
