@@ -1,7 +1,3 @@
-// ---------------------------------------------------------------------------
-// Imports
-// ---------------------------------------------------------------------------
-
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/camo_colors.dart';
@@ -9,18 +5,13 @@ import '../../../core/theme/camo_icons.dart';
 import '../../../core/theme/camo_spacing.dart';
 import '../../../core/theme/camo_typography.dart';
 
-// ---------------------------------------------------------------------------
-// Widget
-// ---------------------------------------------------------------------------
-
 class CamoDrawer extends StatelessWidget {
   const CamoDrawer({
     super.key,
     required this.onWorkspaceTap,
     required this.onMyIdentityTap,
     required this.onPairingHubTap,
-    required this.onEncryptedHistoryTap,
-    required this.onDecryptedHistoryTap,
+    required this.onHistoryTap,
     required this.onSecurityCenterTap,
     required this.onSettingsTap,
     required this.onAboutTap,
@@ -30,8 +21,7 @@ class CamoDrawer extends StatelessWidget {
   final VoidCallback onWorkspaceTap;
   final VoidCallback onMyIdentityTap;
   final VoidCallback onPairingHubTap;
-  final VoidCallback onEncryptedHistoryTap;
-  final VoidCallback onDecryptedHistoryTap;
+  final VoidCallback onHistoryTap;
   final VoidCallback onSecurityCenterTap;
   final VoidCallback onSettingsTap;
   final VoidCallback onAboutTap;
@@ -50,7 +40,7 @@ class CamoDrawer extends StatelessWidget {
               child: ListView(
                 padding: EdgeInsets.zero,
                 children: [
-                  _DrawerSectionTitle(title: 'Main'),
+                  const _DrawerSectionTitle(title: 'Main'),
                   _DrawerItem(
                     icon: CamoIcons.dashboard,
                     title: 'Workspace',
@@ -67,19 +57,14 @@ class CamoDrawer extends StatelessWidget {
                     onTap: onPairingHubTap,
                   ),
                   CamoSpacing.gapSm,
-                  _DrawerSectionTitle(title: 'Records'),
+                  const _DrawerSectionTitle(title: 'Records'),
                   _DrawerItem(
-                    icon: Icons.lock_outline_rounded,
-                    title: 'Encrypted History',
-                    onTap: onEncryptedHistoryTap,
-                  ),
-                  _DrawerItem(
-                    icon: Icons.lock_open_rounded,
-                    title: 'Decrypted History',
-                    onTap: onDecryptedHistoryTap,
+                    icon: Icons.history_rounded,
+                    title: 'History',
+                    onTap: onHistoryTap,
                   ),
                   CamoSpacing.gapSm,
-                  _DrawerSectionTitle(title: 'System'),
+                  const _DrawerSectionTitle(title: 'System'),
                   _DrawerItem(
                     icon: CamoIcons.security,
                     title: 'Security Center',
@@ -118,10 +103,7 @@ class CamoDrawer extends StatelessWidget {
         children: [
           const CircleAvatar(
             backgroundColor: CamoColors.background,
-            child: Icon(
-              CamoIcons.identity,
-              color: CamoColors.primary,
-            ),
+            child: Icon(CamoIcons.identity, color: CamoColors.primary),
           ),
           CamoSpacing.gapHorizontalMd,
           Expanded(
@@ -136,7 +118,7 @@ class CamoDrawer extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  'v0.16.0 • Privacy Beyond Encryption',
+                  'Privacy Beyond Encryption',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: CamoTypography.label.copyWith(
@@ -152,15 +134,8 @@ class CamoDrawer extends StatelessWidget {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Private Widgets
-// ---------------------------------------------------------------------------
-
 class _DrawerSectionTitle extends StatelessWidget {
-  const _DrawerSectionTitle({
-    required this.title,
-  });
-
+  const _DrawerSectionTitle({required this.title});
   final String title;
 
   @override
@@ -198,19 +173,14 @@ class _DrawerItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color color =
-        isDestructive ? CamoColors.error : CamoColors.textPrimary;
-
+    final Color color = isDestructive
+        ? CamoColors.error
+        : CamoColors.textPrimary;
     return ListTile(
-      leading: Icon(
-        icon,
-        color: color,
-      ),
+      leading: Icon(icon, color: color),
       title: Text(
         title,
-        style: CamoTypography.bodyStrong.copyWith(
-          color: color,
-        ),
+        style: CamoTypography.bodyStrong.copyWith(color: color),
       ),
       onTap: onTap,
     );

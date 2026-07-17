@@ -104,8 +104,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
         onWorkspaceTap: _closeDrawer,
         onMyIdentityTap: _openMyIdentity,
         onPairingHubTap: _openPairingHub,
-        onEncryptedHistoryTap: _closeDrawerAndShowComingSoon,
-        onDecryptedHistoryTap: _closeDrawerAndShowComingSoon,
+        onHistoryTap: _closeDrawerAndShowComingSoon,
         onSecurityCenterTap: _closeDrawerAndShowComingSoon,
         onSettingsTap: _closeDrawerAndShowComingSoon,
         onAboutTap: _closeDrawerAndShowComingSoon,
@@ -117,19 +116,19 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
             Builder(
               builder: (BuildContext context) {
                 return CamoHeader(
-                  pendingCount: 1,
+                  pairRequestsCount: 1,
+                  notificationCount: 0,
                   onMenuTap: () {
                     Scaffold.of(context).openDrawer();
                   },
-                  onPairTap: () =>
-                      Navigator.pushNamed(context, AppRoutes.pairRequest),
-                  onPendingTap: () => Navigator.pushNamed(
+                  onPairRequestsTap: () => Navigator.pushNamed(
                     context,
                     AppRoutes.pendingPairRequests,
                   ),
+                  onNotificationsTap: _showComingSoon,
                   onScanQrTap: () =>
                       Navigator.pushNamed(context, AppRoutes.qrScanner),
-                  onSentTap: _showComingSoon,
+                  onIdentityTap: _openMyIdentity,
                 );
               },
             ),
