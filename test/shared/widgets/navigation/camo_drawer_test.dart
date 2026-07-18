@@ -16,6 +16,7 @@ void main() {
             onMyIdentityTap: () {},
             onPairingHubTap: () {},
             onHistoryTap: () => historyTaps++,
+            onSubscriptionTap: () {},
             onSecurityCenterTap: () {},
             onSettingsTap: () {},
             onAboutTap: () {},

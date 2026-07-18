@@ -12,6 +12,7 @@ class CamoDrawer extends StatelessWidget {
     required this.onMyIdentityTap,
     required this.onPairingHubTap,
     required this.onHistoryTap,
+    required this.onSubscriptionTap,
     required this.onSecurityCenterTap,
     required this.onSettingsTap,
     required this.onAboutTap,
@@ -22,6 +23,7 @@ class CamoDrawer extends StatelessWidget {
   final VoidCallback onMyIdentityTap;
   final VoidCallback onPairingHubTap;
   final VoidCallback onHistoryTap;
+  final VoidCallback onSubscriptionTap;
   final VoidCallback onSecurityCenterTap;
   final VoidCallback onSettingsTap;
   final VoidCallback onAboutTap;
@@ -65,6 +67,11 @@ class CamoDrawer extends StatelessWidget {
                   ),
                   CamoSpacing.gapSm,
                   const _DrawerSectionTitle(title: 'System'),
+                  _DrawerItem(
+                    icon: Icons.workspace_premium_outlined,
+                    title: 'Subscription',
+                    onTap: onSubscriptionTap,
+                  ),
                   _DrawerItem(
                     icon: CamoIcons.security,
                     title: 'Security Center',

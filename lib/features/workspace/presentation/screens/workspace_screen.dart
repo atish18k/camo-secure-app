@@ -129,6 +129,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
         onMyIdentityTap: _openMyIdentity,
         onPairingHubTap: _openPairingHub,
         onHistoryTap: _openHistory,
+        onSubscriptionTap: _openSubscription,
         onSecurityCenterTap: _openSecurityCenter,
         onSettingsTap: _closeDrawerAndShowComingSoon,
         onAboutTap: _closeDrawerAndShowComingSoon,
@@ -526,6 +527,11 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
   void _closeDrawerAndShowComingSoon() {
     Navigator.pop(context);
     _showComingSoon();
+  }
+
+  void _openSubscription() {
+    Navigator.pop(context);
+    Navigator.pushNamed(context, AppRoutes.subscription);
   }
 
   void _openSecurityCenter() {
