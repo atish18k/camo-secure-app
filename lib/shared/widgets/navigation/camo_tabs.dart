@@ -11,10 +11,7 @@ import '../../../core/theme/camo_radius.dart';
 // Enum
 // ---------------------------------------------------------------------------
 
-enum CamoWorkspaceTab {
-  encoder,
-  decoder,
-}
+enum CamoWorkspaceTab { encoder, decoder }
 
 // ---------------------------------------------------------------------------
 // Widget
@@ -48,31 +45,23 @@ class CamoTabs extends StatelessWidget {
       height: 52,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(
-          CamoRadius.lg,
-        ),
-        border: Border.all(
-          color: CamoColors.border,
-        ),
+        borderRadius: BorderRadius.circular(CamoRadius.lg),
+        border: Border.all(color: CamoColors.border),
       ),
       child: Row(
         children: [
           Expanded(
             child: _TabButton(
-              title: 'Encoder',
+              title: 'CAMO Mode',
               selected: selectedTab == CamoWorkspaceTab.encoder,
-              onTap: () => onChanged(
-                CamoWorkspaceTab.encoder,
-              ),
+              onTap: () => onChanged(CamoWorkspaceTab.encoder),
             ),
           ),
           Expanded(
             child: _TabButton(
-              title: 'Decoder',
+              title: 'UNCAMO Mode',
               selected: selectedTab == CamoWorkspaceTab.decoder,
-              onTap: () => onChanged(
-                CamoWorkspaceTab.decoder,
-              ),
+              onTap: () => onChanged(CamoWorkspaceTab.decoder),
             ),
           ),
         ],
@@ -111,34 +100,21 @@ class _TabButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      borderRadius: BorderRadius.circular(
-        CamoRadius.lg,
-      ),
+      borderRadius: BorderRadius.circular(CamoRadius.lg),
       onTap: onTap,
       child: AnimatedContainer(
-        duration: const Duration(
-          milliseconds: 180,
-        ),
+        duration: const Duration(milliseconds: 180),
         decoration: BoxDecoration(
-          color: selected
-              ? CamoColors.primary
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(
-            CamoRadius.lg,
-          ),
+          color: selected ? CamoColors.primary : Colors.transparent,
+          borderRadius: BorderRadius.circular(CamoRadius.lg),
         ),
         alignment: Alignment.center,
         child: Text(
           title,
-          style: Theme.of(context)
-              .textTheme
-              .titleMedium
-              ?.copyWith(
-                color: selected
-                    ? Colors.white
-                    : CamoColors.textPrimary,
-                fontWeight: FontWeight.w600,
-              ),
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            color: selected ? Colors.white : CamoColors.textPrimary,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
     );
