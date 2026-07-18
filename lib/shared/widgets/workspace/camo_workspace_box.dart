@@ -22,6 +22,7 @@ class CamoWorkspaceBox extends StatelessWidget {
     super.key,
     required this.title,
     required this.child,
+    this.expandChild = false,
   });
 
   // ---------------------------------------------------------------------------
@@ -30,6 +31,7 @@ class CamoWorkspaceBox extends StatelessWidget {
 
   final String title;
   final Widget child;
+  final bool expandChild;
 
   // ---------------------------------------------------------------------------
   // Build
@@ -48,12 +50,9 @@ class CamoWorkspaceBox extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
+          Text(title, style: Theme.of(context).textTheme.titleMedium),
           CamoSpacing.gapMd,
-          child,
+          if (expandChild) Expanded(child: child) else child,
         ],
       ),
     );

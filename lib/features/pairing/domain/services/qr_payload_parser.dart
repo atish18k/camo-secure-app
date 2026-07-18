@@ -1,53 +1,39 @@
-// ---------------------------------------------------------------------------
-// Imports
-// ---------------------------------------------------------------------------
-
 import 'dart:convert';
 
-// ---------------------------------------------------------------------------
-// QR Payload
-// ---------------------------------------------------------------------------
-
 class QrPayload {
-  const QrPayload({
-    required this.version,
-    required this.camoId,
-  });
+  const QrPayload({required this.version, required this.camoId});
 
-  final String version;
+  final int version;
   final String camoId;
 }
 
-// ---------------------------------------------------------------------------
-// QR Payload Parser
-// ---------------------------------------------------------------------------
-
 class QrPayloadParser {
+  static const Set<String> _requiredKeys = <String>{'v', 't', 'id'};
+
   QrPayload parse(String payload) {
     try {
-      final Map<String, dynamic> data =
-          jsonDecode(payload) as Map<String, dynamic>;
-
-      final Object? version = data['v'] ?? data['version'];
-      final Object? type = data['t'] ?? data['type'];
-      final Object? identity = data['id'] ?? data['identity'];
-
-      if (version.toString() != '1') {
-        throw const FormatException('Unsupported QR version.');
+      final Object? decoded = jsonDecode(payload);
+      if (decoded is! Map<String, dynamic>) {
+        throw const FormatException('Invalid QR payload.');
       }
-
-      if (type != 'identity') {
+      if (decoded.keys.toSet().length != _requiredKeys.length ||
+          !decoded.keys.toSet().containsAll(_requiredKeys)) {
+        throw const FormatException('Unknown or missing CAMO QR fields.');
+      }
+      if (decoded['v'] != 1) {
+        throw const FormatException('Unsupported CAMO QR version.');
+      }
+      if (decoded['t'] != 'identity') {
         throw const FormatException('Invalid CAMO QR type.');
       }
-
-      if (identity is! String || identity.trim().isEmpty) {
-        throw const FormatException('Missing CAMO ID.');
+      final Object? identity = decoded['id'];
+      if (identity is! String ||
+          identity.trim().isEmpty ||
+          identity.length > 128 ||
+          identity.contains(RegExp(r'[\x00-\x1F/\\]'))) {
+        throw const FormatException('Invalid CAMO ID.');
       }
-
-      return QrPayload(
-        version: version.toString(),
-        camoId: identity.trim().toUpperCase(),
-      );
+      return QrPayload(version: 1, camoId: identity.trim().toUpperCase());
     } on FormatException {
       rethrow;
     } catch (_) {

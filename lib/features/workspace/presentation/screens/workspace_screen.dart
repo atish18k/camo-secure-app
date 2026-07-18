@@ -38,6 +38,7 @@ import '../../../profile/domain/repositories/profile_repository.dart';
 import '../../../profile/presentation/providers/my_identity_controller.dart';
 import '../../../profile/presentation/providers/my_identity_state.dart';
 import '../providers/workspace_controller.dart';
+import '../widgets/camo_workspace_terminology.dart';
 import '../widgets/workspace_pair_header.dart';
 
 // ---------------------------------------------------------------------------
@@ -154,7 +155,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
             ),
             Expanded(
               child: ResponsiveContainer(
-                child: SingleChildScrollView(
+                child: Padding(
                   padding: CamoSpacing.screen,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -166,11 +167,12 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                         onChanged: _onTabChanged,
                       ),
                       CamoSpacing.gapLg,
-                      CamoWorkspaceBox(
-                        title: _selectedTab == CamoWorkspaceTab.encoder
-                            ? 'Encoder'
-                            : 'Decoder',
-                        child: _buildWorkspaceContent(canRun),
+                      Expanded(
+                        child: CamoWorkspaceBox(
+                          title: CamoWorkspaceTerminology.title(_selectedTab),
+                          expandChild: true,
+                          child: _buildWorkspaceContent(canRun),
+                        ),
                       ),
                     ],
                   ),
@@ -219,26 +221,30 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
           CamoSpacing.gapLg,
           CamoSubjectField(controller: _subjectController),
         ],
-        CamoSpacing.gapLg,
-        CamoInputField(
-          controller: _inputController,
-          onPasteTap: _pasteInput,
-          onClearTap: _clearInput,
+        CamoSpacing.gapSm,
+        Expanded(
+          child: CamoInputField(
+            controller: _inputController,
+            onPasteTap: _pasteInput,
+            onClearTap: _clearInput,
+          ),
         ),
-        CamoSpacing.gapLg,
+        CamoSpacing.gapSm,
         CamoActionButton(
-          label: _selectedTab == CamoWorkspaceTab.encoder ? 'Encode' : 'Decode',
+          label: CamoWorkspaceTerminology.action(_selectedTab),
           icon: _selectedTab == CamoWorkspaceTab.encoder
               ? CamoIcons.encode
               : CamoIcons.decode,
           onPressed: canRun ? _runWorkspaceAction : null,
         ),
-        CamoSpacing.gapLg,
-        CamoOutputField(
-          controller: _outputController,
-          onCopyTap: _copyOutput,
-          onShareTap: _shareOutput,
-          onClearTap: _clearOutput,
+        CamoSpacing.gapSm,
+        Expanded(
+          child: CamoOutputField(
+            controller: _outputController,
+            onCopyTap: _copyOutput,
+            onShareTap: _shareOutput,
+            onClearTap: _clearOutput,
+          ),
         ),
       ],
     );
