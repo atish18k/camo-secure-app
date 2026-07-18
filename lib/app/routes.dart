@@ -11,6 +11,7 @@ import '../features/pairing/presentation/screens/pending_pair_requests_screen.da
 import '../features/pairing/presentation/screens/qr_scanner_screen.dart';
 import '../features/policy/presentation/screens/camo_device_approval_gate.dart';
 import '../features/policy/presentation/screens/camo_device_eligibility_screen.dart';
+import '../features/recovery/presentation/screens/recovery_setup_screen.dart';
 import '../features/splash/presentation/screens/splash_screen.dart';
 import '../features/subscription/presentation/screens/activate_plan_screen.dart';
 import '../features/subscription/presentation/screens/choose_plan_screen.dart';
@@ -29,6 +30,7 @@ class AppRoutes {
   static const String workspace = '/workspace';
   static const String history = '/history';
   static const String securityCenter = '/security-center';
+  static const String recoverySetup = '/recovery-setup';
   static const String choosePlan = '/choose-plan';
   static const String planActivation = '/activate-plan';
   static const String subscription = '/subscription';
@@ -51,6 +53,7 @@ class AppRoutes {
     workspace: (context) => protect(const WorkspaceScreen()),
     history: (context) => protect(const HistoryScreen()),
     securityCenter: (context) => protect(const SecurityCenterScreen()),
+    recoverySetup: (context) => protect(const RecoverySetupScreen()),
     choosePlan: (context) => protect(const ChoosePlanScreen()),
     planActivation: (context) => protect(const ActivatePlanScreen()),
     subscription: (context) => protect(const SubscriptionScreen()),
