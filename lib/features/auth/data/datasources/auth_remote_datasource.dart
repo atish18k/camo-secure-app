@@ -1,44 +1,24 @@
-// ---------------------------------------------------------------------------
-// Imports
-// ---------------------------------------------------------------------------
-
 import 'package:firebase_auth/firebase_auth.dart';
-
-// ---------------------------------------------------------------------------
-// Remote Data Source
-// ---------------------------------------------------------------------------
 
 abstract class AuthRemoteDataSource {
   Future<UserCredential> signIn({
     required String email,
     required String password,
   });
-
+  Future<UserCredential> createAccount({
+    required String email,
+    required String password,
+  });
+  Future<void> sendEmailVerification();
+  Future<void> reloadCurrentUser();
+  Future<void> deleteCurrentUser();
   Future<void> signOut();
-
   User? get currentUser;
 }
 
-// ---------------------------------------------------------------------------
-// Firebase Implementation
-// ---------------------------------------------------------------------------
-
 class FirebaseAuthRemoteDataSource implements AuthRemoteDataSource {
-  // ---------------------------------------------------------------------------
-  // Constructor
-  // ---------------------------------------------------------------------------
-
   const FirebaseAuthRemoteDataSource(this._firebaseAuth);
-
-  // ---------------------------------------------------------------------------
-  // Properties
-  // ---------------------------------------------------------------------------
-
   final FirebaseAuth _firebaseAuth;
-
-  // ---------------------------------------------------------------------------
-  // Authentication
-  // ---------------------------------------------------------------------------
 
   @override
   Future<UserCredential> signIn({
@@ -52,13 +32,38 @@ class FirebaseAuthRemoteDataSource implements AuthRemoteDataSource {
   }
 
   @override
-  Future<void> signOut() {
-    return _firebaseAuth.signOut();
+  Future<UserCredential> createAccount({
+    required String email,
+    required String password,
+  }) {
+    return _firebaseAuth.createUserWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
   }
 
-  // ---------------------------------------------------------------------------
-  // Getters
-  // ---------------------------------------------------------------------------
+  @override
+  Future<void> sendEmailVerification() async {
+    final User? user = currentUser;
+    if (user == null) throw StateError('Authenticated user is required.');
+    await user.sendEmailVerification();
+  }
+
+  @override
+  Future<void> reloadCurrentUser() async {
+    final User? user = currentUser;
+    if (user == null) throw StateError('Authenticated user is required.');
+    await user.reload();
+  }
+
+  @override
+  Future<void> deleteCurrentUser() async {
+    final User? user = currentUser;
+    if (user != null) await user.delete();
+  }
+
+  @override
+  Future<void> signOut() => _firebaseAuth.signOut();
 
   @override
   User? get currentUser => _firebaseAuth.currentUser;

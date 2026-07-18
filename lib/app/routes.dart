@@ -1,21 +1,26 @@
 import 'package:flutter/material.dart';
 
+import '../features/auth/presentation/screens/create_account_screen.dart';
+import '../features/auth/presentation/screens/email_verification_screen.dart';
 import '../features/auth/presentation/screens/login_screen.dart';
+import '../features/auth/presentation/screens/passkey_setup_screen.dart';
 import '../features/dashboard/presentation/screens/security_center_screen.dart';
-import '../features/policy/presentation/screens/camo_device_eligibility_screen.dart';
+import '../features/history/presentation/screens/history_screen.dart';
 import '../features/pairing/presentation/screens/pair_request_screen.dart';
 import '../features/pairing/presentation/screens/pending_pair_requests_screen.dart';
 import '../features/pairing/presentation/screens/qr_scanner_screen.dart';
 import '../features/policy/presentation/screens/camo_device_approval_gate.dart';
+import '../features/policy/presentation/screens/camo_device_eligibility_screen.dart';
 import '../features/splash/presentation/screens/splash_screen.dart';
-import '../features/history/presentation/screens/history_screen.dart';
 import '../features/workspace/presentation/screens/workspace_screen.dart';
 
 class AppRoutes {
   const AppRoutes._();
-
   static const String splash = '/';
   static const String login = '/login';
+  static const String createAccount = '/create-account';
+  static const String verifyEmail = '/verify-email';
+  static const String passkeySetup = '/passkey-setup';
   static const String deviceEligibility = '/device-eligibility';
   static const String home = '/home';
   static const String workspace = '/workspace';
@@ -29,10 +34,12 @@ class AppRoutes {
   static const String qrScanner = '/qr-scanner';
 
   static Widget protect(Widget child) => CamoDeviceApprovalGate(child: child);
-
   static Map<String, WidgetBuilder> get routes => {
     splash: (context) => const SplashScreen(),
     login: (context) => const LoginScreen(),
+    createAccount: (context) => const CreateAccountScreen(),
+    verifyEmail: (context) => const EmailVerificationScreen(),
+    passkeySetup: (context) => const PasskeySetupScreen(),
     deviceEligibility: (context) => const CamoDeviceEligibilityScreen(),
     home: (context) => protect(const WorkspaceScreen()),
     workspace: (context) => protect(const WorkspaceScreen()),

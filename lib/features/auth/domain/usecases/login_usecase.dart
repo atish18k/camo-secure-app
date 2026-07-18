@@ -5,7 +5,6 @@ import '../repositories/auth_repository.dart';
 
 class LoginUseCase {
   const LoginUseCase(this._repository, this._deviceRegistrationService);
-
   final AuthRepository _repository;
   final CamoDeviceRegistrationService _deviceRegistrationService;
 
@@ -18,6 +17,15 @@ class LoginUseCase {
       password: password,
     );
     if (authenticationResult is Error<void>) return authenticationResult;
+
+    if (!_repository.isEmailVerified) {
+      return Error<void>(
+        const AuthFailure(
+          message: 'Verify your email before registering this device.',
+          code: 'email-not-verified',
+        ),
+      );
+    }
 
     try {
       await _deviceRegistrationService.submitCurrentDeviceRegistrationRequest();

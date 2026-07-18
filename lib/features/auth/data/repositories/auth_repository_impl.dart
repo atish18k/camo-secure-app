@@ -1,7 +1,3 @@
-// ---------------------------------------------------------------------------
-// Imports
-// ---------------------------------------------------------------------------
-
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../../../core/errors/failure.dart';
@@ -9,80 +5,85 @@ import '../../../../core/errors/result.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../datasources/auth_remote_datasource.dart';
 
-// ---------------------------------------------------------------------------
-// Repository
-// ---------------------------------------------------------------------------
-
 class AuthRepositoryImpl implements AuthRepository {
-  // ---------------------------------------------------------------------------
-  // Constructor
-  // ---------------------------------------------------------------------------
-
   const AuthRepositoryImpl(this._remoteDataSource);
-
-  // ---------------------------------------------------------------------------
-  // Properties
-  // ---------------------------------------------------------------------------
-
   final AuthRemoteDataSource _remoteDataSource;
-
-  // ---------------------------------------------------------------------------
-  // Authentication
-  // ---------------------------------------------------------------------------
 
   @override
   Future<Result<void>> signIn({
     required String email,
     required String password,
   }) async {
-    try {
-      await _remoteDataSource.signIn(
+    return _runAuth(
+      () => _remoteDataSource.signIn(email: email.trim(), password: password),
+    );
+  }
+
+  @override
+  Future<Result<void>> createAccount({
+    required String email,
+    required String password,
+  }) async {
+    return _runAuth(
+      () => _remoteDataSource.createAccount(
         email: email.trim(),
         password: password,
-      );
+      ),
+    );
+  }
 
-      return const Success(null);
-    } on FirebaseAuthException catch (e) {
-      return Error(
+  Future<Result<void>> _runAuth(Future<Object?> Function() action) async {
+    try {
+      await action();
+      return const Success<void>(null);
+    } on FirebaseAuthException catch (error) {
+      return Error<void>(
         AuthFailure(
-          message: e.message ?? 'Authentication failed.',
-          code: e.code,
-          cause: e,
+          message: error.message ?? 'Authentication failed.',
+          code: error.code,
+          cause: error,
         ),
       );
-    } catch (e) {
-      return Error(
+    } catch (error) {
+      return Error<void>(
         UnknownFailure(
           message: 'Unexpected authentication error.',
-          cause: e,
+          cause: error,
         ),
       );
     }
   }
+
+  @override
+  Future<void> sendEmailVerification() =>
+      _remoteDataSource.sendEmailVerification();
+
+  @override
+  Future<void> reloadCurrentUser() => _remoteDataSource.reloadCurrentUser();
+
+  @override
+  Future<void> deleteCurrentUser() => _remoteDataSource.deleteCurrentUser();
 
   @override
   Future<Result<void>> signOut() async {
     try {
       await _remoteDataSource.signOut();
-
-      return const Success(null);
-    } catch (e) {
-      return Error(
-        AuthFailure(
-          message: 'Logout failed.',
-          cause: e,
-        ),
-      );
+      return const Success<void>(null);
+    } catch (error) {
+      return Error<void>(AuthFailure(message: 'Logout failed.', cause: error));
     }
   }
-
-  // ---------------------------------------------------------------------------
-  // Getters
-  // ---------------------------------------------------------------------------
 
   @override
   bool get isSignedIn => _remoteDataSource.currentUser != null;
 
   @override
+  bool get isEmailVerified =>
+      _remoteDataSource.currentUser?.emailVerified ?? false;
+
+  @override
   String? get currentUserId => _remoteDataSource.currentUser?.uid;
+
+  @override
+  String? get currentUserEmail => _remoteDataSource.currentUser?.email;
 }

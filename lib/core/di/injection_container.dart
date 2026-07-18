@@ -57,6 +57,9 @@ import '../../features/policy/data/datasources/camo_device_registry_remote_datas
 import '../../features/policy/data/datasources/camo_message_policy_remote_datasource.dart';
 import '../../features/policy/data/repositories/camo_device_identity_service_impl.dart';
 import '../../features/policy/data/repositories/camo_device_registration_service_impl.dart';
+import '../../features/policy/data/repositories/firestore_camo_device_support_acceptance_repository.dart';
+import '../../features/policy/domain/repositories/camo_device_support_acceptance_repository.dart';
+import '../../features/policy/domain/usecases/save_camo_device_support_acceptance_usecase.dart';
 import '../../features/policy/data/repositories/camo_device_registry_repository_impl.dart';
 import '../../features/policy/data/repositories/firestore_remote_device_resolver.dart';
 import '../../features/policy/data/repositories/realtime_local_device_trust_guard.dart';
@@ -232,6 +235,14 @@ Future<void> initDependencies() async {
 
   sl.registerLazySingleton<CamoDeviceRegistrationService>(
     () => CamoDeviceRegistrationServiceImpl(sl(), sl(), sl(), sl(), sl()),
+  );
+
+  sl.registerLazySingleton<CamoDeviceSupportAcceptanceRepository>(
+    () => FirestoreCamoDeviceSupportAcceptanceRepository(sl(), sl()),
+  );
+
+  sl.registerLazySingleton<SaveCamoDeviceSupportAcceptanceUseCase>(
+    () => SaveCamoDeviceSupportAcceptanceUseCase(sl()),
   );
 
   // ---------------------------------------------------------------------------

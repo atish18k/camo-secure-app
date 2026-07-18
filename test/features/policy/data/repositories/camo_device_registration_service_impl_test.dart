@@ -165,6 +165,31 @@ void main() {
 }
 
 class _FakeAuthRepository implements AuthRepository {
+  // Fake-only registration boundary; not exercised by this test.
+  @override
+  Future<Result<void>> createAccount({
+    required String email,
+    required String password,
+  }) => throw UnsupportedError('createAccount is outside this test boundary.');
+
+  @override
+  Future<void> sendEmailVerification() => throw UnsupportedError(
+    'Email verification is outside this test boundary.',
+  );
+
+  @override
+  Future<void> reloadCurrentUser() =>
+      throw UnsupportedError('User reload is outside this test boundary.');
+
+  @override
+  Future<void> deleteCurrentUser() =>
+      throw UnsupportedError('User deletion is outside this test boundary.');
+
+  @override
+  bool get isEmailVerified => false;
+
+  @override
+  String? get currentUserEmail => null;
   _FakeAuthRepository({required this.currentUserIdValue});
 
   String? currentUserIdValue;

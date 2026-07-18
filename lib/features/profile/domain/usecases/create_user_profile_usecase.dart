@@ -1,57 +1,29 @@
-// ---------------------------------------------------------------------------
-// Imports
-// ---------------------------------------------------------------------------
-
 import '../../../../services/identity/camo_id_generator.dart';
 import '../entities/user_entity.dart';
 import '../repositories/profile_repository.dart';
 
-// ---------------------------------------------------------------------------
-// Class
-// ---------------------------------------------------------------------------
-
 class CreateUserProfileUseCase {
-  // ---------------------------------------------------------------------------
-  // Constructor
-  // ---------------------------------------------------------------------------
-
-  const CreateUserProfileUseCase(
-    this._repository,
-    this._camoIdGenerator,
-  );
-
-  // ---------------------------------------------------------------------------
-  // Dependencies
-  // ---------------------------------------------------------------------------
-
+  const CreateUserProfileUseCase(this._repository, this._camoIdGenerator);
   final ProfileRepository _repository;
   final CamoIdGenerator _camoIdGenerator;
 
-  // ---------------------------------------------------------------------------
-  // Public Methods
-  // ---------------------------------------------------------------------------
-
   Future<void> call(UserEntity user) async {
-    final String camoId = _resolveCamoId(user);
-
+    final UserEntity? existing = await _repository.getUser(user.uid);
+    if (existing != null) {
+      await _repository.saveUser(
+        existing.copyWith(
+          email: user.email,
+          displayName: user.displayName,
+          photoUrl: user.photoUrl,
+        ),
+      );
+      return;
+    }
+    final String requested = user.camoId.trim();
     await _repository.saveUser(
       user.copyWith(
-        camoId: camoId,
+        camoId: requested.isEmpty ? _camoIdGenerator.generate() : requested,
       ),
     );
-  }
-
-  // ---------------------------------------------------------------------------
-  // Private Methods
-  // ---------------------------------------------------------------------------
-
-  String _resolveCamoId(UserEntity user) {
-    final String existingCamoId = user.camoId.trim();
-
-    if (existingCamoId.isNotEmpty) {
-      return existingCamoId;
-    }
-
-    return _camoIdGenerator.generate();
   }
 }

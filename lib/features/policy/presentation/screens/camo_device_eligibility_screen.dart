@@ -3,10 +3,8 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/camo_colors.dart';
 import '../../../../core/theme/camo_spacing.dart';
+import '../../domain/entities/camo_device_support_acceptance.dart';
 
-enum CamoDeviceSupportLevel { fullySupported, limited, unsupported }
-
-@immutable
 class CamoDeviceEligibilityResult {
   const CamoDeviceEligibilityResult({
     required this.level,
@@ -14,7 +12,6 @@ class CamoDeviceEligibilityResult {
     required this.hardwareBackingConfirmed,
     required this.explanation,
   });
-
   final CamoDeviceSupportLevel level;
   final String platformLabel;
   final bool hardwareBackingConfirmed;
@@ -23,7 +20,6 @@ class CamoDeviceEligibilityResult {
 
 class CamoDeviceEligibilityScreen extends StatefulWidget {
   const CamoDeviceEligibilityScreen({super.key});
-
   @override
   State<CamoDeviceEligibilityScreen> createState() =>
       _CamoDeviceEligibilityScreenState();
@@ -80,7 +76,6 @@ class _CamoDeviceEligibilityScreenState
       CamoDeviceSupportLevel.limited => 'Limited Support',
       CamoDeviceSupportLevel.unsupported => 'Unsupported',
     };
-
     return Scaffold(
       backgroundColor: CamoColors.background,
       appBar: AppBar(title: const Text('Device support')),
@@ -125,7 +120,16 @@ class _CamoDeviceEligibilityScreenState
                   CamoSpacing.gapLg,
                   FilledButton(
                     onPressed: mayContinue
-                        ? () => Navigator.pop(context)
+                        ? () => Navigator.pop(
+                            context,
+                            CamoDeviceSupportAcceptance(
+                              supportLevel: _result.level,
+                              platformLabel: _result.platformLabel,
+                              hardwareBackingConfirmed:
+                                  _result.hardwareBackingConfirmed,
+                              limitedRiskAccepted: !limited || _limitedAccepted,
+                            ),
+                          )
                         : null,
                     child: Text(
                       unsupported

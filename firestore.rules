@@ -29,11 +29,31 @@ service cloud.firestore {
       // ---------------------------------------------------------------------
 
       match /security/{docId} {
-        allow read: if isSignedIn();
-
-        allow create, update: if isOwner(userId);
-
+        allow read: if isOwner(userId);
+        allow create, update: if isOwner(userId)
+          && docId != 'deviceSupportAcceptance';
         allow delete: if false;
+      }
+
+      match /security/deviceSupportAcceptance {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId)
+          && request.resource.data.keys().hasOnly([
+            'schemaVersion', 'policyVersion', 'supportLevel', 'platform',
+            'hardwareBackingConfirmed', 'limitedRiskAccepted', 'acceptedAt'
+          ])
+          && request.resource.data.schemaVersion == 1
+          && request.resource.data.policyVersion == 'device-support-v1'
+          && request.resource.data.supportLevel in ['fullySupported', 'limited']
+          && request.resource.data.platform is string
+          && request.resource.data.platform.size() > 0
+          && request.resource.data.platform.size() <= 64
+          && request.resource.data.hardwareBackingConfirmed is bool
+          && request.resource.data.limitedRiskAccepted is bool
+          && (request.resource.data.supportLevel != 'limited'
+              || request.resource.data.limitedRiskAccepted == true)
+          && request.resource.data.acceptedAt == request.time;
+        allow update, delete: if false;
       }
 
       // ---------------------------------------------------------------------
