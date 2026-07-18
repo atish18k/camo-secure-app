@@ -1,4 +1,4 @@
-import {
+﻿import {
   Firestore,
 } from "firebase-admin/firestore";
 
@@ -23,9 +23,10 @@ import {
 import {
   CamoServerAuthorizationOrchestrator,
 } from "./server_authorization_orchestrator";
-import {FirestoreCamoMessagePolicyStore} from "../infrastructure/firestore_camo_message_policy_store";
-import {CamoMessagePolicyLifecycleService} from "./message_policy_lifecycle_service";
-import {AuthorizedMessagePolicyService, CamoServerAuthorizer} from "./authorized_message_policy_service";
+import {FirestoreCamoMessagePolicyStoreV2} from "../infrastructure/firestore_camo_message_policy_store_v2";
+import {CamoMessagePolicyV2LifecycleService} from "./message_policy_v2_lifecycle_service";
+import {CamoServerAuthorizer} from "./authorized_message_policy_service";
+import {AuthorizedMessagePolicyV2Service} from "./authorized_message_policy_v2_service";
 import {
   FirestoreCamoDeviceAuthorizationPort,
 } from "../validators/firestore_device_authorization_port";
@@ -86,7 +87,7 @@ export function createCamoProductionServerAuthorizationOrchestrator(
         clock,
       ),
     policyPort: new FirestoreCamoPolicyAuthorizationPort(reader),
-    riskPort: new FirestoreCamoRiskAuthorizationPort(reader),
+    riskPort: new FirestoreCamoRiskAuthorizationPort(reader, clock),
     entitlementPort:
       new FirestoreCamoEntitlementAuthorizationPort(
         reader,
@@ -106,10 +107,10 @@ export function createCamoProductionServerAuthorizationOrchestrator(
 
   if (options.messagePolicyMutationEnabled !== true) return orchestrator;
 
-  return new AuthorizedMessagePolicyService(
+  return new AuthorizedMessagePolicyV2Service(
     orchestrator,
-    new CamoMessagePolicyLifecycleService(
-      new FirestoreCamoMessagePolicyStore(options.firestore),
+    new CamoMessagePolicyV2LifecycleService(
+      new FirestoreCamoMessagePolicyStoreV2(options.firestore),
       clock,
     ),
     {isMessagePolicyMutationEnabled: () =>

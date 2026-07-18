@@ -1,0 +1,7 @@
+﻿import assert from "node:assert/strict";import test from "node:test";
+import {CamoCanonicalMessagePolicyV2,CamoMessagePolicyStateV2,CamoMessagePolicyStoreV2} from "../domain/message_policy_v2_types";
+import {CamoMessagePolicyV2LifecycleService} from "../services/message_policy_v2_lifecycle_service";
+class Store implements CamoMessagePolicyStoreV2{value?:CamoCanonicalMessagePolicyV2;state?:CamoMessagePolicyStateV2;async reserveIfAbsent(p:CamoCanonicalMessagePolicyV2){if(this.value)return false;this.value=p;this.state="pending";return true;}async transitionIfState(i:{expectedState:"pending"|"active";nextState:CamoMessagePolicyStateV2}){if(this.state!==i.expectedState)return false;this.state=i.nextState;return true;}}
+const input={messageId:"m",pairId:"p",senderUserId:"u",senderDeviceId:"d",operationId:"o",validity:"five_minutes" as const};
+test("V2 durable lifecycle reserves activates and consumes once",async()=>{const s=new Store();const l=new CamoMessagePolicyV2LifecycleService(s,()=>new Date("2026-07-19T00:00:00Z"));assert.equal((await l.reserve(input)).state,"pending");await l.activate("m","a","k");await l.consume("m");assert.equal(s.state,"consumed");await assert.rejects(()=>l.consume("m"));});
+test("V2 authorization failure blocks pending reservation",async()=>{const s=new Store();const l=new CamoMessagePolicyV2LifecycleService(s,()=>new Date("2026-07-19T00:00:00Z"));await l.reserve(input);await l.block("m","denied");assert.equal(s.state,"blocked");await assert.rejects(()=>l.activate("m","a","k"));});

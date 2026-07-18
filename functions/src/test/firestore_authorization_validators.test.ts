@@ -1,4 +1,4 @@
-import assert from "node:assert/strict";
+﻿import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
@@ -129,9 +129,15 @@ test("risk validator requires explicit allow decision", async () => {
   const validator = new FirestoreCamoRiskAuthorizationPort(
     new FakeReader({
       "enterpriseRiskDecisions/operation-001": {
+        schemaVersion: 1,
         operationId: "operation-001",
+        userId: "user-001",
+        deviceId: "device-001",
+        pairId: "pair-001",
         decision: "allow",
         permitsOperation: true,
+        createdAt: "2026-07-13T11:59:00.000Z",
+        expiresAt: "2026-07-13T12:01:00.000Z",
       },
     }),
   );
