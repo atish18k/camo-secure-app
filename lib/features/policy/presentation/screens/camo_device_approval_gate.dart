@@ -110,7 +110,7 @@ class _ApprovalStatusScreen extends StatelessWidget {
                   Text(
                     isVerifying
                         ? 'Verifying this device'
-                        : 'Device approval pending',
+                        : 'Device access restricted',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.headlineSmall,
                   ),
@@ -118,7 +118,7 @@ class _ApprovalStatusScreen extends StatelessWidget {
                   Text(
                     isVerifying
                         ? 'CAMO is validating the approved device record and local key binding.'
-                        : 'This account is signed in, but no CAMO function is available until this exact device is approved. Pending, rejected, revoked, missing, mismatched, and unavailable trust states remain blocked.',
+                        : 'No CAMO function is available until this exact device and its local public-key binding are remotely approved. Pending, rejected, revoked, missing, mismatched, and unavailable states remain blocked.',
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 28),
@@ -129,6 +129,11 @@ class _ApprovalStatusScreen extends StatelessWidget {
                       onPressed: onRetry,
                       icon: const Icon(Icons.refresh),
                       label: const Text('Check approval again'),
+                    ),
+                    const SizedBox(height: 12),
+                    const OutlinedButton(
+                      onPressed: null,
+                      child: Text('Recovery approval unavailable'),
                     ),
                     const SizedBox(height: 12),
                     OutlinedButton(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../features/auth/presentation/screens/login_screen.dart';
+import '../features/policy/presentation/screens/camo_device_eligibility_screen.dart';
 import '../features/pairing/presentation/screens/pair_request_screen.dart';
 import '../features/pairing/presentation/screens/pending_pair_requests_screen.dart';
 import '../features/pairing/presentation/screens/qr_scanner_screen.dart';
@@ -14,6 +15,7 @@ class AppRoutes {
 
   static const String splash = '/';
   static const String login = '/login';
+  static const String deviceEligibility = '/device-eligibility';
   static const String home = '/home';
   static const String workspace = '/workspace';
   static const String history = '/history';
@@ -29,6 +31,7 @@ class AppRoutes {
   static Map<String, WidgetBuilder> get routes => {
     splash: (context) => const SplashScreen(),
     login: (context) => const LoginScreen(),
+    deviceEligibility: (context) => const CamoDeviceEligibilityScreen(),
     home: (context) => protect(const WorkspaceScreen()),
     workspace: (context) => protect(const WorkspaceScreen()),
     history: (context) => protect(const HistoryScreen()),

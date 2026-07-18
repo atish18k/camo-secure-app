@@ -36,10 +36,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
     final AuthState authState = ref.watch(authControllerProvider);
     final bool isLoading = authState.status == AuthStatus.loading;
 
-    ref.listen<AuthState>(
-      authControllerProvider,
-      _handleAuthStateChange,
-    );
+    ref.listen<AuthState>(authControllerProvider, _handleAuthStateChange);
 
     return Form(
       key: _formKey,
@@ -55,6 +52,15 @@ class _LoginFormState extends ConsumerState<LoginForm> {
           LoginButton(
             isLoading: isLoading,
             onPressed: isLoading ? null : _login,
+          ),
+          CamoSpacing.gapSm,
+          TextButton.icon(
+            onPressed: isLoading
+                ? null
+                : () =>
+                      Navigator.pushNamed(context, AppRoutes.deviceEligibility),
+            icon: const Icon(Icons.phonelink_lock_outlined),
+            label: const Text('Check device support before purchase'),
           ),
         ],
       ),
@@ -75,10 +81,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
     );
   }
 
-  void _handleAuthStateChange(
-    AuthState? previous,
-    AuthState next,
-  ) {
+  void _handleAuthStateChange(AuthState? previous, AuthState next) {
     if (!mounted) return;
 
     switch (next.status) {
@@ -88,18 +91,12 @@ class _LoginFormState extends ConsumerState<LoginForm> {
         return;
 
       case AuthStatus.authenticated:
-        Navigator.of(context).pushReplacementNamed(
-          AppRoutes.dashboard,
-        );
+        Navigator.of(context).pushReplacementNamed(AppRoutes.dashboard);
         return;
 
       case AuthStatus.failure:
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              next.failure?.message ?? 'Login failed.',
-            ),
-          ),
+          SnackBar(content: Text(next.failure?.message ?? 'Login failed.')),
         );
         return;
     }
@@ -112,7 +109,9 @@ class _LoginFormState extends ConsumerState<LoginForm> {
       return;
     }
 
-    await ref.read(authControllerProvider.notifier).login(
+    await ref
+        .read(authControllerProvider.notifier)
+        .login(
           email: _emailController.text.trim(),
           password: _passwordController.text.trim(),
         );
@@ -120,9 +119,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
 
   void _onForgotPassword() {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Forgot password will be available soon.'),
-      ),
+      const SnackBar(content: Text('Forgot password will be available soon.')),
     );
   }
 }

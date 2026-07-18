@@ -33,7 +33,7 @@ void main() {
     expect(app, contains('AppRoutes.protect(const MyIdentityScreen())'));
     expect(app, contains('AppRoutes.protect(const PairingHubScreen())'));
     expect(gate, contains('ensureTrusted()'));
-    expect(gate, contains('Device approval pending'));
+    expect(gate, contains('Device access restricted'));
     expect(gate, contains('Check approval again'));
     expect(gate, contains('Logout'));
     expect(login, isNot(contains('CAMO-LOCAL-DEVICE-APPROVAL-HARNESS')));
