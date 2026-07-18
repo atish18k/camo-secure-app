@@ -1,18 +1,6 @@
-// ---------------------------------------------------------------------------
-// Imports
-// ---------------------------------------------------------------------------
-
 import '../../domain/entities/user_entity.dart';
 
-// ---------------------------------------------------------------------------
-// Class
-// ---------------------------------------------------------------------------
-
 class UserProfileModel extends UserEntity {
-  // ---------------------------------------------------------------------------
-  // Constructor
-  // ---------------------------------------------------------------------------
-
   const UserProfileModel({
     required super.uid,
     required super.camoId,
@@ -22,26 +10,19 @@ class UserProfileModel extends UserEntity {
     required super.createdAt,
   });
 
-  // ---------------------------------------------------------------------------
-  // Factories
-  // ---------------------------------------------------------------------------
-
   factory UserProfileModel.fromMap(Map<String, dynamic> map) {
     return UserProfileModel(
-      uid: map['uid'] as String? ?? '',
-      camoId: map['camoId'] as String? ?? '',
-      email: map['email'] as String? ?? '',
-      displayName: map['displayName'] as String?,
-      photoUrl: map['photoUrl'] as String?,
-      createdAt: DateTime.tryParse(
-            map['createdAt'] as String? ?? '',
-          ) ??
-          DateTime.now(),
+      uid: _requiredString(map, 'uid'),
+      camoId: _requiredString(map, 'camoId'),
+      email: _requiredString(map, 'email'),
+      displayName: _nullableString(map, 'displayName'),
+      photoUrl: _nullableString(map, 'photoUrl'),
+      createdAt: _requiredDateTime(map, 'createdAt'),
     );
   }
 
   factory UserProfileModel.fromEntity(UserEntity entity) {
-    return UserProfileModel(
+    final model = UserProfileModel(
       uid: entity.uid,
       camoId: entity.camoId,
       email: entity.email,
@@ -49,20 +30,68 @@ class UserProfileModel extends UserEntity {
       photoUrl: entity.photoUrl,
       createdAt: entity.createdAt,
     );
+    model.validate();
+    return model;
   }
 
-  // ---------------------------------------------------------------------------
-  // Mapping
-  // ---------------------------------------------------------------------------
+  void validate() {
+    _validateRequired('uid', uid);
+    _validateRequired('camoId', camoId);
+    _validateRequired('email', email);
+    _validateOptional('displayName', displayName);
+    _validateOptional('photoUrl', photoUrl);
+  }
 
   Map<String, dynamic> toMap() {
-    return {
-      'uid': uid,
-      'camoId': camoId,
-      'email': email,
-      'displayName': displayName,
-      'photoUrl': photoUrl,
+    validate();
+    return <String, dynamic>{
+      'uid': uid.trim(),
+      'camoId': camoId.trim(),
+      'email': email.trim(),
+      'displayName': displayName?.trim(),
+      'photoUrl': photoUrl?.trim(),
       'createdAt': createdAt.toIso8601String(),
     };
+  }
+
+  static String _requiredString(Map<String, dynamic> map, String key) {
+    final value = map[key];
+    if (value is! String || value.trim().isEmpty) {
+      throw FormatException('Missing or invalid profile $key.');
+    }
+    return value.trim();
+  }
+
+  static String? _nullableString(Map<String, dynamic> map, String key) {
+    final value = map[key];
+    if (value == null) return null;
+    if (value is! String) {
+      throw FormatException('Invalid profile $key.');
+    }
+    return value.trim();
+  }
+
+  static DateTime _requiredDateTime(Map<String, dynamic> map, String key) {
+    final value = map[key];
+    if (value is! String) {
+      throw FormatException('Missing or invalid profile $key.');
+    }
+    final parsed = DateTime.tryParse(value);
+    if (parsed == null) {
+      throw FormatException('Missing or invalid profile $key.');
+    }
+    return parsed;
+  }
+
+  static void _validateRequired(String key, String value) {
+    if (value.trim().isEmpty) {
+      throw FormatException('Missing or invalid profile $key.');
+    }
+  }
+
+  static void _validateOptional(String key, String? value) {
+    if (value != null && value.length > 512) {
+      throw FormatException('Invalid profile $key.');
+    }
   }
 }

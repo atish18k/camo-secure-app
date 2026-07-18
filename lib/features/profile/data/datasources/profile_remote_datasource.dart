@@ -1,85 +1,67 @@
-// ---------------------------------------------------------------------------
-// Imports
-// ---------------------------------------------------------------------------
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../../../core/constants/firestore_paths.dart';
 import '../models/user_profile_model.dart';
 
-// ---------------------------------------------------------------------------
-// Profile Remote Data Source
-// ---------------------------------------------------------------------------
-
 abstract class ProfileRemoteDataSource {
   Future<void> saveUser(UserProfileModel user);
-
   Future<UserProfileModel?> getUser(String uid);
-
   Future<UserProfileModel?> getUserByCamoId(String camoId);
 }
 
-// ---------------------------------------------------------------------------
-// Firebase Profile Remote Data Source
-// ---------------------------------------------------------------------------
-
 class FirebaseProfileRemoteDataSource implements ProfileRemoteDataSource {
   const FirebaseProfileRemoteDataSource(this._firestore);
-
   final FirebaseFirestore _firestore;
-
-  // ---------------------------------------------------------------------------
-  // Save User
-  // ---------------------------------------------------------------------------
 
   @override
   Future<void> saveUser(UserProfileModel user) async {
+    user.validate();
     await _firestore
         .collection(FirestorePaths.users)
-        .doc(user.uid)
+        .doc(user.uid.trim())
         .set(user.toMap(), SetOptions(merge: true));
   }
 
-  // ---------------------------------------------------------------------------
-  // Get User
-  // ---------------------------------------------------------------------------
-
   @override
   Future<UserProfileModel?> getUser(String uid) async {
-    final DocumentSnapshot<Map<String, dynamic>> snapshot = await _firestore
+    final requestedUid = _requiredIdentity('uid', uid);
+    final snapshot = await _firestore
         .collection(FirestorePaths.users)
-        .doc(uid)
+        .doc(requestedUid)
         .get();
-
-    if (!snapshot.exists) {
-      return null;
-    }
-
-    final Map<String, dynamic>? data = snapshot.data();
-
+    if (!snapshot.exists) return null;
+    final data = snapshot.data();
     if (data == null) {
-      return null;
+      throw const FormatException('Existing profile has no data.');
     }
-
-    return UserProfileModel.fromMap(data);
+    final model = UserProfileModel.fromMap(data);
+    if (model.uid != requestedUid) {
+      throw const FormatException('Profile UID does not match its document.');
+    }
+    return model;
   }
-
-  // ---------------------------------------------------------------------------
-  // Get User by CAMO ID
-  // ---------------------------------------------------------------------------
 
   @override
   Future<UserProfileModel?> getUserByCamoId(String camoId) async {
-    final QuerySnapshot<Map<String, dynamic>> query = await _firestore
+    final requestedCamoId = _requiredIdentity('CAMO ID', camoId);
+    final query = await _firestore
         .collection(FirestorePaths.users)
-        .where('camoId', isEqualTo: camoId)
+        .where('camoId', isEqualTo: requestedCamoId)
         .limit(1)
         .get();
-
-    if (query.docs.isEmpty) {
-      return null;
+    if (query.docs.isEmpty) return null;
+    final model = UserProfileModel.fromMap(query.docs.first.data());
+    if (model.camoId != requestedCamoId) {
+      throw const FormatException('Profile CAMO ID does not match the query.');
     }
+    return model;
+  }
 
-    return UserProfileModel.fromMap(query.docs.first.data());
+  static String _requiredIdentity(String label, String value) {
+    final normalized = value.trim();
+    if (normalized.isEmpty) {
+      throw FormatException('Missing profile $label.');
+    }
+    return normalized;
   }
 }
