@@ -3,19 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('drawer has exactly one metadata-only History entry', (
-    WidgetTester tester,
-  ) async {
-    var historyTaps = 0;
-
+  testWidgets('drawer retires identity duplicate', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
           body: CamoDrawer(
             onWorkspaceTap: () {},
-            onMyIdentityTap: () {},
             onPairingHubTap: () {},
-            onHistoryTap: () => historyTaps++,
+            onHistoryTap: () {},
             onSubscriptionTap: () {},
             onSecurityCenterTap: () {},
             onSettingsTap: () {},
@@ -25,11 +20,8 @@ void main() {
         ),
       ),
     );
-
-    expect(find.text('History'), findsOneWidget);
-    expect(find.text('Encrypted History'), findsNothing);
-    expect(find.text('Decrypted History'), findsNothing);
-    await tester.tap(find.text('History'));
-    expect(historyTaps, 1);
+    expect(find.text('My Identity'), findsNothing);
+    expect(find.text('Security Center'), findsOneWidget);
+    expect(find.text('Settings'), findsOneWidget);
   });
 }

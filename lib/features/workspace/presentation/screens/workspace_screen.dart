@@ -29,6 +29,7 @@ import '../../../pairing/domain/entities/pairing_entity.dart';
 import '../../../pairing/presentation/providers/accepted_pairings_provider.dart';
 import '../../../pairing/presentation/providers/pending_pair_requests_provider.dart';
 import '../../../pairing/presentation/screens/pending_pair_requests_screen.dart';
+import '../../../pairing/presentation/screens/qr_scanner_screen.dart';
 import '../../../notifications/domain/entities/camo_notification_feed.dart';
 import '../../../notifications/presentation/providers/other_notifications_provider.dart';
 import '../../../notifications/presentation/screens/other_notifications_panel.dart';
@@ -36,7 +37,6 @@ import '../../../dashboard/presentation/widgets/identity_qr_dialog.dart';
 import '../../../profile/domain/entities/user_entity.dart';
 import '../../../profile/domain/repositories/profile_repository.dart';
 import '../../../profile/presentation/providers/my_identity_controller.dart';
-import '../../../profile/presentation/providers/my_identity_state.dart';
 import '../providers/workspace_controller.dart';
 import '../providers/workspace_state.dart';
 import '../widgets/camo_workspace_operation_banner.dart';
@@ -128,7 +128,6 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
       backgroundColor: CamoColors.background,
       drawer: CamoDrawer(
         onWorkspaceTap: _closeDrawer,
-        onMyIdentityTap: _openMyIdentity,
         onPairingHubTap: _openPairingHub,
         onHistoryTap: _openHistory,
         onSubscriptionTap: _openSubscription,
@@ -150,8 +149,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                   },
                   onPairRequestsTap: _showPendingPairRequestsPanel,
                   onNotificationsTap: _showOtherNotificationsPanel,
-                  onScanQrTap: () =>
-                      Navigator.pushNamed(context, AppRoutes.qrScanner),
+                  onScanQrTap: _showScannerPanel,
                   onIdentityTap: _showIdentityPanel,
                 );
               },
@@ -315,48 +313,116 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
   }
 
   Future<void> _showIdentityPanel() async {
-    await showModalBottomSheet<void>(
+    await showGeneralDialog<void>(
       context: context,
-      showDragHandle: true,
-      backgroundColor: CamoColors.surface,
-      builder: (BuildContext context) {
-        return Consumer(
-          builder: (BuildContext context, WidgetRef ref, Widget? child) {
-            final MyIdentityState state = ref.watch(
-              myIdentityControllerProvider,
-            );
-            final controller = ref.read(myIdentityControllerProvider.notifier);
-            final accepted = ref.watch(acceptedPairingsProvider);
-            final bool isPaired = accepted.when(
-              data: (List<PairingEntity> items) => items.isNotEmpty,
-              loading: () => false,
-              error: (_, _) => false,
-            );
-            return Padding(
-              padding: CamoSpacing.screen,
-              child: CamoIdentityPanel(
-                camoId: state.camoId,
-                isVisible: state.isVisible,
-                isPaired: isPaired,
-                onVisibilityTap: controller.toggleVisibility,
-                onCopyTap: () async {
-                  final bool copied = await controller.copyCamoId();
-                  if (copied && mounted) {
-                    _showMessage('CAMO ID copied.');
-                  }
-                },
-                onQrTap: () {
-                  if (state.camoId.trim().isEmpty) {
-                    return;
-                  }
-                  showDialog<void>(
-                    context: context,
-                    builder: (_) => IdentityQrDialog(camoId: state.camoId),
+      barrierDismissible: true,
+      barrierLabel: 'Close identity card',
+      barrierColor: Colors.black54,
+      transitionDuration: const Duration(milliseconds: 220),
+      pageBuilder: (dialogContext, animation, secondaryAnimation) {
+        return SafeArea(
+          child: Align(
+            alignment: Alignment.topRight,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(8, 58, 8, 8),
+              child: Consumer(
+                builder: (context, ref, child) {
+                  final state = ref.watch(myIdentityControllerProvider);
+                  final controller = ref.read(
+                    myIdentityControllerProvider.notifier,
+                  );
+                  final accepted = ref.watch(acceptedPairingsProvider);
+                  final isPaired = accepted.when(
+                    data: (List<PairingEntity> items) => items.isNotEmpty,
+                    loading: () => false,
+                    error: (_, _) => false,
+                  );
+                  return Material(
+                    color: Colors.transparent,
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth: MediaQuery.sizeOf(context).width - 16,
+                      ),
+                      child: CamoIdentityPanel(
+                        camoId: state.camoId,
+                        isVisible: state.isVisible,
+                        isPaired: isPaired,
+                        onVisibilityTap: controller.toggleVisibility,
+                        onCopyTap: () async {
+                          final copied = await controller.copyCamoId();
+                          if (copied && mounted) {
+                            _showMessage('CAMO ID copied.');
+                          }
+                        },
+                        onQrTap: () {
+                          if (state.camoId.trim().isEmpty) return;
+                          showDialog<void>(
+                            context: context,
+                            builder: (_) =>
+                                IdentityQrDialog(camoId: state.camoId),
+                          );
+                        },
+                      ),
+                    ),
                   );
                 },
               ),
-            );
-          },
+            ),
+          ),
+        );
+      },
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        final curved = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutBack,
+        );
+        return FadeTransition(
+          opacity: animation,
+          child: ScaleTransition(
+            scale: Tween(begin: 0.12, end: 1.0).animate(curved),
+            alignment: Alignment.topRight,
+            child: child,
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _showScannerPanel() async {
+    await showGeneralDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'Close scanner',
+      barrierColor: Colors.black54,
+      transitionDuration: const Duration(milliseconds: 220),
+      pageBuilder: (context, animation, secondaryAnimation) {
+        final size = MediaQuery.sizeOf(context);
+        return SafeArea(
+          child: Align(
+            alignment: Alignment.topRight,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(8, 58, 8, 8),
+              child: SizedBox(
+                width: size.width < 380 ? size.width - 16 : 360,
+                height: (size.height - 90).clamp(320.0, 500.0),
+                child: const QrScannerScreen(compact: true),
+              ),
+            ),
+          ),
+        );
+      },
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        final curved = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutBack,
+        );
+        return FadeTransition(
+          opacity: animation,
+          child: ScaleTransition(
+            scale: Tween(begin: 0.12, end: 1.0).animate(curved),
+            alignment: Alignment.topRight,
+            child: child,
+          ),
         );
       },
     );
@@ -547,11 +613,6 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
   void _openSecurityCenter() {
     Navigator.pop(context);
     Navigator.pushNamed(context, AppRoutes.securityCenter);
-  }
-
-  void _openMyIdentity() {
-    Navigator.pop(context);
-    Navigator.pushNamed(context, AppRoutes.myIdentity);
   }
 
   void _openPairingHub() {

@@ -9,7 +9,6 @@ class CamoDrawer extends StatelessWidget {
   const CamoDrawer({
     super.key,
     required this.onWorkspaceTap,
-    required this.onMyIdentityTap,
     required this.onPairingHubTap,
     required this.onHistoryTap,
     required this.onSubscriptionTap,
@@ -20,7 +19,6 @@ class CamoDrawer extends StatelessWidget {
   });
 
   final VoidCallback onWorkspaceTap;
-  final VoidCallback onMyIdentityTap;
   final VoidCallback onPairingHubTap;
   final VoidCallback onHistoryTap;
   final VoidCallback onSubscriptionTap;
@@ -47,11 +45,6 @@ class CamoDrawer extends StatelessWidget {
                     icon: CamoIcons.dashboard,
                     title: 'Workspace',
                     onTap: onWorkspaceTap,
-                  ),
-                  _DrawerItem(
-                    icon: CamoIcons.identity,
-                    title: 'My Identity',
-                    onTap: onMyIdentityTap,
                   ),
                   _DrawerItem(
                     icon: CamoIcons.pairings,
@@ -120,7 +113,7 @@ class CamoDrawer extends StatelessWidget {
                 Text(
                   'CAMO',
                   style: CamoTypography.appTitle.copyWith(
-                    color: CamoColors.textPrimary,
+                    color: CamoColors.primary,
                     letterSpacing: 1.2,
                   ),
                 ),
@@ -129,7 +122,7 @@ class CamoDrawer extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: CamoTypography.label.copyWith(
-                    color: CamoColors.textSecondary,
+                    color: CamoColors.primary,
                   ),
                 ),
               ],
@@ -157,7 +150,7 @@ class _DrawerSectionTitle extends StatelessWidget {
       child: Text(
         title.toUpperCase(),
         style: CamoTypography.label.copyWith(
-          color: CamoColors.textSecondary,
+          color: CamoColors.primary,
           letterSpacing: 1.1,
         ),
       ),
@@ -180,9 +173,7 @@ class _DrawerItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color color = isDestructive
-        ? CamoColors.error
-        : CamoColors.textPrimary;
+    final Color color = isDestructive ? CamoColors.error : CamoColors.primary;
     return ListTile(
       leading: Icon(icon, color: color),
       title: Text(

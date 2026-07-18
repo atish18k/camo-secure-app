@@ -31,50 +31,64 @@ class CamoHeader extends StatelessWidget {
     return Container(
       color: CamoColors.background,
       child: ResponsiveContainer(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: CamoSpacing.lg,
-            vertical: CamoSpacing.sm,
-          ),
-          child: Row(
-            children: [
-              IconButton(
-                tooltip: 'Menu',
-                onPressed: onMenuTap,
-                icon: const Icon(CamoIcons.menu, color: CamoColors.icon),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final compact = constraints.maxWidth < 420;
+            return Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: compact ? CamoSpacing.xs : CamoSpacing.lg,
+                vertical: CamoSpacing.xs,
               ),
-              Text(
-                'CAMO',
-                style: CamoTypography.appTitle.copyWith(
-                  color: CamoColors.textPrimary,
-                  letterSpacing: 1.2,
-                ),
+              child: Row(
+                children: [
+                  _HeaderIconButton(
+                    tooltip: 'Menu',
+                    icon: CamoIcons.menu,
+                    onTap: onMenuTap,
+                    compact: compact,
+                  ),
+                  Expanded(
+                    child: Text(
+                      'CAMO',
+                      maxLines: 1,
+                      overflow: TextOverflow.clip,
+                      style: CamoTypography.appTitle.copyWith(
+                        color: CamoColors.primary,
+                        letterSpacing: compact ? 0.6 : 1.2,
+                        fontSize: compact ? 17 : null,
+                      ),
+                    ),
+                  ),
+                  _HeaderIconButton(
+                    tooltip: 'Pair Requests',
+                    icon: Icons.person_add_alt_1_rounded,
+                    badgeCount: pairRequestsCount,
+                    onTap: onPairRequestsTap,
+                    compact: compact,
+                  ),
+                  _HeaderIconButton(
+                    tooltip: 'Notifications',
+                    icon: Icons.notifications_none_rounded,
+                    badgeCount: notificationCount,
+                    onTap: onNotificationsTap,
+                    compact: compact,
+                  ),
+                  _HeaderIconButton(
+                    tooltip: 'Scan QR',
+                    icon: CamoIcons.scanQr,
+                    onTap: onScanQrTap,
+                    compact: compact,
+                  ),
+                  _HeaderIconButton(
+                    tooltip: 'Identity',
+                    icon: CamoIcons.identity,
+                    onTap: onIdentityTap,
+                    compact: compact,
+                  ),
+                ],
               ),
-              const Spacer(),
-              _HeaderIconButton(
-                tooltip: 'Pair Requests',
-                icon: CamoIcons.pending,
-                badgeCount: pairRequestsCount,
-                onTap: onPairRequestsTap,
-              ),
-              _HeaderIconButton(
-                tooltip: 'Notifications',
-                icon: Icons.notifications_none_rounded,
-                badgeCount: notificationCount,
-                onTap: onNotificationsTap,
-              ),
-              _HeaderIconButton(
-                tooltip: 'Scan QR',
-                icon: CamoIcons.scanQr,
-                onTap: onScanQrTap,
-              ),
-              _HeaderIconButton(
-                tooltip: 'Identity',
-                icon: CamoIcons.identity,
-                onTap: onIdentityTap,
-              ),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );
@@ -86,12 +100,13 @@ class _HeaderIconButton extends StatelessWidget {
     required this.tooltip,
     required this.icon,
     required this.onTap,
+    required this.compact,
     this.badgeCount = 0,
   });
-
   final String tooltip;
   final IconData icon;
   final VoidCallback onTap;
+  final bool compact;
   final int badgeCount;
 
   @override
@@ -101,11 +116,25 @@ class _HeaderIconButton extends StatelessWidget {
       children: [
         IconButton(
           tooltip: tooltip,
+          visualDensity: VisualDensity.compact,
+          constraints: BoxConstraints.tightFor(
+            width: compact ? 38 : 44,
+            height: compact ? 40 : 44,
+          ),
+          padding: EdgeInsets.zero,
           onPressed: onTap,
-          icon: Icon(icon, color: CamoColors.icon, size: CamoIcons.md),
+          icon: Icon(
+            icon,
+            color: CamoColors.primary,
+            size: compact ? 21 : CamoIcons.md,
+          ),
         ),
         if (badgeCount > 0)
-          Positioned(right: 6, top: 6, child: _Badge(count: badgeCount)),
+          Positioned(
+            right: compact ? 1 : 3,
+            top: 2,
+            child: _Badge(count: badgeCount),
+          ),
       ],
     );
   }
@@ -113,27 +142,23 @@ class _HeaderIconButton extends StatelessWidget {
 
 class _Badge extends StatelessWidget {
   const _Badge({required this.count});
-
   final int count;
-
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      decoration: const BoxDecoration(
-        color: CamoColors.badge,
-        shape: BoxShape.circle,
+  Widget build(BuildContext context) => Container(
+    constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+    padding: const EdgeInsets.symmetric(horizontal: 4),
+    decoration: const BoxDecoration(
+      color: CamoColors.badge,
+      shape: BoxShape.circle,
+    ),
+    alignment: Alignment.center,
+    child: Text(
+      count > 99 ? '99+' : count.toString(),
+      style: CamoTypography.label.copyWith(
+        color: CamoColors.badgeText,
+        fontSize: 10,
+        fontWeight: FontWeight.w700,
       ),
-      alignment: Alignment.center,
-      child: Text(
-        count > 99 ? '99+' : count.toString(),
-        style: CamoTypography.label.copyWith(
-          color: CamoColors.badgeText,
-          fontSize: 10,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-    );
-  }
+    ),
+  );
 }

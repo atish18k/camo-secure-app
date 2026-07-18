@@ -43,7 +43,7 @@ class CamoWorkspaceOperationBanner extends StatelessWidget {
       CamoWorkspaceOperationStatus.ready => const _OperationPresentation(
         'Ready',
         Icons.check_circle_outline,
-        CamoColors.info,
+        CamoColors.primary,
       ),
       CamoWorkspaceOperationStatus.authorizing => const _OperationPresentation(
         'Authorizing with server',

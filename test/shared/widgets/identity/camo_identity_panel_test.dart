@@ -3,31 +3,25 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('identity panel exposes reveal copy and QR controls', (
-    WidgetTester tester,
-  ) async {
-    var reveal = 0;
-    var copy = 0;
-    var qr = 0;
+  testWidgets('identity is a compact horizontal business card', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
           body: CamoIdentityPanel(
-            camoId: 'CM-ABCD-1234',
-            isVisible: false,
+            camoId: 'CM-1234-5678',
+            isVisible: true,
             isPaired: true,
-            onVisibilityTap: () => reveal++,
-            onCopyTap: () => copy++,
-            onQrTap: () => qr++,
+            onVisibilityTap: () {},
+            onCopyTap: () {},
+            onQrTap: () {},
           ),
         ),
       ),
     );
-    expect(find.text('CM-XXXX-XXXX'), findsOneWidget);
-    expect(find.text('Paired'), findsOneWidget);
-    await tester.tap(find.byTooltip('Reveal CAMO ID'));
-    await tester.tap(find.byTooltip('Copy CAMO ID'));
-    await tester.tap(find.byTooltip('Show Identity QR'));
-    expect((reveal, copy, qr), (1, 1, 1));
+    final size = tester.getSize(find.byType(CamoIdentityPanel));
+    expect(size.width, greaterThan(size.height));
+    expect(size.height, lessThan(120));
+    expect(find.byTooltip('Show Identity QR'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 }

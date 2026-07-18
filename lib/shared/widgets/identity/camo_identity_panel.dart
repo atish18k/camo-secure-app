@@ -1,25 +1,12 @@
-// ---------------------------------------------------------------------------
-// Imports
-// ---------------------------------------------------------------------------
-
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/camo_colors.dart';
 import '../../../core/theme/camo_icons.dart';
 import '../../../core/theme/camo_radius.dart';
-import '../../../core/theme/camo_spacing.dart';
 import '../../../core/theme/camo_shadows.dart';
 import '../../../core/theme/camo_typography.dart';
 
-// ---------------------------------------------------------------------------
-// Widget
-// ---------------------------------------------------------------------------
-
 class CamoIdentityPanel extends StatelessWidget {
-  // ---------------------------------------------------------------------------
-  // Constructor
-  // ---------------------------------------------------------------------------
-
   const CamoIdentityPanel({
     super.key,
     required this.camoId,
@@ -29,11 +16,6 @@ class CamoIdentityPanel extends StatelessWidget {
     required this.onCopyTap,
     required this.onQrTap,
   });
-
-  // ---------------------------------------------------------------------------
-  // Properties
-  // ---------------------------------------------------------------------------
-
   final String camoId;
   final bool isVisible;
   final bool isPaired;
@@ -41,93 +23,92 @@ class CamoIdentityPanel extends StatelessWidget {
   final VoidCallback onCopyTap;
   final VoidCallback onQrTap;
 
-  // ---------------------------------------------------------------------------
-  // Build
-  // ---------------------------------------------------------------------------
-
   @override
   Widget build(BuildContext context) {
-    final String displayId = isVisible ? camoId : 'CM-XXXX-XXXX';
-
+    final displayId = isVisible ? camoId : 'CM-XXXX-XXXX';
     return Container(
-      width: double.infinity,
-      padding: CamoSpacing.card,
+      constraints: const BoxConstraints(maxWidth: 440),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: CamoColors.surface,
-        borderRadius: BorderRadius.circular(CamoRadius.xl),
+        borderRadius: BorderRadius.circular(CamoRadius.lg),
         boxShadow: CamoShadows.card,
+        border: Border.all(color: CamoColors.primary.withValues(alpha: 0.28)),
       ),
-      child: Column(
+      child: Row(
         children: [
-          Transform.translate(
-            offset: const Offset(-10, 0),
-            child: Row(
+          const Icon(CamoIcons.identity, color: CamoColors.primary, size: 28),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
               mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(
-                  CamoIcons.identity,
-                  color: CamoColors.primary,
-                  size: CamoIcons.md,
-                ),
-                CamoSpacing.gapHorizontalSm,
+                Text('CAMO Identity', style: CamoTypography.bodyStrong),
+                const SizedBox(height: 2),
                 Text(
-                  'CAMO Identity',
-                  style: CamoTypography.cardTitle.copyWith(
+                  displayId,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: CamoTypography.label.copyWith(
                     color: CamoColors.textPrimary,
+                    letterSpacing: 0.7,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  isPaired ? 'Paired' : 'Not Paired',
+                  style: CamoTypography.label.copyWith(
+                    color: isPaired ? CamoColors.success : CamoColors.warning,
                   ),
                 ),
               ],
             ),
           ),
-          CamoSpacing.gapXxl,
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              IconButton(
-                tooltip: isVisible ? 'Hide CAMO ID' : 'Reveal CAMO ID',
-                onPressed: onVisibilityTap,
-                icon: Icon(
-                  isVisible ? CamoIcons.hide : CamoIcons.reveal,
-                  color: CamoColors.icon,
-                ),
-              ),
-              Text(
-                displayId,
-                style: CamoTypography.bodyStrong.copyWith(
-                  fontSize: 18,
-                  letterSpacing: 1.1,
-                  color: CamoColors.textPrimary,
-                ),
-              ),
-              IconButton(
-                tooltip: 'Copy CAMO ID',
-                onPressed: onCopyTap,
-                icon: const Icon(
-                  CamoIcons.copy,
-                  color: CamoColors.icon,
-                ),
-              ),
-            ],
+          _CompactAction(
+            tooltip: isVisible ? 'Hide CAMO ID' : 'Reveal CAMO ID',
+            icon: isVisible ? CamoIcons.hide : CamoIcons.reveal,
+            onTap: onVisibilityTap,
           ),
-          CamoSpacing.gapXxl,
-          IconButton(
+          _CompactAction(
+            tooltip: 'Copy CAMO ID',
+            icon: CamoIcons.copy,
+            onTap: onCopyTap,
+          ),
+          _CompactAction(
             tooltip: 'Show Identity QR',
-            onPressed: onQrTap,
-            icon: const Icon(
-              CamoIcons.qr,
-              size: CamoIcons.xl,
-              color: CamoColors.primary,
-            ),
-          ),
-          CamoSpacing.gapLg,
-          Text(
-            isPaired ? 'Paired' : 'Not Paired',
-            style: CamoTypography.label.copyWith(
-              color: isPaired ? CamoColors.success : CamoColors.warning,
-            ),
+            icon: CamoIcons.qr,
+            onTap: onQrTap,
+            primary: true,
           ),
         ],
       ),
     );
   }
+}
+
+class _CompactAction extends StatelessWidget {
+  const _CompactAction({
+    required this.tooltip,
+    required this.icon,
+    required this.onTap,
+    this.primary = false,
+  });
+  final String tooltip;
+  final IconData icon;
+  final VoidCallback onTap;
+  final bool primary;
+  @override
+  Widget build(BuildContext context) => IconButton(
+    tooltip: tooltip,
+    visualDensity: VisualDensity.compact,
+    constraints: const BoxConstraints.tightFor(width: 36, height: 40),
+    padding: EdgeInsets.zero,
+    onPressed: onTap,
+    icon: Icon(
+      icon,
+      size: 20,
+      color: primary ? CamoColors.primary : CamoColors.icon,
+    ),
+  );
 }

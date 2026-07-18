@@ -75,7 +75,7 @@ class CamoOutputField extends StatelessWidget {
                   onPressed: onClearTap,
                   icon: const Icon(
                     CamoIcons.clear,
-                    color: CamoColors.icon,
+                    color: CamoColors.primary,
                     size: CamoIcons.sm,
                   ),
                 ),
