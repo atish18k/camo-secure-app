@@ -23,6 +23,9 @@ import {
 import {
   CamoServerAuthorizationOrchestrator,
 } from "./server_authorization_orchestrator";
+import {FirestoreCamoMessagePolicyStore} from "../infrastructure/firestore_camo_message_policy_store";
+import {CamoMessagePolicyLifecycleService} from "./message_policy_lifecycle_service";
+import {AuthorizedMessagePolicyService, CamoServerAuthorizer} from "./authorized_message_policy_service";
 import {
   FirestoreCamoDeviceAuthorizationPort,
 } from "../validators/firestore_device_authorization_port";
@@ -51,11 +54,12 @@ export interface CamoProductionServerAuthorizationFactoryOptions {
   readonly idGenerator: () => string;
   readonly clock?: () => Date;
   readonly kmsClient?: CamoCloudKmsClient;
+  readonly messagePolicyMutationEnabled?: boolean;
 }
 
 export function createCamoProductionServerAuthorizationOrchestrator(
   options: CamoProductionServerAuthorizationFactoryOptions,
-): CamoServerAuthorizationOrchestrator {
+): CamoServerAuthorizer {
   const clock = options.clock ?? (() => new Date());
 
   const kmsAdapters =
@@ -72,7 +76,7 @@ export function createCamoProductionServerAuthorizationOrchestrator(
       options.firestore,
     );
 
-  return new CamoServerAuthorizationOrchestrator({
+  const orchestrator = new CamoServerAuthorizationOrchestrator({
     userPort: new FirestoreCamoUserAuthorizationPort(reader),
     devicePort: new FirestoreCamoDeviceAuthorizationPort(reader),
     pairPort: new FirestoreCamoPairAuthorizationPort(reader),
@@ -99,4 +103,16 @@ export function createCamoProductionServerAuthorizationOrchestrator(
     idGenerator: options.idGenerator,
     clock,
   });
+
+  if (options.messagePolicyMutationEnabled !== true) return orchestrator;
+
+  return new AuthorizedMessagePolicyService(
+    orchestrator,
+    new CamoMessagePolicyLifecycleService(
+      new FirestoreCamoMessagePolicyStore(options.firestore),
+      clock,
+    ),
+    {isMessagePolicyMutationEnabled: () =>
+      options.messagePolicyMutationEnabled === true},
+  );
 }
