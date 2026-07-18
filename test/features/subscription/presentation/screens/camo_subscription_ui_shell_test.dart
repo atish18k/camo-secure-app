@@ -33,11 +33,21 @@ void main() {
   });
 
   testWidgets('unbound subscription state remains fail closed', (tester) async {
-    await tester.pumpWidget(const MaterialApp(home: SubscriptionScreen()));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: const SubscriptionScreen(),
+        routes: {AppRoutes.choosePlan: (_) => const ChoosePlanScreen()},
+      ),
+    );
 
     expect(find.text('Subscription status unavailable'), findsOneWidget);
     expect(find.textContaining('Access remains fail-closed'), findsOneWidget);
     expect(find.text('Active'), findsNothing);
+
+    await tester.tap(find.text('View available plan'));
+    await tester.pumpAndSettle();
+    expect(find.text('Choose Plan'), findsOneWidget);
+    expect(find.textContaining('does not activate access'), findsOneWidget);
   });
 
   testWidgets('complete server facts render without enabling management', (

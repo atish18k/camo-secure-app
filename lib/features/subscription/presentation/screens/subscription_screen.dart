@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../app/routes.dart';
+
 import '../../../../core/licensing/domain/entities/camo_license_status.dart';
 import '../../../../core/licensing/domain/entities/camo_subscription_status.dart';
 import '../../../../core/theme/camo_colors.dart';
@@ -61,6 +63,12 @@ class _UnavailableView extends StatelessWidget {
           textAlign: TextAlign.center,
         ),
         CamoSpacing.gapLg,
+        CamoButton.primary(
+          text: 'View available plan',
+          icon: Icons.workspace_premium_outlined,
+          onPressed: () => Navigator.pushNamed(context, AppRoutes.choosePlan),
+        ),
+        CamoSpacing.gapSm,
         const CamoButton.outlined(
           text: 'Server refresh unavailable',
           icon: Icons.refresh,
