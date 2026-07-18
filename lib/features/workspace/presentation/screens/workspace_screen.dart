@@ -38,6 +38,8 @@ import '../../../profile/domain/repositories/profile_repository.dart';
 import '../../../profile/presentation/providers/my_identity_controller.dart';
 import '../../../profile/presentation/providers/my_identity_state.dart';
 import '../providers/workspace_controller.dart';
+import '../providers/workspace_state.dart';
+import '../widgets/camo_workspace_operation_banner.dart';
 import '../widgets/camo_workspace_terminology.dart';
 import '../widgets/workspace_pair_header.dart';
 
@@ -131,7 +133,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
         onHistoryTap: _openHistory,
         onSubscriptionTap: _openSubscription,
         onSecurityCenterTap: _openSecurityCenter,
-        onSettingsTap: _closeDrawerAndShowComingSoon,
+        onSettingsTap: _openSettings,
         onAboutTap: _closeDrawerAndShowComingSoon,
         onLogoutTap: _logout,
       ),
@@ -172,7 +174,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
                         child: CamoWorkspaceBox(
                           title: CamoWorkspaceTerminology.title(_selectedTab),
                           expandChild: true,
-                          child: _buildWorkspaceContent(canRun),
+                          child: _buildWorkspaceContent(canRun, workspaceState),
                         ),
                       ),
                     ],
@@ -210,10 +212,12 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
     );
   }
 
-  Widget _buildWorkspaceContent(bool canRun) {
+  Widget _buildWorkspaceContent(bool canRun, WorkspaceState workspaceState) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        CamoWorkspaceOperationBanner(status: workspaceState.operationStatus),
+        CamoSpacing.gapSm,
         CamoCamouflageSwitch(value: _isCamouflageEnabled, onChanged: null),
         if (_isCamouflageEnabled) ...[
           CamoSpacing.gapLg,
@@ -234,6 +238,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
               ? CamoIcons.encode
               : CamoIcons.decode,
           onPressed: canRun ? _runWorkspaceAction : null,
+          isLoading: workspaceState.isLoading,
         ),
         CamoSpacing.gapSm,
         Expanded(
@@ -527,6 +532,11 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
   void _closeDrawerAndShowComingSoon() {
     Navigator.pop(context);
     _showComingSoon();
+  }
+
+  void _openSettings() {
+    Navigator.pop(context);
+    Navigator.pushNamed(context, AppRoutes.settings);
   }
 
   void _openSubscription() {

@@ -1,35 +1,17 @@
-// ---------------------------------------------------------------------------
-// Imports
-// ---------------------------------------------------------------------------
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../domain/services/camo_authorized_workspace_service.dart';
 import '../../../../core/di/injection_container.dart';
+import '../../domain/services/camo_authorized_workspace_service.dart';
 import 'workspace_state.dart';
-
-// ---------------------------------------------------------------------------
-// Provider
-// ---------------------------------------------------------------------------
 
 final workspaceControllerProvider =
     NotifierProvider<WorkspaceController, WorkspaceState>(
       WorkspaceController.new,
     );
 
-// ---------------------------------------------------------------------------
-// Workspace Controller
-// ---------------------------------------------------------------------------
-
 class WorkspaceController extends Notifier<WorkspaceState> {
   @override
-  WorkspaceState build() {
-    return const WorkspaceState();
-  }
-
-  // ---------------------------------------------------------------------------
-  // Encode
-  // ---------------------------------------------------------------------------
+  WorkspaceState build() => const WorkspaceState();
 
   Future<void> encode({
     required String pairingId,
@@ -37,69 +19,67 @@ class WorkspaceController extends Notifier<WorkspaceState> {
     String? subject,
     bool camouflageEnabled = false,
   }) async {
-    state = state.copyWith(isLoading: true, errorMessage: null);
-
+    state = state.copyWith(
+      isLoading: true,
+      errorMessage: null,
+      operationStatus: CamoWorkspaceOperationStatus.authorizing,
+    );
     try {
-      final CamoAuthorizedWorkspaceService workspaceService =
-          sl<CamoAuthorizedWorkspaceService>();
-
-      final String output = await workspaceService.encode(
+      final String output = await sl<CamoAuthorizedWorkspaceService>().encode(
         pairingId: pairingId,
         plainText: plainText,
         subject: subject,
         camouflageEnabled: camouflageEnabled,
       );
-
       state = state.copyWith(
         isLoading: false,
         output: output,
         errorMessage: null,
+        operationStatus: CamoWorkspaceOperationStatus.success,
       );
     } catch (_) {
       state = state.copyWith(
         isLoading: false,
         errorMessage: 'Encoding failed.',
+        operationStatus: CamoWorkspaceOperationStatus.failure,
       );
     }
   }
-
-  // ---------------------------------------------------------------------------
-  // Decode
-  // ---------------------------------------------------------------------------
 
   Future<void> decode({
     required String pairingId,
     required String encodedText,
   }) async {
-    state = state.copyWith(isLoading: true, errorMessage: null);
-
+    state = state.copyWith(
+      isLoading: true,
+      errorMessage: null,
+      operationStatus: CamoWorkspaceOperationStatus.authorizing,
+    );
     try {
-      final CamoAuthorizedWorkspaceService workspaceService =
-          sl<CamoAuthorizedWorkspaceService>();
-
-      final String output = await workspaceService.decode(
+      final String output = await sl<CamoAuthorizedWorkspaceService>().decode(
         pairingId: pairingId,
         encodedText: encodedText,
       );
-
       state = state.copyWith(
         isLoading: false,
         output: output,
         errorMessage: null,
+        operationStatus: CamoWorkspaceOperationStatus.success,
       );
     } catch (_) {
       state = state.copyWith(
         isLoading: false,
         errorMessage: 'Decoding failed.',
+        operationStatus: CamoWorkspaceOperationStatus.failure,
       );
     }
   }
 
-  // ---------------------------------------------------------------------------
-  // Clear
-  // ---------------------------------------------------------------------------
-
   void clearOutput() {
-    state = state.copyWith(output: '', errorMessage: null);
+    state = state.copyWith(
+      output: '',
+      errorMessage: null,
+      operationStatus: CamoWorkspaceOperationStatus.ready,
+    );
   }
 }
