@@ -6,6 +6,7 @@ import '../features/pairing/presentation/screens/pending_pair_requests_screen.da
 import '../features/pairing/presentation/screens/qr_scanner_screen.dart';
 import '../features/policy/presentation/screens/camo_device_approval_gate.dart';
 import '../features/splash/presentation/screens/splash_screen.dart';
+import '../features/history/presentation/screens/history_screen.dart';
 import '../features/workspace/presentation/screens/workspace_screen.dart';
 
 class AppRoutes {
@@ -15,6 +16,7 @@ class AppRoutes {
   static const String login = '/login';
   static const String home = '/home';
   static const String workspace = '/workspace';
+  static const String history = '/history';
   static const String dashboard = '/dashboard';
   static const String myIdentity = '/my-identity';
   static const String pairRequest = '/pair-request';
@@ -29,6 +31,7 @@ class AppRoutes {
     login: (context) => const LoginScreen(),
     home: (context) => protect(const WorkspaceScreen()),
     workspace: (context) => protect(const WorkspaceScreen()),
+    history: (context) => protect(const HistoryScreen()),
     dashboard: (context) => protect(const WorkspaceScreen()),
     pairRequest: (context) => protect(const PairRequestScreen()),
     pendingPairRequests: (context) =>

@@ -63,7 +63,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
 
   CamoWorkspaceTab _selectedTab = CamoWorkspaceTab.encoder;
   PairingEntity? _selectedPair;
-  bool _isCamouflageEnabled = false;
+  final bool _isCamouflageEnabled = false;
   bool _routePairLoaded = false;
 
   @override
@@ -128,7 +128,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
         onWorkspaceTap: _closeDrawer,
         onMyIdentityTap: _openMyIdentity,
         onPairingHubTap: _openPairingHub,
-        onHistoryTap: _closeDrawerAndShowComingSoon,
+        onHistoryTap: _openHistory,
         onSecurityCenterTap: _closeDrawerAndShowComingSoon,
         onSettingsTap: _closeDrawerAndShowComingSoon,
         onAboutTap: _closeDrawerAndShowComingSoon,
@@ -213,10 +213,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        CamoCamouflageSwitch(
-          value: _isCamouflageEnabled,
-          onChanged: _toggleCamouflage,
-        ),
+        CamoCamouflageSwitch(value: _isCamouflageEnabled, onChanged: null),
         if (_isCamouflageEnabled) ...[
           CamoSpacing.gapLg,
           CamoSubjectField(controller: _subjectController),
@@ -278,16 +275,6 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
     setState(() {
       _selectedTab = tab;
       _outputController.clear();
-    });
-  }
-
-  void _toggleCamouflage(bool value) {
-    setState(() {
-      _isCamouflageEnabled = value;
-
-      if (!value) {
-        _subjectController.clear();
-      }
     });
   }
 
@@ -512,8 +499,8 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
       await workspaceController.encode(
         pairingId: _selectedPair!.id,
         plainText: input,
-        subject: _isCamouflageEnabled ? _subjectController.text.trim() : null,
-        camouflageEnabled: _isCamouflageEnabled,
+        subject: null,
+        camouflageEnabled: false,
       );
     } else {
       await workspaceController.decode(
@@ -549,6 +536,11 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
   void _openPairingHub() {
     Navigator.pop(context);
     Navigator.pushNamed(context, AppRoutes.myPairings);
+  }
+
+  void _openHistory() {
+    Navigator.pop(context);
+    Navigator.pushNamed(context, AppRoutes.history);
   }
 
   Future<void> _logout() async {

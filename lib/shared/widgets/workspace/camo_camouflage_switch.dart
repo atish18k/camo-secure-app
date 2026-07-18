@@ -28,7 +28,7 @@ class CamoCamouflageSwitch extends StatelessWidget {
   // ---------------------------------------------------------------------------
 
   final bool value;
-  final ValueChanged<bool> onChanged;
+  final ValueChanged<bool>? onChanged;
 
   // ---------------------------------------------------------------------------
   // Build
@@ -39,7 +39,7 @@ class CamoCamouflageSwitch extends StatelessWidget {
     return Row(
       children: [
         Text(
-          'Camouflage',
+          'Camouflage (Coming later)',
           style: CamoTypography.bodyStrong.copyWith(
             color: CamoColors.textPrimary,
           ),
@@ -48,14 +48,10 @@ class CamoCamouflageSwitch extends StatelessWidget {
         Text(
           value ? 'ON' : 'OFF',
           style: CamoTypography.label.copyWith(
-            color: value
-                ? CamoColors.primary
-                : CamoColors.textSecondary,
+            color: value ? CamoColors.primary : CamoColors.textSecondary,
           ),
         ),
-        const SizedBox(
-          width: CamoSpacing.sm,
-        ),
+        const SizedBox(width: CamoSpacing.sm),
         Switch(
           value: value,
           activeThumbColor: CamoColors.primary,
