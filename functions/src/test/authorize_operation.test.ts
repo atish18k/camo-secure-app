@@ -1,10 +1,11 @@
-﻿import assert from "node:assert/strict";
+import assert from "node:assert/strict";
 import test from "node:test";
 import {createFailClosedDenial, parseAuthorizationInput} from "../authorization_contract";
 
 function createValidInput(): Record<string, unknown> {
   return {requestId: "request-001", operationId: "operation-001",
-    userId: "user-001", deviceId: "device-001", operationType: "encode",
+    userId: "user-001", deviceId: "device-001",
+    payloadDigest: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", operationType: "encode",
     keyPurpose: "messageEncryption", keyScope: "message",
     requestedAt: "2026-07-13T12:00:00.000Z", pairId: "pair-001",
     messageId: "message-001", messageValidity: "five_minutes",

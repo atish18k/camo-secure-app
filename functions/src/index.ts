@@ -98,6 +98,7 @@ export const authorizeOperation = onCall(
         requiredEntitlements: input.requiredEntitlements,
         requestedAt: input.requestedAt,
         serverReceivedAt: new Date().toISOString(),
+        payloadDigest: input.payloadDigest,
       });
 
     let result;

@@ -14,7 +14,8 @@ import {CamoMessagePolicyLifecycleService} from "../services/message_policy_life
 
 const encodeContext: CamoServerAuthorizationContext = Object.freeze({
   requestId: "request-1", operationId: "operation-1", userId: "user-1",
-  deviceId: "device-1", operationType: "encode", pairId: "pair-1",
+  deviceId: "device-1",
+  payloadDigest: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", operationType: "encode", pairId: "pair-1",
   messageId: "message-1", messageValidity: "five_minutes", oneTimeView: false,
   keyPurpose: "messageEncryption", keyScope: "message",
   requiredEntitlements: ["baseEncoding"],

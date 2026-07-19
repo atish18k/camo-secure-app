@@ -29,6 +29,7 @@ const context = {
   operationId: "operation-001",
   userId: "user-001",
   deviceId: "device-001",
+  payloadDigest: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   operationType: "encode" as const,
   pairId: "pair-001",
   keyPurpose: "messageEncryption",

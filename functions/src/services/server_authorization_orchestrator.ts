@@ -129,6 +129,7 @@ export class CamoServerAuthorizationOrchestrator {
         deviceId: context.deviceId,
         pairId: context.pairId,
         messageId: context.messageId,
+        payloadDigest: context.payloadDigest,
         keyReleaseId: kmsDecision.releaseId,
         keyReference: kmsDecision.keyReference,
         sessionId,
@@ -148,6 +149,8 @@ export class CamoServerAuthorizationOrchestrator {
           camoAuthorizationCanonicalizationVersion ||
         signedResponse.requestId.trim() !==
           context.requestId.trim() ||
+        signedResponse.payloadDigest.trim() !==
+          context.payloadDigest.trim() ||
         signedResponse.signatureAlgorithm !==
           camoAuthorizationSignatureAlgorithm ||
         signedResponse.signatureEncoding !==
@@ -193,6 +196,7 @@ export class CamoServerAuthorizationOrchestrator {
       context.operationId.trim().length > 0 &&
       context.userId.trim().length > 0 &&
       context.deviceId.trim().length > 0 &&
+      /^[a-f0-9]{64}$/i.test(context.payloadDigest) &&
       context.requiredEntitlements.length > 0 &&
       (context.operationType === "encode" ||
         context.operationType === "decode") &&

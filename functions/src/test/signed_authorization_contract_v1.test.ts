@@ -26,6 +26,7 @@ test("signed contract binds schema and request identity", async () => {
     operationId: "operation-v1-001",
     userId: "user-v1-001",
     deviceId: "device-v1-001",
+    payloadDigest: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
     operationType: "encode",
     pairId: "pair-v1-001",
     keyPurpose: "messageEncryption",

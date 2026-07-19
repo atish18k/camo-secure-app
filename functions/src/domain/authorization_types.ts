@@ -28,6 +28,7 @@ export interface CamoServerAuthorizationContext {
   readonly requiredEntitlements: readonly string[];
   readonly requestedAt: string;
   readonly serverReceivedAt: string;
+  readonly payloadDigest: string;
 }
 
 export interface CamoDomainDecision {
@@ -58,6 +59,7 @@ export interface CamoUnsignedAuthorizationResponse {
   readonly deviceId: string;
   readonly pairId?: string;
   readonly messageId?: string;
+  readonly payloadDigest: string;
   readonly keyReleaseId: string;
   readonly keyReference: string;
   readonly sessionId: string;

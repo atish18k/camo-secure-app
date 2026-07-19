@@ -54,6 +54,7 @@ const unsignedResponse = {
   canonicalizationVersion:
     "CAMO_AUTHORIZATION_V1",
   requestId: "request-001",
+  payloadDigest: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   authorized: true,
   authorizationId:
     "authorization-001",

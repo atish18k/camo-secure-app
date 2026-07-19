@@ -3,7 +3,8 @@ import test from "node:test";
 import {camoMessagePolicyTransitionsV2} from "../domain/message_policy_v2_types";
 import {FirestoreCamoRiskAuthorizationPort} from "../validators/firestore_risk_authorization_port";
 
-const context = {requestId: "r", operationId: "o", userId: "u", deviceId: "d", operationType: "encode" as const,
+const context = {requestId: "r", operationId: "o", userId: "u", deviceId: "d",
+payloadDigest: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", operationType: "encode" as const,
   pairId: "p", messageId: "m", keyPurpose: "messageEncryption", keyScope: "message",
   requiredEntitlements: ["baseEncoding"], requestedAt: "2026-07-19T00:00:00.000Z", serverReceivedAt: "2026-07-19T00:00:01.000Z"};
 const valid = {schemaVersion: 1, operationId: "o", userId: "u", deviceId: "d", pairId: "p", messageId: "m",

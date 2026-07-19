@@ -14,6 +14,7 @@ test("message-policy service activation gate fails closed", async () => {
   );
   const result = await service.authorize({
     requestId: "r", operationId: "o", userId: "u", deviceId: "d",
+    payloadDigest: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
     operationType: "encode", pairId: "p", messageId: "m",
     messageValidity: "five_minutes", oneTimeView: false,
     keyPurpose: "messageEncryption", keyScope: "message",

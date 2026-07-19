@@ -17,6 +17,7 @@ const context: CamoServerAuthorizationContext = {
   operationId: "operation-001",
   userId: "user-001",
   deviceId: "device-001",
+  payloadDigest: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   operationType: "encode",
   pairId: "pair-001",
   keyPurpose: "messageEncryption",

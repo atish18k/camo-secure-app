@@ -21,6 +21,7 @@ export function canonicalizeAuthorizationResponse(
     `deviceId=${response.deviceId.trim()}`,
     `pairId=${normalizeOptional(response.pairId)}`,
     `messageId=${normalizeOptional(response.messageId)}`,
+    `payloadDigest=${response.payloadDigest.trim()}`,
     `keyReleaseId=${response.keyReleaseId.trim()}`,
     `keyReference=${response.keyReference.trim()}`,
     `sessionId=${response.sessionId.trim()}`,

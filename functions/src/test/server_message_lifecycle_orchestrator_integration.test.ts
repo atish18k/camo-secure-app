@@ -40,7 +40,8 @@ test("message lifecycle denial stops before policy KMS replay and signing", asyn
   });
   const result = await orchestrator.authorize({
     requestId: "request", operationId: "operation", userId: "user-2",
-    deviceId: "device-2", operationType: "decode", pairId: "pair-1",
+    deviceId: "device-2",
+    payloadDigest: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", operationType: "decode", pairId: "pair-1",
     messageId: "message-1", keyPurpose: "messageDecryption", keyScope: "message",
     requiredEntitlements: ["baseDecoding"], requestedAt: "2026-07-17T00:00:00.000Z",
     serverReceivedAt: "2026-07-17T00:00:01.000Z",

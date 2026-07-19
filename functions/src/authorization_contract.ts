@@ -1,4 +1,4 @@
-﻿import {
+import {
   camoMessageValiditiesV1,
   CamoMessageValidityV1,
 } from "./domain/message_policy_types";
@@ -12,6 +12,7 @@ export interface CamoAuthorizationInput {
   readonly keyPurpose: string;
   readonly keyScope: string;
   readonly requestedAt: string;
+  readonly payloadDigest: string;
   readonly pairId?: string;
   readonly messageId?: string;
   readonly messageValidity?: CamoMessageValidityV1;
@@ -36,6 +37,14 @@ function requireNonEmptyString(value: unknown, fieldName: string): string {
 function requireIdentifier(value: unknown, fieldName: string): string {
   const normalized = requireNonEmptyString(value, fieldName);
   if (normalized.includes("/")) {
+    throw new Error(`Invalid authorization field: ${fieldName}.`);
+  }
+  return normalized;
+}
+
+function requireSha256Hex(value: unknown, fieldName: string): string {
+  const normalized = requireNonEmptyString(value, fieldName).toLowerCase();
+  if (!/^[a-f0-9]{64}$/.test(normalized)) {
     throw new Error(`Invalid authorization field: ${fieldName}.`);
   }
   return normalized;
@@ -103,6 +112,7 @@ export function parseAuthorizationInput(data: unknown): CamoAuthorizationInput {
     operationType, keyPurpose: requireNonEmptyString(input.keyPurpose, "keyPurpose"),
     keyScope: requireNonEmptyString(input.keyScope, "keyScope"),
     requestedAt: requireNonEmptyString(input.requestedAt, "requestedAt"),
+    payloadDigest: requireSha256Hex(input.payloadDigest, "payloadDigest"),
     pairId, messageId, messageValidity, oneTimeView,
     requiredEntitlements: requireStringArray(input.requiredEntitlements, "requiredEntitlements"),
     attributes: normalizeAttributes(input.attributes),

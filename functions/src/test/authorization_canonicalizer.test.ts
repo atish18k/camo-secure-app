@@ -10,6 +10,7 @@ test("canonical response has deterministic ordered fields", () => {
     schemaVersion: 1,
     canonicalizationVersion: "CAMO_AUTHORIZATION_V1",
     requestId: "request-001",
+    payloadDigest: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
     authorized: true,
     authorizationId: "authorization-001",
     operationId: "operation-001",

@@ -18,6 +18,7 @@ const expectedCanonicalPayload = [
   "deviceId=device-001",
   "pairId=pair-001",
   "messageId=",
+  "payloadDigest=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   "keyReleaseId=release-001",
   "keyReference=key-001",
   "sessionId=session-001",
@@ -27,14 +28,15 @@ const expectedCanonicalPayload = [
 ].join("\n");
 
 const expectedSha256 =
-  "44a93a222988e68fb1667675c7e266b8a" +
-  "7fd0c3b16f2b8a1129247b2be634587";
+  "569ef4396fd33e940541c7de07e0043f" +
+  "afd762e50ed46c521cb116c5c54d75a8";
 
 test("server canonical payload matches Version-1 golden bytes", () => {
   const canonical = canonicalizeAuthorizationResponse({
     schemaVersion: 1,
     canonicalizationVersion: "CAMO_AUTHORIZATION_V1",
     requestId: "request-001",
+    payloadDigest: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
     authorized: true,
     authorizationId: "authorization-001",
     operationId: "operation-001",
