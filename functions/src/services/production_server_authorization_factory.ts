@@ -1,4 +1,4 @@
-﻿import {
+import {
   Firestore,
 } from "firebase-admin/firestore";
 
@@ -31,8 +31,8 @@ import {
   FirestoreCamoDeviceAuthorizationPort,
 } from "../validators/firestore_device_authorization_port";
 import {
-  FirestoreCamoEntitlementAuthorizationPort,
-} from "../validators/firestore_entitlement_authorization_port";
+  FirestoreCamoEntitlementAuthorizationPortV2,
+} from "../validators/firestore_entitlement_authorization_port_v2";
 import {
   FirestoreCamoPairAuthorizationPort,
 } from "../validators/firestore_pair_authorization_port";
@@ -89,7 +89,7 @@ export function createCamoProductionServerAuthorizationOrchestrator(
     policyPort: new FirestoreCamoPolicyAuthorizationPort(reader),
     riskPort: new FirestoreCamoRiskAuthorizationPort(reader, clock),
     entitlementPort:
-      new FirestoreCamoEntitlementAuthorizationPort(
+      new FirestoreCamoEntitlementAuthorizationPortV2(
         reader,
         clock,
       ),

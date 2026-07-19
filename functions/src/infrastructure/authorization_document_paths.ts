@@ -1,4 +1,4 @@
-function requireSegment(
+﻿function requireSegment(
   value: string,
   segmentName: string,
 ): string {
@@ -43,6 +43,14 @@ export const camoAuthorizationDocumentPaths = Object.freeze({
       "users",
       requireSegment(userId, "userId"),
       "commercialAccess",
+      "current",
+    ].join("/");
+  },
+  commercialAccessV2(userId: string): string {
+    return [
+      "users",
+      requireSegment(userId, "userId"),
+      "commercialAccessV2",
       "current",
     ].join("/");
   },
