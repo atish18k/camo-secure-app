@@ -63,6 +63,7 @@ import '../../features/policy/domain/usecases/save_camo_device_support_acceptanc
 import '../../features/policy/data/repositories/camo_device_registry_repository_impl.dart';
 import '../../features/policy/data/repositories/firestore_remote_device_resolver.dart';
 import '../../features/policy/data/repositories/realtime_local_device_trust_guard.dart';
+import '../../features/policy/data/services/firestore_camo_post_login_access_verifier.dart';
 import '../../features/policy/data/repositories/camo_message_policy_service_impl.dart';
 import '../../features/policy/data/repositories/camo_policy_evaluator_impl.dart';
 import '../../features/policy/data/repositories/camo_secure_device_id_generator.dart';
@@ -73,6 +74,7 @@ import '../../features/policy/domain/repositories/camo_device_registration_servi
 import '../../features/policy/domain/repositories/camo_device_registry_repository.dart';
 import '../../features/policy/domain/repositories/camo_message_policy_service.dart';
 import '../../features/policy/domain/repositories/camo_platform_info_provider.dart';
+import '../../features/policy/domain/services/camo_post_login_access_verifier.dart';
 import '../../features/policy/domain/repositories/camo_policy_evaluator.dart';
 import '../../features/policy/domain/usecases/evaluate_camo_policy_usecase.dart';
 
@@ -306,6 +308,14 @@ Future<void> initDependencies() async {
 
   sl.registerLazySingleton<CamoLocalDeviceTrustGuard>(
     () => RealtimeLocalDeviceTrustGuard(sl(), sl(), sl(), sl()),
+  );
+
+  sl.registerLazySingleton<CamoPostLoginAccessVerifier>(
+    () => FirestoreCamoPostLoginAccessVerifier(
+      firestore: sl(),
+      authRepository: sl(),
+      deviceIdentityService: sl(),
+    ),
   );
 
   sl.registerLazySingleton<CamoCryptoFacade>(

@@ -9,6 +9,9 @@ import '../features/history/presentation/screens/history_screen.dart';
 import '../features/pairing/presentation/screens/pair_request_screen.dart';
 import '../features/pairing/presentation/screens/pending_pair_requests_screen.dart';
 import '../features/pairing/presentation/screens/qr_scanner_screen.dart';
+import '../core/di/injection_container.dart';
+import '../features/policy/domain/services/camo_post_login_access_verifier.dart';
+import '../features/policy/presentation/screens/camo_composite_access_gate.dart';
 import '../features/policy/presentation/screens/camo_device_approval_gate.dart';
 import '../features/policy/presentation/screens/camo_device_eligibility_screen.dart';
 import '../features/recovery/presentation/screens/recovery_setup_screen.dart';
@@ -43,7 +46,15 @@ class AppRoutes {
   static const String myPairings = '/my-pairings';
   static const String qrScanner = '/qr-scanner';
 
-  static Widget protect(Widget child) => CamoDeviceApprovalGate(child: child);
+  static Widget protect(Widget child) {
+    return CamoDeviceApprovalGate(
+      child: CamoCompositeAccessGate(
+        verifier: sl<CamoPostLoginAccessVerifier>(),
+        child: child,
+      ),
+    );
+  }
+
   static Map<String, WidgetBuilder> get routes => {
     splash: (context) => const SplashScreen(),
     login: (context) => const LoginScreen(),
