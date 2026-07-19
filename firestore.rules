@@ -60,6 +60,22 @@ service cloud.firestore {
       // Trusted Devices
       // ---------------------------------------------------------------------
 
+      // ---------------------------------------------------------------------
+      // Commercial access projections
+      // Server-owned facts. The owner may get only the canonical current
+      // projection. Direct client list/create/update/delete always fails.
+      // A readable projection never grants authority by itself.
+      // ---------------------------------------------------------------------
+
+      match /commercialAccess/{docId} {
+        allow get: if isOwner(userId) && docId == 'current';
+        allow list, create, update, delete: if false;
+      }
+
+      match /commercialAccessV2/{docId} {
+        allow get: if isOwner(userId) && docId == 'current';
+        allow list, create, update, delete: if false;
+      }
       match /devices/{deviceId} {
         allow get: if isOwner(userId);
         allow list: if isOwner(userId)
@@ -118,9 +134,28 @@ service cloud.firestore {
     }
 
     // -----------------------------------------------------------------------
-    // Pairings ΓÇö Existing Behavior Preserved
+    // Pairings Î“Ã‡Ã¶ Existing Behavior Preserved
     // -----------------------------------------------------------------------
 
+    // -----------------------------------------------------------------------
+    // Server-owned enterprise authority â€” all direct client access denied
+    // -----------------------------------------------------------------------
+
+    match /enterprisePolicies/{document=**} {
+      allow read, write: if false;
+    }
+
+    match /enterpriseRiskDecisions/{document=**} {
+      allow read, write: if false;
+    }
+
+    match /messagePolicies/{document=**} {
+      allow read, write: if false;
+    }
+
+    match /enterpriseAuthorizationConsumptions/{document=**} {
+      allow read, write: if false;
+    }
     match /pairings/{pairingId} {
       allow read: if isSignedIn()
         && request.auth.uid in resource.data.participantUserIds;
