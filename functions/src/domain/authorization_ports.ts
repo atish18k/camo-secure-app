@@ -31,12 +31,6 @@ export interface CamoMessageLifecycleAuthorizationPort {
   ): Promise<CamoDomainDecision>;
 }
 
-export interface CamoMessageLifecycleAuthorizationPort {
-  validateMessageLifecycle(
-    context: CamoServerAuthorizationContext,
-  ): Promise<CamoDomainDecision>;
-}
-
 export interface CamoPolicyAuthorizationPort {
   evaluatePolicy(
     context: CamoServerAuthorizationContext,

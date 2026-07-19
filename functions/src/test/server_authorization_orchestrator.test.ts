@@ -146,6 +146,7 @@ test("orchestrator remains denied when KMS is unavailable", async () => {
 
   assert.equal(result.authorized, false);
   assert.equal(result.reasonCode, "production_kms_unavailable");
-  assert.equal(replayCalls, 0);
+  // MP-016: replay is consumed before the unavailable KMS denies.
+  assert.equal(replayCalls, 1);
   assert.equal(signerCalls, 0);
 });

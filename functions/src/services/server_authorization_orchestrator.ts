@@ -76,19 +76,6 @@ export class CamoServerAuthorizationOrchestrator {
       }
     }
 
-    const kmsDecision =
-      await this.dependencies.kmsPort.authorizeKeyRelease(context);
-
-    if (
-      !kmsDecision.permitted ||
-      kmsDecision.releaseId.trim().length === 0 ||
-      kmsDecision.keyReference.trim().length === 0
-    ) {
-      return this.denied(
-        kmsDecision.reasonCode.trim() || "server_kms_denied",
-      );
-    }
-
     const now = this.dependencies.clock();
     const expiresAt = new Date(now.getTime() + 60_000);
 
@@ -111,6 +98,20 @@ export class CamoServerAuthorizationOrchestrator {
 
     if (!consumed) {
       return this.denied("server_replay_protection_denied");
+    }
+
+    // MP-016: consume replay protection before KMS authorization.
+    const kmsDecision =
+      await this.dependencies.kmsPort.authorizeKeyRelease(context);
+
+    if (
+      !kmsDecision.permitted ||
+      kmsDecision.releaseId.trim().length === 0 ||
+      kmsDecision.keyReference.trim().length === 0
+    ) {
+      return this.denied(
+        kmsDecision.reasonCode.trim() || "server_kms_denied",
+      );
     }
 
     const unsignedResponse: CamoUnsignedAuthorizationResponse =
