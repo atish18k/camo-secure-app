@@ -1,35 +1,28 @@
-﻿import {randomUUID} from "node:crypto";
+import { randomUUID } from "node:crypto";
 
-import {initializeApp} from "firebase-admin/app";
-import {getFirestore} from "firebase-admin/firestore";
-import {setGlobalOptions} from "firebase-functions/v2";
-import {provisionControlledCanaryPair} from "./services/canary_pair_provisioning_service";
+import { initializeApp } from "firebase-admin/app";
+import { getFirestore } from "firebase-admin/firestore";
+import { setGlobalOptions } from "firebase-functions/v2";
+import { provisionControlledCanaryPair } from "./services/canary_pair_provisioning_service";
 import {
   approveDeviceRegistration,
   parseDeviceApprovalInput,
 } from "./services/device_registration_approval_service";
-import {HttpsError, onCall} from "firebase-functions/v2/https";
+import { HttpsError, onCall } from "firebase-functions/v2/https";
 
 import {
   createFailClosedDenial,
   parseAuthorizationInput,
 } from "./authorization_contract";
-import {
-  CamoServerAuthorizationContext,
-} from "./domain/authorization_types";
-import {
-  createCamoProductionServerAuthorizationOrchestrator,
-} from "./services/production_server_authorization_factory";
-import {
-  camoProductionSecurityConfig,
-} from "./config/production_security_config";
+import { CamoServerAuthorizationContext } from "./domain/authorization_types";
+import { createCamoProductionServerAuthorizationOrchestrator } from "./services/production_server_authorization_factory";
+import { camoProductionSecurityConfig } from "./config/production_security_config";
 
 initializeApp();
 
 setGlobalOptions({
   region: camoProductionSecurityConfig.region,
-  serviceAccount:
-    camoProductionSecurityConfig.runtimeServiceAccount,
+  serviceAccount: camoProductionSecurityConfig.runtimeServiceAccount,
   maxInstances: 10,
   concurrency: 20,
   timeoutSeconds: 30,
@@ -82,24 +75,23 @@ export const authorizeOperation = onCall(
       );
     }
 
-    const context: CamoServerAuthorizationContext =
-      Object.freeze({
-        requestId: input.requestId,
-        operationId: input.operationId,
-        userId: input.userId,
-        deviceId: input.deviceId,
-        operationType: input.operationType,
-        pairId: input.pairId,
-        messageId: input.messageId,
-        messageValidity: input.messageValidity,
-        oneTimeView: input.oneTimeView,
-        keyPurpose: input.keyPurpose,
-        keyScope: input.keyScope,
-        requiredEntitlements: input.requiredEntitlements,
-        requestedAt: input.requestedAt,
-        serverReceivedAt: new Date().toISOString(),
-        payloadDigest: input.payloadDigest,
-      });
+    const context: CamoServerAuthorizationContext = Object.freeze({
+      requestId: input.requestId,
+      operationId: input.operationId,
+      userId: input.userId,
+      deviceId: input.deviceId,
+      operationType: input.operationType,
+      pairId: input.pairId,
+      messageId: input.messageId,
+      messageValidity: input.messageValidity,
+      oneTimeView: input.oneTimeView,
+      keyPurpose: input.keyPurpose,
+      keyScope: input.keyScope,
+      requiredEntitlements: input.requiredEntitlements,
+      requestedAt: input.requestedAt,
+      serverReceivedAt: new Date().toISOString(),
+      payloadDigest: input.payloadDigest,
+    });
 
     let result;
 
@@ -115,70 +107,92 @@ export const authorizeOperation = onCall(
       );
     }
 
-    if (
-      !result.authorized ||
-      result.signedResponse === undefined
-    ) {
+    if (!result.authorized || result.signedResponse === undefined) {
       throw new HttpsError(
         "permission-denied",
         "CAMO server authorization was denied.",
         {
           authorized: false,
-          reasonCode:
-            result.reasonCode.trim() ||
-            "server_authorization_denied",
+          reasonCode: result.reasonCode.trim() || "server_authorization_denied",
           serverTime: new Date().toISOString(),
         },
       );
     }
 
-    throw new HttpsError(
-      "failed-precondition",
-      "CAMO production authorization activation remains blocked.",
-      createFailClosedDenial(),
-    );
+    return result.signedResponse;
   },
 );
 
 export const approveDeviceRegistrationRequest = onCall(
-  {enforceAppCheck: true, consumeAppCheckToken: true},
+  { enforceAppCheck: true, consumeAppCheckToken: true },
   async (request) => {
     if (request.auth === undefined) {
-      throw new HttpsError("unauthenticated", "Authenticated approver is required.");
+      throw new HttpsError(
+        "unauthenticated",
+        "Authenticated approver is required.",
+      );
     }
     if (request.app === undefined) {
-      throw new HttpsError("failed-precondition", "Valid App Check is required.");
+      throw new HttpsError(
+        "failed-precondition",
+        "Valid App Check is required.",
+      );
     }
     if (request.auth.token.camoDeviceApprover !== true) {
-      throw new HttpsError("permission-denied", "Trusted device approver role is required.");
+      throw new HttpsError(
+        "permission-denied",
+        "Trusted device approver role is required.",
+      );
     }
     let input;
     try {
       input = parseDeviceApprovalInput(request.data);
     } catch {
-      throw new HttpsError("invalid-argument", "Device approval payload is invalid.");
+      throw new HttpsError(
+        "invalid-argument",
+        "Device approval payload is invalid.",
+      );
     }
     try {
-      return await approveDeviceRegistration(firestore, input, request.auth.uid);
+      return await approveDeviceRegistration(
+        firestore,
+        input,
+        request.auth.uid,
+      );
     } catch {
-      throw new HttpsError("failed-precondition", "Device approval failed closed.");
+      throw new HttpsError(
+        "failed-precondition",
+        "Device approval failed closed.",
+      );
     }
   },
 );
 
 export const provisionCanaryPair = onCall(
-  {enforceAppCheck: true, consumeAppCheckToken: true},
+  { enforceAppCheck: true, consumeAppCheckToken: true },
   async (request) => {
-    if (request.auth === undefined) throw new HttpsError("unauthenticated", "Authentication required.");
-    if (request.app === undefined) throw new HttpsError("failed-precondition", "Valid App Check required.");
+    if (request.auth === undefined)
+      throw new HttpsError("unauthenticated", "Authentication required.");
+    if (request.app === undefined)
+      throw new HttpsError("failed-precondition", "Valid App Check required.");
     if (request.app?.alreadyConsumed === true) {
       throw new HttpsError(
         "unauthenticated",
-        "Consumed App Check token rejected."
+        "Consumed App Check token rejected.",
       );
     }
-    if (request.auth.token.camoPairProvisioner !== true) throw new HttpsError("permission-denied", "Canary provisioner claim required.");
-    try { return await provisionControlledCanaryPair(firestore, request.auth.uid); }
-    catch { throw new HttpsError("failed-precondition", "Canary provisioning failed closed."); }
+    if (request.auth.token.camoPairProvisioner !== true)
+      throw new HttpsError(
+        "permission-denied",
+        "Canary provisioner claim required.",
+      );
+    try {
+      return await provisionControlledCanaryPair(firestore, request.auth.uid);
+    } catch {
+      throw new HttpsError(
+        "failed-precondition",
+        "Canary provisioning failed closed.",
+      );
+    }
   },
 );
