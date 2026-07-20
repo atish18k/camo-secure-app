@@ -3,6 +3,7 @@
 // -----------------------------------------------------------------------------
 
 import '../../../authorization/domain/entities/camo_authorization_pipeline_decision.dart';
+import '../../../message_lifecycle/domain/entities/camo_message_validity.dart';
 import '../../domain/entities/camo_authorization_gateway_request.dart';
 import '../../domain/entities/camo_authorization_gateway_response.dart';
 import '../../domain/entities/camo_authorization_transport_request.dart';
@@ -47,6 +48,10 @@ final class DefaultCamoAuthorizationTransportMapper
             .toIso8601String(),
         'pairId': request.authorizationRequest.pairId?.trim(),
         'messageId': request.authorizationRequest.messageId?.trim(),
+        'messageValidity':
+            request.authorizationRequest.messageValidity?.wireName,
+        'oneTimeView': request.authorizationRequest.oneTimeView,
+        'payloadDigest': request.authorizationRequest.payloadDigest?.trim(),
         'challengeId': request.challenge.challengeId.trim(),
         'challenge': request.challenge.challenge.trim(),
         'challengeIssuedAt': request.challenge.issuedAt

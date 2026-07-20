@@ -4,6 +4,7 @@ import 'package:camo/core/authorization/domain/entities/camo_enterprise_authoriz
 import 'package:camo/core/kms/domain/entities/camo_key_purpose.dart';
 import 'package:camo/core/kms/domain/entities/camo_key_scope.dart';
 import 'package:camo/core/licensing/domain/entities/camo_entitlement_type.dart';
+import 'package:camo/core/message_lifecycle/domain/entities/camo_message_validity.dart';
 import 'package:camo/core/operation_coordinator/domain/entities/camo_enterprise_operation_request.dart';
 import 'package:camo/core/shared/types/camo_operation_type.dart';
 import 'package:camo/features/auth/domain/repositories/auth_repository.dart';
@@ -49,13 +50,19 @@ final class DefaultCamoWorkspaceEnterpriseRequestBuilder
       'Pairing identifier is required.',
     );
 
+    if (camouflageEnabled) {
+      throw StateError(
+        'Camouflage uses a separate engine and is not active in Standard CAMO.',
+      );
+    }
+
     final String userId = _requireAuthenticatedUserId();
     final String deviceId = await _requireDeviceId();
     final DateTime requestedAt = _clock();
+    final String messageId = _requireGeneratedRequestId();
 
-    final Set<CamoEntitlementType> entitlements = <CamoEntitlementType>{
+    const Set<CamoEntitlementType> entitlements = <CamoEntitlementType>{
       CamoEntitlementType.baseEncoding,
-      if (camouflageEnabled) CamoEntitlementType.camouflage,
     };
 
     return CamoEnterpriseOperationRequest(
@@ -70,9 +77,12 @@ final class DefaultCamoWorkspaceEnterpriseRequestBuilder
         requestedAt: requestedAt,
         requiredEntitlements: entitlements,
         pairId: normalizedPairingId,
-        attributes: <String, String>{
+        messageId: messageId,
+        messageValidity: CamoMessageValidity.oneDay,
+        oneTimeView: false,
+        attributes: const <String, String>{
           'source': 'workspace',
-          'camouflageRequested': camouflageEnabled.toString(),
+          'engine': 'standardCamo',
         },
       ),
       createdAt: requestedAt,

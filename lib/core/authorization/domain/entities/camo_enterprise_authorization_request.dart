@@ -4,6 +4,7 @@
 import '../../../kms/domain/entities/camo_key_purpose.dart';
 import '../../../kms/domain/entities/camo_key_scope.dart';
 import '../../../licensing/domain/entities/camo_entitlement_type.dart';
+import '../../../message_lifecycle/domain/entities/camo_message_validity.dart';
 import '../../../shared/types/camo_operation_type.dart';
 
 // -----------------------------------------------------------------------------
@@ -21,11 +22,15 @@ final class CamoEnterpriseAuthorizationRequest {
     required Set<CamoEntitlementType> requiredEntitlements,
     this.pairId,
     this.messageId,
+    this.messageValidity,
+    this.oneTimeView,
+    this.payloadDigest,
     Map<String, String> attributes = const <String, String>{},
   }) : requiredEntitlements = Set<CamoEntitlementType>.unmodifiable(
          requiredEntitlements,
        ),
        attributes = Map<String, String>.unmodifiable(attributes);
+
   final String operationId;
   final String userId;
   final String deviceId;
@@ -36,8 +41,21 @@ final class CamoEnterpriseAuthorizationRequest {
   final Set<CamoEntitlementType> requiredEntitlements;
   final String? pairId;
   final String? messageId;
+  final CamoMessageValidity? messageValidity;
+  final bool? oneTimeView;
+  final String? payloadDigest;
   final Map<String, String> attributes;
+
   bool get isValid {
     return operationId.isNotEmpty && userId.isNotEmpty && deviceId.isNotEmpty;
+  }
+
+  bool get hasStandardCamoEncodeContract {
+    return operationType == CamoOperationType.encode &&
+        pairId?.trim().isNotEmpty == true &&
+        messageId?.trim().isNotEmpty == true &&
+        messageValidity != null &&
+        oneTimeView == false &&
+        payloadDigest?.trim().isNotEmpty == true;
   }
 }

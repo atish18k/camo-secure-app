@@ -2,6 +2,7 @@ import 'package:camo/core/authorization/domain/entities/camo_enterprise_authoriz
 import 'package:camo/core/kms/domain/entities/camo_key_purpose.dart';
 import 'package:camo/core/kms/domain/entities/camo_key_scope.dart';
 import 'package:camo/core/licensing/domain/entities/camo_entitlement_type.dart';
+import 'package:camo/core/message_lifecycle/domain/entities/camo_message_validity.dart';
 import 'package:camo/core/operation_coordinator/domain/entities/camo_enterprise_operation_outcome.dart';
 import 'package:camo/core/operation_coordinator/domain/entities/camo_enterprise_operation_request.dart';
 import 'package:camo/core/operation_coordinator/domain/entities/camo_enterprise_operation_stage.dart';
@@ -191,6 +192,8 @@ final class _FakeRequestBuilder
     required CamoKeyPurpose keyPurpose,
     required CamoEntitlementType entitlement,
   }) {
+    final bool isEncode = operationType == CamoOperationType.encode;
+
     return CamoEnterpriseOperationRequest(
       requestId: 'request-$operationId',
       authorizationRequest: CamoEnterpriseAuthorizationRequest(
@@ -204,6 +207,8 @@ final class _FakeRequestBuilder
         requiredEntitlements: <CamoEntitlementType>{entitlement},
         pairId: pairingId,
         messageId: 'message-001',
+        messageValidity: isEncode ? CamoMessageValidity.oneDay : null,
+        oneTimeView: isEncode ? false : null,
       ),
       createdAt: fixedTime,
     );

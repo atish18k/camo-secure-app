@@ -1,10 +1,14 @@
 // ignore_for_file: prefer_initializing_formals
 
+import 'dart:convert';
+
+import 'package:camo/core/authorization/domain/entities/camo_enterprise_authorization_request.dart';
 import 'package:camo/core/operation_coordinator/domain/entities/camo_enterprise_operation_outcome.dart';
 import 'package:camo/core/operation_coordinator/domain/entities/camo_enterprise_operation_request.dart';
 import 'package:camo/core/operation_coordinator/domain/services/camo_enterprise_operation_coordinator.dart';
 import 'package:camo/core/shared/result/camo_result.dart';
 import 'package:camo/core/shared/types/camo_operation_type.dart';
+import 'package:cryptography/cryptography.dart';
 
 import '../../domain/entities/camo_workspace_operation_payload.dart';
 import '../../domain/repositories/camo_workspace_operation_payload_store.dart';
@@ -49,11 +53,17 @@ final class CoordinatorBackedCamoAuthorizedWorkspaceService
     _payloadStore.put(payload);
 
     try {
-      final CamoEnterpriseOperationRequest request = await _requestBuilder
+      final CamoEnterpriseOperationRequest baseRequest = await _requestBuilder
           .buildEncodeRequest(
             operationId: operationId,
             pairingId: pairingId,
             camouflageEnabled: camouflageEnabled,
+          );
+
+      final CamoEnterpriseOperationRequest request =
+          await _bindStandardCamoPayloadDigest(
+            request: baseRequest,
+            plainText: plainText,
           );
 
       return await _coordinate(operationId: operationId, request: request);
@@ -86,6 +96,48 @@ final class CoordinatorBackedCamoAuthorizedWorkspaceService
     } finally {
       _payloadStore.remove(operationId);
     }
+  }
+
+  Future<CamoEnterpriseOperationRequest> _bindStandardCamoPayloadDigest({
+    required CamoEnterpriseOperationRequest request,
+    required String plainText,
+  }) async {
+    final CamoEnterpriseAuthorizationRequest authorization =
+        request.authorizationRequest;
+    final Hash digest = await Sha256().hash(utf8.encode(plainText));
+    final String payloadDigest = digest.bytes
+        .map((int byte) => byte.toRadixString(16).padLeft(2, '0'))
+        .join();
+
+    final CamoEnterpriseAuthorizationRequest boundAuthorization =
+        CamoEnterpriseAuthorizationRequest(
+          operationId: authorization.operationId,
+          userId: authorization.userId,
+          deviceId: authorization.deviceId,
+          operationType: authorization.operationType,
+          keyPurpose: authorization.keyPurpose,
+          keyScope: authorization.keyScope,
+          requestedAt: authorization.requestedAt,
+          requiredEntitlements: authorization.requiredEntitlements,
+          pairId: authorization.pairId,
+          messageId: authorization.messageId,
+          messageValidity: authorization.messageValidity,
+          oneTimeView: authorization.oneTimeView,
+          payloadDigest: payloadDigest,
+          attributes: authorization.attributes,
+        );
+
+    if (!boundAuthorization.hasStandardCamoEncodeContract) {
+      throw StateError('Standard CAMO authorization contract is incomplete.');
+    }
+
+    return CamoEnterpriseOperationRequest(
+      requestId: request.requestId,
+      authorizationRequest: boundAuthorization,
+      createdAt: request.createdAt,
+      payloadReference: request.payloadReference,
+      metadata: request.metadata,
+    );
   }
 
   String _createOperationId() {
