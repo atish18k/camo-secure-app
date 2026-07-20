@@ -1,4 +1,9 @@
-﻿import {FieldValue, Firestore} from "firebase-admin/firestore";
+﻿import {
+  DocumentData,
+  DocumentSnapshot,
+  FieldValue,
+  Firestore,
+} from "firebase-admin/firestore";
 
 export const canaryPair = Object.freeze({
   schemaVersion: 1 as const,
@@ -9,28 +14,32 @@ export const canaryPair = Object.freeze({
   ] as const,
   requestedBy: "dQMhOUtVwjcl17KQgIa52pbETOn1",
   status: "active" as const,
-  canary: true as const,
 });
 
-export type ControlledCanaryProvisioningResult = Readonly<{
+export type CanaryPairProvisioningResult = Readonly<{
   pairId: string;
   status: "active";
   outcome: "created" | "already_provisioned";
 }>;
 
-function isExactExistingCanaryPair(
-  data: Readonly<Record<string, unknown>> | undefined,
+function isExactCanaryPair(
+  snapshot: DocumentSnapshot<DocumentData>,
 ): boolean {
+  if (!snapshot.exists) return false;
+
+  const data = snapshot.data();
   if (data === undefined) return false;
 
-  const participants = data.participantUserIds;
+  const participantUserIds = data.participantUserIds;
+  if (!Array.isArray(participantUserIds)) return false;
+
   return (
     data.schemaVersion === canaryPair.schemaVersion &&
     data.pairId === canaryPair.pairId &&
-    Array.isArray(participants) &&
-    participants.length === canaryPair.participantUserIds.length &&
-    participants.every(
-      (value, index) => value === canaryPair.participantUserIds[index],
+    participantUserIds.length === canaryPair.participantUserIds.length &&
+    participantUserIds.every(
+      (value: unknown, index: number) =>
+        value === canaryPair.participantUserIds[index],
     ) &&
     data.status === canaryPair.status &&
     data.requestedBy === canaryPair.requestedBy &&
@@ -39,26 +48,52 @@ function isExactExistingCanaryPair(
   );
 }
 
+function createCanonicalAudit(
+  provisionerUid: string,
+): Readonly<Record<string, unknown>> {
+  return Object.freeze({
+    schemaVersion: canaryPair.schemaVersion,
+    pairId: canaryPair.pairId,
+    participantUserIds: [...canaryPair.participantUserIds],
+    requestedBy: canaryPair.requestedBy,
+    provisionedBy: provisionerUid,
+    status: canaryPair.status,
+    canary: true,
+    outcome: "created",
+    createdAt: FieldValue.serverTimestamp(),
+  });
+}
+
 export async function provisionControlledCanaryPair(
   firestore: Firestore,
   provisionerUid: string,
-): Promise<ControlledCanaryProvisioningResult> {
+): Promise<CanaryPairProvisioningResult> {
   if (provisionerUid !== canaryPair.requestedBy) {
     throw new Error("Unexpected canary provisioner.");
   }
 
-  const pairReference = firestore.doc(`pairings/${canaryPair.pairId}`);
+  const pairReference = firestore.doc(
+    `pairings/${canaryPair.pairId}`,
+  );
   const auditReference = firestore.doc(
     `canarySeedAudits/${canaryPair.pairId}`,
   );
 
   return firestore.runTransaction(async (transaction) => {
     const pairSnapshot = await transaction.get(pairReference);
+    const auditSnapshot = await transaction.get(auditReference);
 
     if (pairSnapshot.exists) {
-      if (!isExactExistingCanaryPair(pairSnapshot.data())) {
+      if (!isExactCanaryPair(pairSnapshot)) {
         throw new Error(
           "Existing canary pair does not match the locked seed contract.",
+        );
+      }
+
+      if (!auditSnapshot.exists) {
+        transaction.create(
+          auditReference,
+          createCanonicalAudit(provisionerUid),
         );
       }
 
@@ -69,29 +104,29 @@ export async function provisionControlledCanaryPair(
       });
     }
 
+    if (auditSnapshot.exists) {
+      throw new Error(
+        "Canary audit exists without the locked canonical pair.",
+      );
+    }
+
     transaction.create(pairReference, {
       schemaVersion: canaryPair.schemaVersion,
       pairId: canaryPair.pairId,
       participantUserIds: [...canaryPair.participantUserIds],
       status: canaryPair.status,
       requestedBy: canaryPair.requestedBy,
-      canary: canaryPair.canary,
+      canary: true,
       provisionedBy: provisionerUid,
       createdAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
       acceptedAt: FieldValue.serverTimestamp(),
     });
 
-    transaction.create(auditReference, {
-      schemaVersion: 1,
-      eventType: "controlled_canary_seed_created",
-      pairId: canaryPair.pairId,
-      participantUserIds: [...canaryPair.participantUserIds],
-      requestedBy: canaryPair.requestedBy,
-      provisionedBy: provisionerUid,
-      outcome: "created",
-      createdAt: FieldValue.serverTimestamp(),
-    });
+    transaction.create(
+      auditReference,
+      createCanonicalAudit(provisionerUid),
+    );
 
     return Object.freeze({
       pairId: canaryPair.pairId,
