@@ -79,6 +79,16 @@ import '../../features/policy/domain/repositories/camo_policy_evaluator.dart';
 import '../../features/policy/domain/usecases/evaluate_camo_policy_usecase.dart';
 
 import '../../core/authorization_gateway/data/repositories/fail_closed_camo_single_use_authorization_store.dart';
+import '../../core/authorization_gateway/data/security/camo_p256_der_signature_decoder.dart';
+import '../../core/authorization_gateway/data/security/camo_p256_signature_verification_primitive.dart';
+import '../../core/authorization_gateway/data/security/camo_pinned_authorization_public_key_v1.dart';
+import '../../core/authorization_gateway/data/security/camo_signed_authorization_contract_v1_verifier.dart';
+import '../../core/authorization_gateway/data/security/cryptography_camo_p256_signature_verification_primitive.dart';
+import '../../core/authorization_gateway/data/services/camo_authorization_callable_client.dart';
+import '../../core/authorization_gateway/data/services/camo_signed_authorization_contract_v1_canonicalizer.dart';
+import '../../core/authorization_gateway/data/services/camo_signed_authorization_contract_v1_transport_decoder.dart';
+import '../../core/authorization_gateway/data/services/firebase_camo_authorization_callable_primitive.dart';
+import '../../core/authorization_gateway/domain/services/camo_authorization_callable_primitive.dart';
 import '../../core/authorization_gateway/data/services/default_camo_authorization_response_acceptance_service.dart';
 import '../../core/authorization_gateway/data/services/default_camo_authorization_response_canonicalizer.dart';
 import '../../core/authorization_gateway/data/services/default_camo_signed_authorization_response_service.dart';
@@ -408,6 +418,55 @@ Future<void> initDependencies() async {
   // ---------------------------------------------------------------------------
   // Authorization Gateway Security Boundary
   // ---------------------------------------------------------------------------
+
+  // ---------------------------------------------------------------------------
+  // MP-022 Canonical Callable and Signed Permit Verification
+  // ---------------------------------------------------------------------------
+  //
+  // These bindings make the region-locked Firebase callable client and the
+  // pinned P-256 signed-permit verifier available to the dependency graph.
+  // They do not activate the production gateway. Existing fail-closed
+  // transport, gateway, readiness and workspace bindings remain unchanged.
+
+  sl.registerLazySingleton<CamoAuthorizationCallablePrimitive>(
+    FirebaseCamoAuthorizationCallablePrimitive.production,
+  );
+
+  sl.registerLazySingleton<CamoP256SignatureVerificationPrimitive>(
+    CryptographyCamoP256SignatureVerificationPrimitive.new,
+  );
+
+  sl.registerLazySingleton<CamoSignedAuthorizationContractV1Canonicalizer>(
+    CamoSignedAuthorizationContractV1Canonicalizer.new,
+  );
+
+  sl.registerLazySingleton<CamoP256DerSignatureDecoder>(
+    CamoP256DerSignatureDecoder.new,
+  );
+
+  sl.registerLazySingleton<CamoPinnedAuthorizationPublicKeyV1>(
+    CamoPinnedAuthorizationPublicKeyV1.new,
+  );
+
+  sl.registerLazySingleton<CamoSignedAuthorizationContractV1Verifier>(
+    () => CamoSignedAuthorizationContractV1Verifier(
+      canonicalizer: sl(),
+      derDecoder: sl(),
+      pinnedKey: sl(),
+      primitive: sl(),
+      clock: DateTime.now,
+    ),
+  );
+
+  sl.registerLazySingleton<CamoSignedAuthorizationContractV1TransportDecoder>(
+    () => CamoSignedAuthorizationContractV1TransportDecoder(
+      verifyContract: sl<CamoSignedAuthorizationContractV1Verifier>().verify,
+    ),
+  );
+
+  sl.registerLazySingleton<CamoAuthorizationCallableClient>(
+    () => CamoAuthorizationCallableClient(primitive: sl(), decoder: sl()),
+  );
 
   sl.registerLazySingleton<CamoAuthorizationTransportMapper>(
     DefaultCamoAuthorizationTransportMapper.new,
