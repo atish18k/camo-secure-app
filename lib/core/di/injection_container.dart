@@ -83,10 +83,14 @@ import '../../core/authorization_gateway/data/security/camo_p256_der_signature_d
 import '../../core/authorization_gateway/data/security/camo_p256_signature_verification_primitive.dart';
 import '../../core/authorization_gateway/data/security/camo_pinned_authorization_public_key_v1.dart';
 import '../../core/authorization_gateway/data/security/camo_signed_authorization_contract_v1_verifier.dart';
+import '../../core/authorization_gateway/data/security/camo_signed_authorization_contract_v2_verifier.dart';
 import '../../core/authorization_gateway/data/security/cryptography_camo_p256_signature_verification_primitive.dart';
 import '../../core/authorization_gateway/data/services/camo_authorization_callable_client.dart';
+import '../../core/authorization_gateway/data/services/camo_v2_authorization_callable_client.dart';
 import '../../core/authorization_gateway/data/services/camo_signed_authorization_contract_v1_canonicalizer.dart';
+import '../../core/authorization_gateway/data/services/camo_signed_authorization_contract_v2_canonicalizer.dart';
 import '../../core/authorization_gateway/data/services/camo_signed_authorization_contract_v1_transport_decoder.dart';
+import '../../core/authorization_gateway/data/services/camo_signed_authorization_contract_v2_transport_decoder.dart';
 import '../../core/authorization_gateway/data/services/firebase_camo_authorization_callable_primitive.dart';
 import '../../core/authorization_gateway/domain/services/camo_authorization_callable_primitive.dart';
 import '../../core/authorization_gateway/data/services/default_camo_authorization_response_acceptance_service.dart';
@@ -466,6 +470,32 @@ Future<void> initDependencies() async {
 
   sl.registerLazySingleton<CamoAuthorizationCallableClient>(
     () => CamoAuthorizationCallableClient(primitive: sl(), decoder: sl()),
+  );
+
+  // MP-023H: V2 callable verification composition.
+  // V1 remains present but is not used by this V2 client registration.
+  sl.registerLazySingleton<CamoSignedAuthorizationContractV2Canonicalizer>(
+    CamoSignedAuthorizationContractV2Canonicalizer.new,
+  );
+
+  sl.registerLazySingleton<CamoSignedAuthorizationContractV2Verifier>(
+    () => CamoSignedAuthorizationContractV2Verifier(
+      canonicalizer: sl(),
+      derDecoder: sl(),
+      pinnedKey: sl(),
+      primitive: sl(),
+      clock: DateTime.now,
+    ),
+  );
+
+  sl.registerLazySingleton<CamoSignedAuthorizationContractV2TransportDecoder>(
+    () => CamoSignedAuthorizationContractV2TransportDecoder(
+      verifyContract: sl<CamoSignedAuthorizationContractV2Verifier>().verify,
+    ),
+  );
+
+  sl.registerLazySingleton<CamoV2AuthorizationCallableClient>(
+    () => CamoV2AuthorizationCallableClient(primitive: sl(), decoder: sl()),
   );
 
   sl.registerLazySingleton<CamoAuthorizationTransportMapper>(
