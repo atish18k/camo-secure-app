@@ -98,7 +98,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
       case AuthStatus.awaitingEmailVerification:
         Navigator.pushReplacementNamed(context, AppRoutes.verifyEmail);
       case AuthStatus.authenticated:
-        Navigator.pushReplacementNamed(context, AppRoutes.dashboard);
+        Navigator.pushReplacementNamed(context, AppRoutes.postLogin);
       case AuthStatus.failure:
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(next.failure?.message ?? 'Login failed.')),

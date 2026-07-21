@@ -1,4 +1,4 @@
-﻿export const camoAuthorizationSchemaVersion = 1 as const;
+export const camoAuthorizationSchemaVersion = 1 as const;
 
 export const camoAuthorizationCanonicalizationVersion =
   "CAMO_AUTHORIZATION_V1" as const;
@@ -26,6 +26,7 @@ export interface CamoServerAuthorizationContext {
   readonly keyPurpose: string;
   readonly keyScope: string;
   readonly requiredEntitlements: readonly string[];
+  readonly commercialAccessBypass?: boolean;
   readonly requestedAt: string;
   readonly serverReceivedAt: string;
   readonly payloadDigest: string;

@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../app/routes.dart';
+import '../../../admin/data/services/firebase_camo_admin_access_service.dart';
 import '../../../../core/di/injection_container.dart';
 import '../../../../core/errors/result.dart' as app_result;
 import '../../../../core/theme/camo_colors.dart';
@@ -59,6 +60,7 @@ class WorkspaceScreen extends ConsumerStatefulWidget {
 // ---------------------------------------------------------------------------
 
 class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
+  bool _showAdminConsole = false;
   final TextEditingController _subjectController = TextEditingController();
   final TextEditingController _inputController = TextEditingController();
   final TextEditingController _outputController = TextEditingController();
@@ -71,6 +73,7 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
   @override
   void initState() {
     super.initState();
+    _loadAdminConsoleVisibility();
     _inputController.addListener(_refresh);
   }
 
@@ -135,6 +138,8 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
         onSettingsTap: _openSettings,
         onAboutTap: _closeDrawerAndShowComingSoon,
         onLogoutTap: _logout,
+        showAdminConsole: _showAdminConsole,
+        onAdminConsoleTap: _openAdminConsole,
       ),
       body: SafeArea(
         child: Column(
@@ -598,6 +603,24 @@ class _WorkspaceScreenState extends ConsumerState<WorkspaceScreen> {
   void _closeDrawerAndShowComingSoon() {
     Navigator.pop(context);
     _showComingSoon();
+  }
+
+  Future<void> _loadAdminConsoleVisibility() async {
+    final bool allowed = await FirebaseCamoAdminAccessService()
+        .hasFreshAdminAccess();
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _showAdminConsole = allowed;
+    });
+  }
+
+  void _openAdminConsole() {
+    Navigator.pop(context);
+    Navigator.pushNamed(context, AppRoutes.adminConsole);
   }
 
   void _openSettings() {

@@ -34,7 +34,7 @@ class PasskeySetupScreen extends StatelessWidget {
                   FilledButton(
                     onPressed: () => Navigator.pushReplacementNamed(
                       context,
-                      AppRoutes.dashboard,
+                      AppRoutes.postLogin,
                     ),
                     child: const Text('Continue with verified email'),
                   ),

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../features/admin/presentation/screens/camo_admin_console_gate.dart';
+import '../features/admin/presentation/screens/camo_post_login_route_resolver.dart';
+
 import '../features/auth/presentation/screens/create_account_screen.dart';
 import '../features/auth/presentation/screens/email_verification_screen.dart';
 import '../features/auth/presentation/screens/login_screen.dart';
@@ -26,6 +29,7 @@ class AppRoutes {
   const AppRoutes._();
   static const String splash = '/';
   static const String login = '/login';
+  static const String postLogin = '/post-login';
   static const String createAccount = '/create-account';
   static const String verifyEmail = '/verify-email';
   static const String passkeySetup = '/passkey-setup';
@@ -45,6 +49,7 @@ class AppRoutes {
   static const String pendingPairRequests = '/pending-pair-requests';
   static const String myPairings = '/my-pairings';
   static const String qrScanner = '/qr-scanner';
+  static const String adminConsole = '/admin-console';
 
   static Widget protect(Widget child) {
     return CamoDeviceApprovalGate(
@@ -58,6 +63,7 @@ class AppRoutes {
   static Map<String, WidgetBuilder> get routes => {
     splash: (context) => const SplashScreen(),
     login: (context) => const LoginScreen(),
+    postLogin: (context) => const CamoPostLoginRouteResolver(),
     createAccount: (context) => const CreateAccountScreen(),
     verifyEmail: (context) => const EmailVerificationScreen(),
     passkeySetup: (context) => const PasskeySetupScreen(),
@@ -76,5 +82,6 @@ class AppRoutes {
     pendingPairRequests: (context) =>
         protect(const PendingPairRequestsScreen()),
     qrScanner: (context) => protect(const QrScannerScreen()),
+    adminConsole: (context) => const CamoAdminConsoleGate(),
   };
 }

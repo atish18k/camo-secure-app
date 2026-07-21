@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../../../admin/data/services/firebase_camo_admin_access_service.dart';
+
 import '../../../auth/domain/repositories/auth_repository.dart';
 import '../../domain/repositories/camo_device_identity_service.dart';
 import '../../domain/services/camo_post_login_access_verifier.dart';
@@ -43,6 +45,13 @@ final class FirestoreCamoPostLoginAccessVerifier
 
   @override
   Future<CamoPostLoginAccessDecision> verify() async {
+    final bool isLockedAdmin = await FirebaseCamoAdminAccessService()
+        .hasFreshAdminAccess();
+
+    if (isLockedAdmin) {
+      // server_locked_admin_commercial_bypass
+      return const CamoPostLoginAccessDecision.allow();
+    }
     final String userId = _authRepository.currentUserId?.trim() ?? '';
 
     if (userId.isEmpty) {

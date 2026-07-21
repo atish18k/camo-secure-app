@@ -31,6 +31,11 @@ setGlobalOptions({
 
 const firestore = getFirestore();
 
+const lockedCommercialBypassAdminUid =
+  "VSgby7BHaRd1MFplKsBAd2QmV9Z2";
+const lockedCommercialBypassAdminEmail =
+  "atish18k@gmail.com";
+
 const authorizationOrchestrator =
   createCamoProductionServerAuthorizationOrchestrator({
     firestore,
@@ -75,6 +80,16 @@ export const authorizeOperation = onCall(
       );
     }
 
+    const tokenEmail =
+      typeof request.auth.token.email === "string" ?
+        request.auth.token.email.trim().toLowerCase() :
+        "";
+
+    const commercialAccessBypass =
+      request.auth.uid === lockedCommercialBypassAdminUid &&
+      tokenEmail === lockedCommercialBypassAdminEmail &&
+      request.auth.token.camoAdmin === true;
+
     const context: CamoServerAuthorizationContext = Object.freeze({
       requestId: input.requestId,
       operationId: input.operationId,
@@ -88,6 +103,7 @@ export const authorizeOperation = onCall(
       keyPurpose: input.keyPurpose,
       keyScope: input.keyScope,
       requiredEntitlements: input.requiredEntitlements,
+      commercialAccessBypass,
       requestedAt: input.requestedAt,
       serverReceivedAt: new Date().toISOString(),
       payloadDigest: input.payloadDigest,
@@ -138,10 +154,10 @@ export const approveDeviceRegistrationRequest = onCall(
         "Valid App Check is required.",
       );
     }
-    if (request.auth.token.camoDeviceApprover !== true) {
+    if (request.auth.token.camoAdmin !== true) {
       throw new HttpsError(
         "permission-denied",
-        "Trusted device approver role is required.",
+        "CAMO admin role is required.",
       );
     }
     let input;
