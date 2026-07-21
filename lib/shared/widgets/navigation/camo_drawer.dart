@@ -16,6 +16,8 @@ class CamoDrawer extends StatelessWidget {
     required this.onSettingsTap,
     required this.onAboutTap,
     required this.onLogoutTap,
+    this.showAdminConsole = false,
+    this.onAdminConsoleTap,
   });
 
   final VoidCallback onWorkspaceTap;
@@ -26,6 +28,8 @@ class CamoDrawer extends StatelessWidget {
   final VoidCallback onSettingsTap;
   final VoidCallback onAboutTap;
   final VoidCallback onLogoutTap;
+  final bool showAdminConsole;
+  final VoidCallback? onAdminConsoleTap;
 
   @override
   Widget build(BuildContext context) {
@@ -80,6 +84,15 @@ class CamoDrawer extends StatelessWidget {
                     title: 'About CAMO',
                     onTap: onAboutTap,
                   ),
+                  if (showAdminConsole) ...<Widget>[
+                    CamoSpacing.gapSm,
+                    const _DrawerSectionTitle(title: 'Admin'),
+                    _DrawerItem(
+                      icon: Icons.admin_panel_settings_rounded,
+                      title: 'Admin Console',
+                      onTap: onAdminConsoleTap ?? () {},
+                    ),
+                  ],
                 ],
               ),
             ),
