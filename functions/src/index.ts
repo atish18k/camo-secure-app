@@ -5,6 +5,7 @@ import { getFirestore } from "firebase-admin/firestore";
 import { setGlobalOptions } from "firebase-functions/v2";
 import { provisionControlledCanaryPair } from "./services/canary_pair_provisioning_service";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
+import * as logger from "firebase-functions/logger";
 import {
   approveDeviceRegistrationWithAudit,
   listActiveDevices,
@@ -174,8 +175,26 @@ export const listPendingDeviceRegistrationRequests = onCall(
   async (request) => {
     assertLockedAdmin(request);
     try {
-      return { requests: await listPendingDeviceRequests(firestore) };
-    } catch {
+      return {
+        requests: await listPendingDeviceRequests(firestore),
+      };
+    } catch (error) {
+      logger.error(
+        "listPendingDeviceRegistrationRequests failed.",
+        {
+          operation: "listPendingDeviceRegistrationRequests",
+          actorUid: request.auth?.uid ?? null,
+          error:
+            error instanceof Error
+              ? {
+                  name: error.name,
+                  message: error.message,
+                  stack: error.stack,
+                }
+              : error,
+        },
+      );
+
       throw new HttpsError(
         "failed-precondition",
         "Pending device request read failed closed.",

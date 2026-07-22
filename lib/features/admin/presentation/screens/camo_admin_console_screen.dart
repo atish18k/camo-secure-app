@@ -1,3 +1,4 @@
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../app/routes.dart';
@@ -67,7 +68,18 @@ class _CamoAdminConsoleScreenState extends State<CamoAdminConsoleScreen> {
         _requests = requests;
         _isLoading = false;
       });
-    } on Object {
+    } on FirebaseFunctionsException catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _errorMessage =
+            'Callable failed: ${error.code}'
+            '${error.message == null ? '' : ' - ${error.message}'}';
+        _isLoading = false;
+      });
+    } on Object catch (_) {
       if (!mounted) {
         return;
       }
@@ -229,7 +241,7 @@ class _CamoAdminConsoleScreenState extends State<CamoAdminConsoleScreen> {
     await showDialog<void>(
       context: context,
       builder: (BuildContext context) => AlertDialog(
-        title: Text('Active Devices â€” ${request.userEmail}'),
+        title: Text('Active Devices Ã¢â‚¬â€ ${request.userEmail}'),
         content: SizedBox(
           width: 600,
           child: devices.isEmpty
@@ -245,7 +257,9 @@ class _CamoAdminConsoleScreenState extends State<CamoAdminConsoleScreen> {
                                 : Icons.block_rounded,
                           ),
                           title: Text(item.deviceId),
-                          subtitle: Text('${item.platform} â€¢ ${item.status}'),
+                          subtitle: Text(
+                            '${item.platform} Ã¢â‚¬Â¢ ${item.status}',
+                          ),
                         ),
                       )
                       .toList(growable: false),
@@ -308,7 +322,7 @@ class _CamoAdminConsoleScreenState extends State<CamoAdminConsoleScreen> {
                       (CamoAdminDevice device) => DropdownMenuItem<String>(
                         value: device.deviceId,
                         child: Text(
-                          '${device.platform} â€” ${device.deviceId}',
+                          '${device.platform} Ã¢â‚¬â€ ${device.deviceId}',
                         ),
                       ),
                     )
@@ -683,7 +697,7 @@ class _AdminLoadingState extends StatelessWidget {
           children: <Widget>[
             CircularProgressIndicator(),
             SizedBox(height: CamoSpacing.md),
-            Text('Loading pending device requestsâ€¦'),
+            Text('Loading pending device requestsÃ¢â‚¬Â¦'),
           ],
         ),
       ),
