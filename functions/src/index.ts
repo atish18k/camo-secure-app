@@ -4,11 +4,17 @@ import { initializeApp } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 import { setGlobalOptions } from "firebase-functions/v2";
 import { provisionControlledCanaryPair } from "./services/canary_pair_provisioning_service";
-import {
-  approveDeviceRegistration,
-  parseDeviceApprovalInput,
-} from "./services/device_registration_approval_service";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
+import {
+  approveDeviceRegistrationWithAudit,
+  listActiveDevices,
+  listPendingDeviceRequests,
+  parseAdminDeviceTargetInput,
+  parseAdminRejectDeviceInput,
+  parseAdminReplaceDeviceInput,
+  rejectDeviceRegistration,
+  replaceDeviceRegistration,
+} from "./services/admin_device_administration_service";
 
 import {
   createFailClosedDenial,
@@ -31,11 +37,35 @@ setGlobalOptions({
 
 const firestore = getFirestore();
 
-const lockedCommercialBypassAdminUid =
-  "VSgby7BHaRd1MFplKsBAd2QmV9Z2";
-const lockedCommercialBypassAdminEmail =
-  "atish18k@gmail.com";
+const lockedCommercialBypassAdminUid = "VSgby7BHaRd1MFplKsBAd2QmV9Z2";
+const lockedCommercialBypassAdminEmail = "atish18k@gmail.com";
 
+const lockedAdminUid = "VSgby7BHaRd1MFplKsBAd2QmV9Z2";
+const lockedAdminEmail = "atish18k@gmail.com";
+
+function assertLockedAdmin(request: {
+  auth?: { uid: string; token: Record<string, unknown> };
+  app?: unknown;
+}): string {
+  if (request.auth === undefined) {
+    throw new HttpsError("unauthenticated", "Authenticated admin is required.");
+  }
+  if (request.app === undefined) {
+    throw new HttpsError("failed-precondition", "Valid App Check is required.");
+  }
+  const email =
+    typeof request.auth.token.email === "string"
+      ? request.auth.token.email.trim().toLowerCase()
+      : "";
+  if (
+    request.auth.uid !== lockedAdminUid ||
+    email !== lockedAdminEmail ||
+    request.auth.token.camoAdmin !== true
+  ) {
+    throw new HttpsError("permission-denied", "Locked CAMO admin is required.");
+  }
+  return request.auth.uid;
+}
 const authorizationOrchestrator =
   createCamoProductionServerAuthorizationOrchestrator({
     firestore,
@@ -81,9 +111,9 @@ export const authorizeOperation = onCall(
     }
 
     const tokenEmail =
-      typeof request.auth.token.email === "string" ?
-        request.auth.token.email.trim().toLowerCase() :
-        "";
+      typeof request.auth.token.email === "string"
+        ? request.auth.token.email.trim().toLowerCase()
+        : "";
 
     const commercialAccessBypass =
       request.auth.uid === lockedCommercialBypassAdminUid &&
@@ -139,41 +169,36 @@ export const authorizeOperation = onCall(
   },
 );
 
+export const listPendingDeviceRegistrationRequests = onCall(
+  { enforceAppCheck: true, consumeAppCheckToken: true },
+  async (request) => {
+    assertLockedAdmin(request);
+    try {
+      return { requests: await listPendingDeviceRequests(firestore) };
+    } catch {
+      throw new HttpsError(
+        "failed-precondition",
+        "Pending device request read failed closed.",
+      );
+    }
+  },
+);
+
 export const approveDeviceRegistrationRequest = onCall(
   { enforceAppCheck: true, consumeAppCheckToken: true },
   async (request) => {
-    if (request.auth === undefined) {
-      throw new HttpsError(
-        "unauthenticated",
-        "Authenticated approver is required.",
-      );
-    }
-    if (request.app === undefined) {
-      throw new HttpsError(
-        "failed-precondition",
-        "Valid App Check is required.",
-      );
-    }
-    if (request.auth.token.camoAdmin !== true) {
-      throw new HttpsError(
-        "permission-denied",
-        "CAMO admin role is required.",
-      );
-    }
+    const actorUid = assertLockedAdmin(request);
     let input;
     try {
-      input = parseDeviceApprovalInput(request.data);
+      input = parseAdminDeviceTargetInput(request.data);
     } catch {
-      throw new HttpsError(
-        "invalid-argument",
-        "Device approval payload is invalid.",
-      );
+      throw new HttpsError("invalid-argument", "Approval payload is invalid.");
     }
     try {
-      return await approveDeviceRegistration(
+      return await approveDeviceRegistrationWithAudit(
         firestore,
         input,
-        request.auth.uid,
+        actorUid,
       );
     } catch {
       throw new HttpsError(
@@ -184,6 +209,69 @@ export const approveDeviceRegistrationRequest = onCall(
   },
 );
 
+export const rejectDeviceRegistrationRequest = onCall(
+  { enforceAppCheck: true, consumeAppCheckToken: true },
+  async (request) => {
+    const actorUid = assertLockedAdmin(request);
+    let input;
+    try {
+      input = parseAdminRejectDeviceInput(request.data);
+    } catch {
+      throw new HttpsError("invalid-argument", "Rejection payload is invalid.");
+    }
+    try {
+      return await rejectDeviceRegistration(firestore, input, actorUid);
+    } catch {
+      throw new HttpsError(
+        "failed-precondition",
+        "Device rejection failed closed.",
+      );
+    }
+  },
+);
+
+export const listAdminUserDevices = onCall(
+  { enforceAppCheck: true, consumeAppCheckToken: true },
+  async (request) => {
+    assertLockedAdmin(request);
+    try {
+      const input = parseAdminDeviceTargetInput({
+        userId: (request.data as Record<string, unknown>)?.userId,
+        requestId: "read",
+      });
+      return { devices: await listActiveDevices(firestore, input.userId) };
+    } catch {
+      throw new HttpsError(
+        "failed-precondition",
+        "Active device read failed closed.",
+      );
+    }
+  },
+);
+
+export const replaceApprovedDevice = onCall(
+  { enforceAppCheck: true, consumeAppCheckToken: true },
+  async (request) => {
+    const actorUid = assertLockedAdmin(request);
+    let input;
+    try {
+      input = parseAdminReplaceDeviceInput(request.data);
+    } catch {
+      throw new HttpsError(
+        "invalid-argument",
+        "Replacement payload is invalid.",
+      );
+    }
+    try {
+      return await replaceDeviceRegistration(firestore, input, actorUid);
+    } catch {
+      throw new HttpsError(
+        "failed-precondition",
+        "Device replacement failed closed.",
+      );
+    }
+  },
+);
 export const provisionCanaryPair = onCall(
   { enforceAppCheck: true, consumeAppCheckToken: true },
   async (request) => {

@@ -8,7 +8,8 @@ import '../../../../core/theme/camo_spacing.dart';
 import '../../../../core/theme/camo_typography.dart';
 import '../../../../shared/layouts/responsive_container.dart';
 import '../../../auth/domain/repositories/auth_repository.dart';
-import '../../data/repositories/placeholder_camo_admin_device_request_repository.dart';
+import '../../data/repositories/firebase_camo_admin_device_repository.dart';
+import '../../domain/entities/camo_admin_device.dart';
 import '../../domain/entities/camo_admin_device_request.dart';
 import '../../domain/repositories/camo_admin_device_request_repository.dart';
 
@@ -27,6 +28,7 @@ class _CamoAdminConsoleScreenState extends State<CamoAdminConsoleScreen> {
 
   bool _isLoading = true;
   String? _errorMessage;
+  String? _busyRequestId;
   List<CamoAdminDeviceRequest> _requests = const <CamoAdminDeviceRequest>[];
   _AdminRequestFilter _filter = _AdminRequestFilter.all;
 
@@ -34,8 +36,7 @@ class _CamoAdminConsoleScreenState extends State<CamoAdminConsoleScreen> {
   void initState() {
     super.initState();
     _repository =
-        widget.deviceRequestRepository ??
-        const PlaceholderCamoAdminDeviceRequestRepository();
+        widget.deviceRequestRepository ?? FirebaseCamoAdminDeviceRepository();
     _searchController.addListener(_refreshVisibleState);
     _loadRequests();
   }
@@ -72,8 +73,7 @@ class _CamoAdminConsoleScreenState extends State<CamoAdminConsoleScreen> {
       }
 
       setState(() {
-        _errorMessage =
-            'Unable to load admin data. No privileged action was performed.';
+        _errorMessage = 'Unable to load live pending device requests.';
         _isLoading = false;
       });
     }
@@ -82,26 +82,6 @@ class _CamoAdminConsoleScreenState extends State<CamoAdminConsoleScreen> {
   void _refreshVisibleState() {
     if (mounted) {
       setState(() {});
-    }
-  }
-
-  Future<void> _logout() async {
-    final app_result.Result<void> result = await sl<AuthRepository>().signOut();
-
-    if (!mounted) {
-      return;
-    }
-
-    switch (result) {
-      case app_result.Success<void>():
-        Navigator.of(context).pushNamedAndRemoveUntil(
-          AppRoutes.login,
-          (Route<dynamic> route) => false,
-        );
-      case app_result.Error<void>():
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Logout failed.')));
     }
   }
 
@@ -130,6 +110,269 @@ class _CamoAdminConsoleScreenState extends State<CamoAdminConsoleScreen> {
               request.deviceLabel.toLowerCase().contains(query);
         })
         .toList(growable: false);
+  }
+
+  Future<String?> _reasonDialog(String title) async {
+    final TextEditingController controller = TextEditingController();
+    final String? result = await showDialog<String>(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
+        title: Text(title),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          maxLength: 200,
+          decoration: const InputDecoration(labelText: 'Reason'),
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () {
+              final String value = controller.text.trim();
+              if (value.length >= 3) {
+                Navigator.pop(context, value);
+              }
+            },
+            child: const Text('Continue'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    return result;
+  }
+
+  Future<void> _runAction(
+    CamoAdminDeviceRequest request,
+    Future<void> Function() action,
+    String successMessage,
+  ) async {
+    setState(() => _busyRequestId = request.requestId);
+
+    try {
+      await action();
+
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(successMessage)));
+
+      await _loadRequests();
+    } on Object {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Admin action failed closed.')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _busyRequestId = null);
+      }
+    }
+  }
+
+  Future<void> _approve(CamoAdminDeviceRequest request) => _runAction(
+    request,
+    () => _repository.approveRequest(
+      userId: request.userId,
+      requestId: request.requestId,
+    ),
+    'Device approved.',
+  );
+
+  Future<void> _reject(CamoAdminDeviceRequest request) async {
+    final String? reason = await _reasonDialog('Reject device request');
+
+    if (reason == null) {
+      return;
+    }
+
+    await _runAction(
+      request,
+      () => _repository.rejectRequest(
+        userId: request.userId,
+        requestId: request.requestId,
+        reason: reason,
+      ),
+      'Device request rejected.',
+    );
+  }
+
+  Future<void> _showDevices(CamoAdminDeviceRequest request) async {
+    List<CamoAdminDevice> devices;
+
+    try {
+      devices = await _repository.fetchDevices(request.userId);
+    } on Object {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to load active devices.')),
+      );
+      return;
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    await showDialog<void>(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
+        title: Text('Active Devices â€” ${request.userEmail}'),
+        content: SizedBox(
+          width: 600,
+          child: devices.isEmpty
+              ? const Text('No active or revoked devices found.')
+              : ListView(
+                  shrinkWrap: true,
+                  children: devices
+                      .map(
+                        (CamoAdminDevice item) => ListTile(
+                          leading: Icon(
+                            item.isApproved
+                                ? Icons.verified_user_rounded
+                                : Icons.block_rounded,
+                          ),
+                          title: Text(item.deviceId),
+                          subtitle: Text('${item.platform} â€¢ ${item.status}'),
+                        ),
+                      )
+                      .toList(growable: false),
+                ),
+        ),
+        actions: <Widget>[
+          FilledButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _replace(CamoAdminDeviceRequest request) async {
+    List<CamoAdminDevice> devices;
+
+    try {
+      devices = await _repository.fetchDevices(request.userId);
+    } on Object {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to load active devices.')),
+      );
+      return;
+    }
+
+    final List<CamoAdminDevice> activeDevices = devices
+        .where((CamoAdminDevice device) => device.isApproved)
+        .toList(growable: false);
+
+    if (!mounted) {
+      return;
+    }
+
+    if (activeDevices.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No active device is available to replace.'),
+        ),
+      );
+      return;
+    }
+
+    String selectedDeviceId = activeDevices.first.deviceId;
+    final String? previousDeviceId = await showDialog<String>(
+      context: context,
+      builder: (BuildContext context) => StatefulBuilder(
+        builder: (BuildContext context, StateSetter setDialogState) =>
+            AlertDialog(
+              title: const Text('Select old device to revoke'),
+              content: DropdownButtonFormField<String>(
+                initialValue: selectedDeviceId,
+                items: activeDevices
+                    .map(
+                      (CamoAdminDevice device) => DropdownMenuItem<String>(
+                        value: device.deviceId,
+                        child: Text(
+                          '${device.platform} â€” ${device.deviceId}',
+                        ),
+                      ),
+                    )
+                    .toList(growable: false),
+                onChanged: (String? value) {
+                  if (value != null) {
+                    setDialogState(() => selectedDeviceId = value);
+                  }
+                },
+              ),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                FilledButton(
+                  onPressed: () => Navigator.pop(context, selectedDeviceId),
+                  child: const Text('Continue'),
+                ),
+              ],
+            ),
+      ),
+    );
+
+    if (previousDeviceId == null || !mounted) {
+      return;
+    }
+
+    final String? reason = await _reasonDialog('Device replacement reason');
+
+    if (reason == null) {
+      return;
+    }
+
+    await _runAction(
+      request,
+      () => _repository.replaceDevice(
+        userId: request.userId,
+        requestId: request.requestId,
+        previousDeviceId: previousDeviceId,
+        reason: reason,
+      ),
+      'New device approved and old device revoked.',
+    );
+  }
+
+  Future<void> _logout() async {
+    final app_result.Result<void> result = await sl<AuthRepository>().signOut();
+
+    if (!mounted) {
+      return;
+    }
+
+    switch (result) {
+      case app_result.Success<void>():
+        Navigator.of(context).pushNamedAndRemoveUntil(
+          AppRoutes.login,
+          (Route<dynamic> route) => false,
+        );
+      case app_result.Error<void>():
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Logout failed.')));
+    }
   }
 
   @override
@@ -176,9 +419,7 @@ class _CamoAdminConsoleScreenState extends State<CamoAdminConsoleScreen> {
                 controller: _searchController,
                 filter: _filter,
                 onFilterChanged: (_AdminRequestFilter value) {
-                  setState(() {
-                    _filter = value;
-                  });
+                  setState(() => _filter = value);
                 },
                 onRefresh: _isLoading ? null : _loadRequests,
               ),
@@ -205,8 +446,7 @@ class _CamoAdminConsoleScreenState extends State<CamoAdminConsoleScreen> {
     if (_requests.isEmpty) {
       return const _AdminEmptyState(
         title: 'No pending device requests',
-        message:
-            'The Phase 1 UI is ready. A dedicated server-authorized read endpoint is still required before live requests can appear.',
+        message: 'There are no live requests awaiting action.',
       );
     }
 
@@ -220,8 +460,14 @@ class _CamoAdminConsoleScreenState extends State<CamoAdminConsoleScreen> {
     return Column(
       children: visibleRequests
           .map(
-            (CamoAdminDeviceRequest request) =>
-                _PendingDeviceRequestCard(request: request),
+            (CamoAdminDeviceRequest request) => _PendingDeviceRequestCard(
+              request: request,
+              isBusy: _busyRequestId == request.requestId,
+              onApprove: () => _approve(request),
+              onReject: () => _reject(request),
+              onShowDevices: () => _showDevices(request),
+              onReplace: () => _replace(request),
+            ),
           )
           .toList(growable: false),
     );
@@ -257,7 +503,8 @@ class _BoundaryBanner extends StatelessWidget {
                 ),
                 SizedBox(height: CamoSpacing.xs),
                 Text(
-                  'This console is device-independent for the locked admin identity. Every privileged action remains disabled until a server-authorized and audited endpoint is connected.',
+                  'Live server-authorized device administration. '
+                  'Privileged writes are performed only by audited callables.',
                 ),
               ],
             ),
@@ -436,7 +683,7 @@ class _AdminLoadingState extends StatelessWidget {
           children: <Widget>[
             CircularProgressIndicator(),
             SizedBox(height: CamoSpacing.md),
-            Text('Loading pending device requests…'),
+            Text('Loading pending device requestsâ€¦'),
           ],
         ),
       ),
@@ -501,9 +748,21 @@ class _AdminEmptyState extends StatelessWidget {
 }
 
 class _PendingDeviceRequestCard extends StatelessWidget {
-  const _PendingDeviceRequestCard({required this.request});
+  const _PendingDeviceRequestCard({
+    required this.request,
+    required this.isBusy,
+    required this.onApprove,
+    required this.onReject,
+    required this.onShowDevices,
+    required this.onReplace,
+  });
 
   final CamoAdminDeviceRequest request;
+  final bool isBusy;
+  final VoidCallback onApprove;
+  final VoidCallback onReject;
+  final VoidCallback onShowDevices;
+  final VoidCallback onReplace;
 
   @override
   Widget build(BuildContext context) {
@@ -534,13 +793,33 @@ class _PendingDeviceRequestCard extends StatelessWidget {
             Text('User ID: ${request.userId}'),
             Text('Device ID: ${request.deviceId}'),
             Text('Platform: ${request.platform}'),
+            Text('Requested: ${request.requestedAt.toLocal()}'),
             const SizedBox(height: CamoSpacing.md),
-            const Align(
-              alignment: Alignment.centerRight,
-              child: Chip(
-                avatar: Icon(Icons.lock_outline_rounded, size: 18),
-                label: Text('Approval actions not connected'),
-              ),
+            Wrap(
+              spacing: CamoSpacing.sm,
+              runSpacing: CamoSpacing.sm,
+              children: <Widget>[
+                FilledButton.icon(
+                  onPressed: isBusy ? null : onApprove,
+                  icon: const Icon(Icons.check_rounded),
+                  label: const Text('Approve'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: isBusy ? null : onReject,
+                  icon: const Icon(Icons.close_rounded),
+                  label: const Text('Reject'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: isBusy ? null : onShowDevices,
+                  icon: const Icon(Icons.devices_rounded),
+                  label: const Text('Active Devices'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: isBusy ? null : onReplace,
+                  icon: const Icon(Icons.swap_horiz_rounded),
+                  label: const Text('Device Replacement'),
+                ),
+              ],
             ),
           ],
         ),
@@ -554,31 +833,37 @@ class _DeferredModulesSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const List<({IconData icon, String title, String description})>
-    modules = <({IconData icon, String title, String description})>[
+    const List<
+      ({IconData icon, String title, String description, String status})
+    >
+    modules = <({IconData icon, String title, String description, String status})>[
       (
-        icon: Icons.devices_other_rounded,
+        icon: Icons.phonelink_setup_rounded,
         title: 'Device Replacement',
         description:
-            'Atomic replacement and old-device revocation remain deferred.',
+            'Available from each pending request through the audited server-authorized replacement workflow.',
+        status: 'Request required',
       ),
       (
         icon: Icons.phonelink_erase_rounded,
         title: 'Active Devices',
         description:
-            'Live approved-device records require a trusted server read endpoint.',
+            'Available from each pending request through the trusted live device-read workflow.',
+        status: 'Request required',
       ),
       (
         icon: Icons.workspace_premium_rounded,
         title: 'Commercial Access',
         description:
-            'Test commercial access remains CLI-only and client-non-authoritative.',
+            'MP-030C remains separately bounded and is not enabled here.',
+        status: 'Server required',
       ),
       (
         icon: Icons.receipt_long_rounded,
         title: 'Audit History',
         description:
-            'Immutable server-generated audit records remain deferred.',
+            'Immutable server-generated audit history remains deferred.',
+        status: 'Server required',
       ),
     ];
 
@@ -588,18 +873,20 @@ class _DeferredModulesSection extends StatelessWidget {
         Text('Deferred secure modules', style: CamoTypography.appTitle),
         const SizedBox(height: CamoSpacing.sm),
         ...modules.map(
-          (({String description, IconData icon, String title}) module) =>
-              Padding(
-                padding: const EdgeInsets.only(bottom: CamoSpacing.sm),
-                child: Card(
-                  child: ListTile(
-                    leading: Icon(module.icon, color: CamoColors.primary),
-                    title: Text(module.title),
-                    subtitle: Text(module.description),
-                    trailing: const Chip(label: Text('Server required')),
-                  ),
-                ),
+          (
+            ({String description, IconData icon, String status, String title})
+            module,
+          ) => Padding(
+            padding: const EdgeInsets.only(bottom: CamoSpacing.sm),
+            child: Card(
+              child: ListTile(
+                leading: Icon(module.icon, color: CamoColors.primary),
+                title: Text(module.title),
+                subtitle: Text(module.description),
+                trailing: Chip(label: Text(module.status)),
               ),
+            ),
+          ),
         ),
       ],
     );

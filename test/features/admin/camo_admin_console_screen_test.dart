@@ -1,3 +1,4 @@
+import 'package:camo/features/admin/domain/entities/camo_admin_device.dart';
 import 'package:camo/features/admin/domain/entities/camo_admin_device_request.dart';
 import 'package:camo/features/admin/domain/repositories/camo_admin_device_request_repository.dart';
 import 'package:camo/features/admin/presentation/screens/camo_admin_console_screen.dart';
@@ -20,6 +21,47 @@ final class _FakeRepository implements CamoAdminDeviceRequestRepository {
     }
     return requests;
   }
+
+  @override
+  Future<void> approveRequest({
+    required String userId,
+    required String requestId,
+  }) async {
+    if (shouldThrow) {
+      throw StateError('failed');
+    }
+  }
+
+  @override
+  Future<void> rejectRequest({
+    required String userId,
+    required String requestId,
+    required String reason,
+  }) async {
+    if (shouldThrow) {
+      throw StateError('failed');
+    }
+  }
+
+  @override
+  Future<List<CamoAdminDevice>> fetchDevices(String userId) async {
+    if (shouldThrow) {
+      throw StateError('failed');
+    }
+    return const <CamoAdminDevice>[];
+  }
+
+  @override
+  Future<void> replaceDevice({
+    required String userId,
+    required String requestId,
+    required String previousDeviceId,
+    required String reason,
+  }) async {
+    if (shouldThrow) {
+      throw StateError('failed');
+    }
+  }
 }
 
 void main() {
@@ -29,20 +71,33 @@ void main() {
     );
   }
 
-  testWidgets('shows Phase 1 empty state without privileged writes', (
+  testWidgets('preserves enterprise layout for live empty state', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(buildSubject(const _FakeRepository()));
     await tester.pumpAndSettle();
 
     expect(find.text('Admin Console'), findsOneWidget);
+    expect(find.text('Authorized admin session'), findsOneWidget);
+    expect(find.text('Pending requests'), findsOneWidget);
+    expect(find.text('Visible results'), findsOneWidget);
+    expect(find.text('Loaded records'), findsOneWidget);
+    expect(find.text('Search requests'), findsOneWidget);
+    expect(find.text('All'), findsOneWidget);
+    expect(find.text('Pending'), findsOneWidget);
     expect(find.text('No pending device requests'), findsOneWidget);
-    expect(find.text('Approval actions not connected'), findsNothing);
+    expect(
+      find.text('There are no live requests awaiting action.'),
+      findsOneWidget,
+    );
+    expect(find.text('Deferred secure modules'), findsOneWidget);
+    expect(find.text('Audit History'), findsOneWidget);
+    expect(find.text('Commercial Access'), findsOneWidget);
     expect(find.text('Approve'), findsNothing);
     expect(find.text('Reject'), findsNothing);
   });
 
-  testWidgets('shows pending request and supports search', (
+  testWidgets('shows live actions while preserving search and statistics', (
     WidgetTester tester,
   ) async {
     final CamoAdminDeviceRequest request = CamoAdminDeviceRequest(
@@ -64,16 +119,23 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Chrome Windows'), findsOneWidget);
-    expect(find.textContaining('person@example.com'), findsOneWidget);
-    expect(find.text('Approval actions not connected'), findsOneWidget);
+    expect(find.text('User: person@example.com'), findsOneWidget);
+    expect(find.text('User ID: user-1'), findsOneWidget);
+    expect(find.text('Device ID: device-1'), findsOneWidget);
+    expect(find.text('Platform: web'), findsOneWidget);
+    expect(find.text('Approve'), findsOneWidget);
+    expect(find.text('Reject'), findsOneWidget);
+    expect(find.text('Active Devices'), findsOneWidget);
+    expect(find.text('Device Replacement'), findsOneWidget);
 
     await tester.enterText(find.byType(TextField), 'missing');
     await tester.pump();
 
     expect(find.text('No matching requests'), findsOneWidget);
+    expect(find.text('Visible results'), findsOneWidget);
   });
 
-  testWidgets('shows fail-closed error and retry state', (
+  testWidgets('shows fail-closed live-load error and retry state', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
@@ -82,10 +144,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Admin data unavailable'), findsOneWidget);
-    expect(find.text('Retry'), findsOneWidget);
     expect(
-      find.textContaining('No privileged action was performed'),
+      find.text('Unable to load live pending device requests.'),
       findsOneWidget,
     );
+    expect(find.text('Retry'), findsOneWidget);
   });
 }

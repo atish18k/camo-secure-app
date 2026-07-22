@@ -7,7 +7,7 @@ void main() {
     final String backend = File('functions/src/index.ts').readAsStringSync();
 
     expect(backend, contains('request.auth.token.camoAdmin !== true'));
-    expect(backend, contains('CAMO admin role is required.'));
+    expect(backend, contains('Locked CAMO admin is required.'));
     expect(backend, isNot(contains('camoDeviceApprover')));
   });
 
