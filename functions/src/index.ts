@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 
 import { initializeApp } from "firebase-admin/app";
-import { getFirestore } from "firebase-admin/firestore";
+import { FieldValue, Timestamp, getFirestore } from "firebase-admin/firestore";
 import { setGlobalOptions } from "firebase-functions/v2";
 import { provisionControlledCanaryPair } from "./services/canary_pair_provisioning_service";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
@@ -67,6 +67,243 @@ function assertLockedAdmin(request: {
   }
   return request.auth.uid;
 }
+type PendingCommercialRequestView = Readonly<{
+  requestId: string;
+  userId: string;
+  userEmail: string | null;
+  status: "pending";
+  requestedAt: string | null;
+}>;
+
+const allowedCommercialApprovalDurations = new Set<number>([1, 3, 7, 10]);
+
+function readCommercialRequestId(value: unknown): string {
+  if (typeof value !== "string") {
+    throw new HttpsError("invalid-argument", "requestId must be a string.");
+  }
+  const normalized = value.trim();
+  if (
+    normalized.length === 0 ||
+    normalized.length > 128 ||
+    normalized.includes("/") ||
+    normalized.includes("\\")
+  ) {
+    throw new HttpsError("invalid-argument", "requestId is invalid.");
+  }
+  return normalized;
+}
+
+function readCommercialApprovalDuration(value: unknown): number {
+  if (
+    typeof value !== "number" ||
+    !Number.isInteger(value) ||
+    !allowedCommercialApprovalDurations.has(value)
+  ) {
+    throw new HttpsError(
+      "invalid-argument",
+      "durationDays must be exactly 1, 3, 7, or 10.",
+    );
+  }
+  return value;
+}
+
+export const requestCommercialAccess = onCall(
+  {
+    enforceAppCheck: true,
+    consumeAppCheckToken: true,
+  },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Authentication is required.");
+    }
+
+    const userId = request.auth.uid;
+    const userEmail =
+      typeof request.auth.token.email === "string"
+        ? request.auth.token.email
+        : null;
+    const requestRef = firestore
+      .collection("commercialAccessRequestsV1")
+      .doc(userId);
+
+    await firestore.runTransaction(async (transaction) => {
+      const existing = await transaction.get(requestRef);
+      if (existing.exists && existing.data()?.status === "pending") {
+        return;
+      }
+
+      transaction.set(
+        requestRef,
+        {
+          schemaVersion: 1,
+          userId,
+          userEmail,
+          status: "pending",
+          requestedAt: FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
+        },
+        { merge: false },
+      );
+    });
+
+    return Object.freeze({
+      success: true,
+      requestId: requestRef.id,
+      status: "pending",
+    });
+  },
+);
+
+export const listPendingCommercialAccessRequests = onCall(
+  {
+    enforceAppCheck: true,
+    consumeAppCheckToken: true,
+  },
+  async (request) => {
+    assertLockedAdmin(request);
+
+    const snapshot = await firestore
+      .collection("commercialAccessRequestsV1")
+      .where("status", "==", "pending")
+      .limit(100)
+      .get();
+
+    const requests: PendingCommercialRequestView[] = snapshot.docs.map((doc) => {
+      const data = doc.data();
+      const requestedAt =
+        data.requestedAt instanceof Timestamp
+          ? data.requestedAt.toDate().toISOString()
+          : null;
+
+      return Object.freeze({
+        requestId: doc.id,
+        userId: typeof data.userId === "string" ? data.userId : "",
+        userEmail: typeof data.userEmail === "string" ? data.userEmail : null,
+        status: "pending" as const,
+        requestedAt,
+      });
+    });
+
+    return Object.freeze({ requests });
+  },
+);
+
+export const approveCommercialAccessRequest = onCall(
+  {
+    enforceAppCheck: true,
+    consumeAppCheckToken: true,
+  },
+  async (request) => {
+    const adminUid = assertLockedAdmin(request);
+
+    if (
+      typeof request.data !== "object" ||
+      request.data === null ||
+      Array.isArray(request.data)
+    ) {
+      throw new HttpsError("invalid-argument", "Approval payload is invalid.");
+    }
+
+    const payload = request.data as Record<string, unknown>;
+    const requestId = readCommercialRequestId(payload.requestId);
+    const durationDays = readCommercialApprovalDuration(payload.durationDays);
+    const requestRef = firestore
+      .collection("commercialAccessRequestsV1")
+      .doc(requestId);
+    const auditRef = firestore.collection("adminAuditEvents").doc();
+
+    const result = await firestore.runTransaction(async (transaction) => {
+      const requestSnapshot = await transaction.get(requestRef);
+      if (!requestSnapshot.exists) {
+        throw new HttpsError("not-found", "Commercial access request not found.");
+      }
+
+      const pending = requestSnapshot.data();
+      if (
+        pending?.status !== "pending" ||
+        typeof pending.userId !== "string" ||
+        pending.userId.length === 0 ||
+        pending.userId !== requestId
+      ) {
+        throw new HttpsError(
+          "failed-precondition",
+          "Commercial access request is not a valid pending request.",
+        );
+      }
+
+      const now = Timestamp.now();
+      const expiresAt = Timestamp.fromMillis(
+        now.toMillis() + durationDays * 24 * 60 * 60 * 1000,
+      );
+      const accessRef = firestore
+        .collection("users")
+        .doc(pending.userId)
+        .collection("commercialAccessV2")
+        .doc("current");
+
+      transaction.set(
+        accessRef,
+        {
+          schemaVersion: 2,
+          userId: pending.userId,
+          planId: "camo_monthly_inr_199",
+          monthlyPriceInr: 199,
+          licenseStatus: "active",
+          subscriptionStatus: "active",
+          billingState: "paid",
+          deviceAllowance: 1,
+          grantedEntitlements: ["baseEncoding", "baseDecoding"],
+          startsAt: now,
+          expiresAt,
+          grantedByAdminUid: adminUid,
+          sourceCommercialRequestId: requestId,
+          updatedAt: FieldValue.serverTimestamp(),
+        },
+        { merge: false },
+      );
+
+      transaction.update(requestRef, {
+        status: "approved",
+        approvedDurationDays: durationDays,
+        approvedByAdminUid: adminUid,
+        approvedAt: now,
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+
+      transaction.create(auditRef, {
+        schemaVersion: 1,
+        eventType: "commercial_access_request_approved",
+        actorAdminUid: adminUid,
+        targetUserId: pending.userId,
+        sourceCommercialRequestId: requestId,
+        durationDays,
+        createdAt: FieldValue.serverTimestamp(),
+      });
+
+      return Object.freeze({
+        userId: pending.userId as string,
+        expiresAt: expiresAt.toDate().toISOString(),
+      });
+    });
+
+    logger.info("Pending commercial access request approved.", {
+      auditEventId: auditRef.id,
+      actorAdminUid: adminUid,
+      targetUserId: result.userId,
+      requestId,
+      durationDays,
+    });
+
+    return Object.freeze({
+      success: true,
+      requestId,
+      userId: result.userId,
+      durationDays,
+      expiresAt: result.expiresAt,
+      auditEventId: auditRef.id,
+    });
+  },
+);
 const authorizationOrchestrator =
   createCamoProductionServerAuthorizationOrchestrator({
     firestore,

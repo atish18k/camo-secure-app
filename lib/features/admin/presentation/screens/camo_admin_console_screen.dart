@@ -1,6 +1,8 @@
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 
+import '../widgets/camo_admin_pending_commercial_requests_panel.dart';
+
 import '../../../../app/routes.dart';
 import '../../../../core/di/injection_container.dart';
 import '../../../../core/errors/result.dart' as app_result;
@@ -15,7 +17,13 @@ import '../../domain/entities/camo_admin_device_request.dart';
 import '../../domain/repositories/camo_admin_device_request_repository.dart';
 
 class CamoAdminConsoleScreen extends StatefulWidget {
-  const CamoAdminConsoleScreen({super.key, this.deviceRequestRepository});
+  final Widget? pendingCommercialRequestsPanel;
+
+  const CamoAdminConsoleScreen({
+    this.pendingCommercialRequestsPanel,
+    super.key,
+    this.deviceRequestRepository,
+  });
 
   final CamoAdminDeviceRequestRepository? deviceRequestRepository;
 
@@ -421,6 +429,10 @@ class _CamoAdminConsoleScreenState extends State<CamoAdminConsoleScreen> {
           child: ListView(
             padding: CamoSpacing.screen,
             children: <Widget>[
+              // MP-030 owns device-administration operations only.
+              // MP-030C remains separately bounded and owns commercial access.
+              widget.pendingCommercialRequestsPanel ??
+                  const CamoAdminPendingCommercialRequestsPanel(),
               const _BoundaryBanner(),
               const SizedBox(height: CamoSpacing.lg),
               _StatisticsGrid(
@@ -865,13 +877,7 @@ class _DeferredModulesSection extends StatelessWidget {
             'Available from each pending request through the trusted live device-read workflow.',
         status: 'Request required',
       ),
-      (
-        icon: Icons.workspace_premium_rounded,
-        title: 'Commercial Access',
-        description:
-            'MP-030C remains separately bounded and is not enabled here.',
-        status: 'Server required',
-      ),
+
       (
         icon: Icons.receipt_long_rounded,
         title: 'Audit History',

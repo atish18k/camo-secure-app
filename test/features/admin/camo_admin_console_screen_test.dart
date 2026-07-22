@@ -67,7 +67,10 @@ final class _FakeRepository implements CamoAdminDeviceRequestRepository {
 void main() {
   Widget buildSubject(CamoAdminDeviceRequestRepository repository) {
     return MaterialApp(
-      home: CamoAdminConsoleScreen(deviceRequestRepository: repository),
+      home: CamoAdminConsoleScreen(
+        pendingCommercialRequestsPanel: const Text('Commercial Access'),
+        deviceRequestRepository: repository,
+      ),
     );
   }
 
@@ -90,9 +93,17 @@ void main() {
       find.text('There are no live requests awaiting action.'),
       findsOneWidget,
     );
+    expect(find.text('Commercial Access'), findsOneWidget);
+
+    await tester.scrollUntilVisible(
+      find.text('Deferred secure modules'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+
     expect(find.text('Deferred secure modules'), findsOneWidget);
     expect(find.text('Audit History'), findsOneWidget);
-    expect(find.text('Commercial Access'), findsOneWidget);
     expect(find.text('Approve'), findsNothing);
     expect(find.text('Reject'), findsNothing);
   });

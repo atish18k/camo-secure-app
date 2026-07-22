@@ -1,5 +1,6 @@
 import 'package:camo/features/policy/domain/services/camo_post_login_access_verifier.dart';
 import 'package:camo/features/policy/presentation/screens/camo_composite_access_gate.dart';
+import 'package:camo/features/subscription/presentation/screens/choose_plan_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -23,7 +24,8 @@ void main() {
         ),
       );
       await t.pumpAndSettle();
-      expect(find.text('Commercial access restricted'), findsOneWidget);
+      expect(find.byType(ChoosePlanScreen), findsOneWidget);
+      expect(find.text('Request commercial access'), findsOneWidget);
       expect(find.text('workspace'), findsNothing);
       await t.pumpWidget(
         MaterialApp(

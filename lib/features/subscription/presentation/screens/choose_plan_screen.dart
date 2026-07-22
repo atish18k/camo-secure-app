@@ -1,16 +1,95 @@
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../app/routes.dart';
 import '../../../../core/theme/camo_colors.dart';
 import '../../../../core/theme/camo_spacing.dart';
 import '../../../../shared/layouts/responsive_container.dart';
-import '../../../../shared/widgets/button/camo_button.dart';
+import '../../data/repositories/firebase_camo_commercial_access_request_repository.dart';
+import '../../domain/repositories/camo_commercial_access_request_repository.dart';
 
-class ChoosePlanScreen extends StatelessWidget {
-  const ChoosePlanScreen({super.key});
+class ChoosePlanScreen extends StatefulWidget {
+  const ChoosePlanScreen({super.key, this.requestRepository});
 
   static const String canonicalPlanId = 'camo_monthly_inr_199';
   static const int monthlyPriceInr = 199;
+
+  final CamoCommercialAccessRequestRepository? requestRepository;
+
+  @override
+  State<ChoosePlanScreen> createState() => _ChoosePlanScreenState();
+}
+
+class _ChoosePlanScreenState extends State<ChoosePlanScreen> {
+  bool _isRequesting = false;
+  bool _requestSubmitted = false;
+
+  Future<void> _requestCommercialAccess() async {
+    if (_isRequesting || _requestSubmitted) {
+      return;
+    }
+
+    setState(() {
+      _isRequesting = true;
+    });
+
+    try {
+      final repository =
+          widget.requestRepository ??
+          FirebaseCamoCommercialAccessRequestRepository();
+      final result = await repository.requestAccess();
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _isRequesting = false;
+        _requestSubmitted = result.isPending;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Commercial access request submitted for administrator review.',
+          ),
+        ),
+      );
+    } on FirebaseFunctionsException catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _isRequesting = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Request failed: ${error.code}'
+            '${error.message == null ? '' : ' - ${error.message}'}',
+          ),
+        ),
+      );
+    } on Object {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _isRequesting = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Unable to submit the commercial access request. Please retry.',
+          ),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,26 +100,25 @@ class ChoosePlanScreen extends StatelessWidget {
         child: ResponsiveContainer(
           maxWidth: 680,
           child: SingleChildScrollView(
-            padding: CamoSpacing.screen,
+            padding: const EdgeInsets.all(CamoSpacing.lg),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
                   'CAMO Monthly',
+                  textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.headlineSmall,
                 ),
                 CamoSpacing.gapSm,
                 Text(
-                  '\u20B9$monthlyPriceInr / month',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    color: CamoColors.primary,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  '\u20B9${ChoosePlanScreen.monthlyPriceInr} / month',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.titleLarge,
                 ),
                 CamoSpacing.gapLg,
                 const Card(
                   child: Padding(
-                    padding: CamoSpacing.card,
+                    padding: EdgeInsets.all(CamoSpacing.md),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -53,13 +131,40 @@ class ChoosePlanScreen extends StatelessWidget {
                   ),
                 ),
                 CamoSpacing.gapLg,
-                const _AuthorityNotice(),
-                CamoSpacing.gapLg,
-                CamoButton.primary(
-                  text: 'Review activation',
-                  icon: Icons.arrow_forward_rounded,
+                const Text(
+                  'Submitting a request does not activate access. Only the '
+                  'server-authorized administrator approval flow can create '
+                  'commercial access.',
+                  textAlign: TextAlign.center,
+                ),
+                CamoSpacing.gapMd,
+                FilledButton.icon(
+                  onPressed: _isRequesting || _requestSubmitted
+                      ? null
+                      : _requestCommercialAccess,
+                  icon: _isRequesting
+                      ? const SizedBox.square(
+                          dimension: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Icon(
+                          _requestSubmitted
+                              ? Icons.hourglass_top_rounded
+                              : Icons.send_rounded,
+                        ),
+                  label: Text(
+                    _isRequesting
+                        ? 'Submitting request...'
+                        : _requestSubmitted
+                        ? 'Request pending'
+                        : 'Request commercial access',
+                  ),
+                ),
+                CamoSpacing.gapSm,
+                OutlinedButton(
                   onPressed: () =>
                       Navigator.pushNamed(context, AppRoutes.planActivation),
+                  child: const Text('Review activation'),
                 ),
               ],
             ),
@@ -71,38 +176,21 @@ class ChoosePlanScreen extends StatelessWidget {
 }
 
 class _PlanFeature extends StatelessWidget {
-  const _PlanFeature(this.text);
-  final String text;
+  const _PlanFeature(this.label);
+
+  final String label;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: CamoSpacing.xs),
+      padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.check_circle_outline, color: CamoColors.success),
-          CamoSpacing.gapHorizontalSm,
-          Expanded(child: Text(text)),
+          const Icon(Icons.check_circle_outline_rounded, size: 20),
+          const SizedBox(width: 10),
+          Expanded(child: Text(label)),
         ],
-      ),
-    );
-  }
-}
-
-class _AuthorityNotice extends StatelessWidget {
-  const _AuthorityNotice();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: CamoSpacing.card,
-      decoration: BoxDecoration(
-        color: CamoColors.surface,
-        border: Border.all(color: CamoColors.border),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: const Text(
-        'Selecting this plan does not activate access. Activation requires verified provider confirmation and server-owned subscription and entitlement records.',
       ),
     );
   }

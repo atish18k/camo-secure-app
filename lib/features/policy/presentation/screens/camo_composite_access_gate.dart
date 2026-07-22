@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../../subscription/presentation/screens/choose_plan_screen.dart';
 import '../../domain/services/camo_post_login_access_verifier.dart';
 
 class CamoCompositeAccessGate extends StatefulWidget {
@@ -7,14 +9,17 @@ class CamoCompositeAccessGate extends StatefulWidget {
     required this.verifier,
     super.key,
   });
+
   final Widget child;
   final CamoPostLoginAccessVerifier verifier;
+
   @override
   State<CamoCompositeAccessGate> createState() => _State();
 }
 
 class _State extends State<CamoCompositeAccessGate> {
   late Future<CamoPostLoginAccessDecision> check;
+
   @override
   void initState() {
     super.initState();
@@ -33,17 +38,27 @@ class _State extends State<CamoCompositeAccessGate> {
   Widget build(BuildContext context) =>
       FutureBuilder<CamoPostLoginAccessDecision>(
         future: check,
-        builder: (context, s) {
-          if (s.connectionState != ConnectionState.done) {
+        builder: (context, snapshot) {
+          if (snapshot.connectionState != ConnectionState.done) {
             return const Scaffold(
               body: Center(child: CircularProgressIndicator()),
             );
           }
-          if (!s.hasData || s.hasError || !s.data!.allowed) {
-            return const Scaffold(
-              body: Center(child: Text('Commercial access restricted')),
-            );
+
+          if (snapshot.hasError) {
+            return const ChoosePlanScreen();
           }
+
+          final CamoPostLoginAccessDecision? decision = snapshot.data;
+
+          if (decision == null) {
+            return const ChoosePlanScreen();
+          }
+
+          if (!decision.allowed) {
+            return const ChoosePlanScreen();
+          }
+
           return widget.child;
         },
       );
