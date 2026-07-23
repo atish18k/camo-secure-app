@@ -43,3 +43,10 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# CAMO local-only exclusions
+.camo-backups/
+.vscode/
+tmpfile
+tools/build/
+tools/runtime/
