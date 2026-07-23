@@ -1,6 +1,7 @@
 // -----------------------------------------------------------------------------
 // Imports
 // -----------------------------------------------------------------------------
+import '../../../authorization_gateway/data/models/camo_verified_signed_permit_projection_v2.dart';
 import '../../../kms/domain/entities/camo_key_release_decision.dart';
 import '../../../licensing/domain/entities/camo_commercial_access_decision.dart';
 import '../../../policy_engine/domain/entities/camo_policy_decision.dart';
@@ -26,6 +27,7 @@ final class CamoAuthorizationPipelineDecision {
     required this.keyReleaseDecision,
     required this.session,
     required this.completedAt,
+    this.verifiedPermitV2,
   });
   final String pipelineId;
   final CamoAuthorizationPipelineStatus status;
@@ -38,6 +40,18 @@ final class CamoAuthorizationPipelineDecision {
   final CamoKeyReleaseDecision keyReleaseDecision;
   final CamoAuthorizationSession session;
   final DateTime completedAt;
+  final CamoVerifiedSignedPermitProjectionV2? verifiedPermitV2;
+
+  bool get hasVerifiedV2Permit {
+    final CamoVerifiedSignedPermitProjectionV2? permit = verifiedPermitV2;
+
+    return permit != null &&
+        permit.operationId.trim().isNotEmpty &&
+        permit.authorizationId.trim().isNotEmpty &&
+        permit.challengeId.trim().isNotEmpty &&
+        permit.messageId.trim().isNotEmpty;
+  }
+
   bool get permitsOperation {
     return status.isSuccessful &&
         securityDecision.isAllowed &&

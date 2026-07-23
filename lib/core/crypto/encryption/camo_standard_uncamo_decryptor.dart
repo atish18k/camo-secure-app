@@ -1,6 +1,4 @@
 ﻿// The public constructor intentionally keeps readable named parameters.
-// Private-field initializing formals would expose private parameter names to
-// importing libraries, so this narrowly scoped lint exception is deliberate.
 // ignore_for_file: prefer_initializing_formals
 
 // ---------------------------------------------------------------------------
@@ -10,49 +8,47 @@
 import 'dart:typed_data';
 
 import '../server_share/camo_server_share_validator.dart';
-import 'camo_authorized_encode_material.dart';
+import 'camo_authorized_decode_material.dart';
 import 'camo_final_key_derivation.dart';
 import 'camo_standard_crypto_context_v2.dart';
 
 // ---------------------------------------------------------------------------
-// Standard CAMO Message Encoder
+// Standard UNCAMO Message Decoder
 // ---------------------------------------------------------------------------
 
-typedef CamoStandardMessageEncoder =
+typedef CamoStandardMessageDecoder =
     Future<String> Function({
-      required String plainText,
+      required String encodedText,
       required Uint8List key,
-      String? subject,
-      bool camouflageEnabled,
     });
 
 // ---------------------------------------------------------------------------
-// Standard CAMO Encryptor
+// Standard UNCAMO Decryptor
 // ---------------------------------------------------------------------------
 
-final class CamoStandardCamoEncryptor {
-  const CamoStandardCamoEncryptor({
+final class CamoStandardUncamoDecryptor {
+  const CamoStandardUncamoDecryptor({
     required CamoServerShareValidator serverShareValidator,
     required CamoFinalKeyDerivation finalKeyDerivation,
-    required CamoStandardMessageEncoder messageEncoder,
+    required CamoStandardMessageDecoder messageDecoder,
   }) : _serverShareValidator = serverShareValidator,
        _finalKeyDerivation = finalKeyDerivation,
-       _messageEncoder = messageEncoder;
+       _messageDecoder = messageDecoder;
 
   final CamoServerShareValidator _serverShareValidator;
   final CamoFinalKeyDerivation _finalKeyDerivation;
-  final CamoStandardMessageEncoder _messageEncoder;
+  final CamoStandardMessageDecoder _messageDecoder;
 
-  Future<String> encrypt({
-    required CamoAuthorizedEncodeMaterial material,
-    required String plainText,
+  Future<String> decrypt({
+    required CamoAuthorizedDecodeMaterial material,
+    required String encodedText,
   }) async {
     if (!material.isValid) {
-      throw StateError('Authorized encode material is invalid.');
+      throw StateError('Authorized decode material is invalid.');
     }
 
-    if (plainText.isEmpty) {
-      throw StateError('Plaintext is required.');
+    if (encodedText.trim().isEmpty) {
+      throw StateError('Encoded text is required.');
     }
 
     _serverShareValidator.validate(
@@ -77,13 +73,18 @@ final class CamoStandardCamoEncryptor {
     );
 
     if (finalKey.length != 32) {
-      throw StateError('Standard CAMO final key must contain 32 bytes.');
+      throw StateError('Standard UNCAMO final key must contain 32 bytes.');
     }
 
-    return _messageEncoder(
-      plainText: plainText,
+    final String plainText = await _messageDecoder(
+      encodedText: encodedText,
       key: finalKey,
-      camouflageEnabled: false,
     );
+
+    if (plainText.isEmpty) {
+      throw StateError('Standard UNCAMO plaintext is empty.');
+    }
+
+    return plainText;
   }
 }

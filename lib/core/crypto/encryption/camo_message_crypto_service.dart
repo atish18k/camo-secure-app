@@ -41,9 +41,7 @@ class CamoMessageCryptoService {
     final Uint8List nonce = nonceGenerator.generateNonce();
 
     final Uint8List encryptedBytes = await cryptoEngine.encrypt(
-      plainText: Uint8List.fromList(
-        utf8.encode(plainText),
-      ),
+      plainText: Uint8List.fromList(utf8.encode(plainText)),
       key: key,
       nonce: nonce,
     );
@@ -65,16 +63,10 @@ class CamoMessageCryptoService {
     required Uint8List key,
   }) async {
     if (encodedText.startsWith('${CamoPayloadFormatter.protocolPrefix}|')) {
-      return _decodeLegacy(
-        encodedText: encodedText,
-        key: key,
-      );
+      return _decodeLegacy(encodedText: encodedText, key: key);
     }
 
-    return _decodeCompact(
-      encodedText: encodedText,
-      key: key,
-    );
+    return _decodeCompact(encodedText: encodedText, key: key);
   }
 
   Future<String> _decodeCompact({
@@ -96,6 +88,22 @@ class CamoMessageCryptoService {
     return utf8.decode(plainTextBytes);
   }
 
+  Future<String> decodeV2Only({
+    required String encodedText,
+    required Uint8List key,
+  }) async {
+    final String normalizedEncodedText = encodedText.trim();
+
+    if (normalizedEncodedText.isEmpty ||
+        normalizedEncodedText.startsWith(
+          '${CamoPayloadFormatter.protocolPrefix}|',
+        )) {
+      throw StateError('Only strict CAMO V2 payloads are accepted.');
+    }
+
+    return decode(encodedText: normalizedEncodedText, key: key);
+  }
+
   Future<String> _decodeLegacy({
     required String encodedText,
     required Uint8List key,
@@ -103,15 +111,14 @@ class CamoMessageCryptoService {
     final CamoCryptoPayload payload = payloadFormatter.decode(encodedText);
 
     final Uint8List cipherText = base64Url.decode(payload.cipherText);
-    final Uint8List authenticationTag =
-        base64Url.decode(payload.authenticationTag);
-
-    final Uint8List encryptedBytes = Uint8List.fromList(
-      <int>[
-        ...cipherText,
-        ...authenticationTag,
-      ],
+    final Uint8List authenticationTag = base64Url.decode(
+      payload.authenticationTag,
     );
+
+    final Uint8List encryptedBytes = Uint8List.fromList(<int>[
+      ...cipherText,
+      ...authenticationTag,
+    ]);
 
     final Uint8List plainTextBytes = await cryptoEngine.decrypt(
       cipherText: encryptedBytes,

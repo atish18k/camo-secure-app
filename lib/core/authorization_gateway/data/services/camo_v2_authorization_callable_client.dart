@@ -2,16 +2,20 @@ import '../../../shared/failures/camo_failure.dart';
 import '../../../shared/result/camo_result.dart';
 import '../../domain/services/camo_authorization_callable_primitive.dart';
 import '../models/camo_signed_authorization_contract_v2.dart';
+import '../models/camo_verified_signed_permit_projection_v2.dart';
+import '../../domain/repositories/camo_verified_v2_permit_store.dart';
 import 'camo_signed_authorization_contract_v2_transport_decoder.dart';
 
 final class CamoV2AuthorizationCallableClient {
   const CamoV2AuthorizationCallableClient({
     required this.primitive,
     required this.decoder,
+    this.permitStore,
   });
 
   final CamoAuthorizationCallablePrimitive primitive;
   final CamoSignedAuthorizationContractV2TransportDecoder decoder;
+  final CamoVerifiedV2PermitStore? permitStore;
 
   Future<CamoResult<CamoSignedAuthorizationContractV2>> authorize({
     required Map<String, Object?> payload,
@@ -65,6 +69,15 @@ final class CamoV2AuthorizationCallableClient {
             payload: responsePayload,
             expectedRequestId: normalizedRequestId,
           );
+
+      final CamoVerifiedV2PermitStore? store = permitStore;
+
+      if (store != null) {
+        final CamoVerifiedSignedPermitProjectionV2 permit =
+            CamoVerifiedSignedPermitProjectionV2.fromVerifiedContract(contract);
+
+        await store.save(requestId: normalizedRequestId, permit: permit);
+      }
 
       return CamoSuccess<CamoSignedAuthorizationContractV2>(contract);
     } on Object {

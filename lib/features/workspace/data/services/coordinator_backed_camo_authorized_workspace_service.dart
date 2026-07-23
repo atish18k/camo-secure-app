@@ -14,6 +14,7 @@ import '../../domain/entities/camo_workspace_operation_payload.dart';
 import '../../domain/repositories/camo_workspace_operation_payload_store.dart';
 import '../../domain/services/camo_authorized_workspace_service.dart';
 import '../../domain/services/camo_workspace_enterprise_request_builder.dart';
+import 'camo_verified_v2_workspace_decode_coordinator.dart';
 
 final class CoordinatorBackedCamoAuthorizedWorkspaceService
     implements CamoAuthorizedWorkspaceService {
@@ -22,15 +23,18 @@ final class CoordinatorBackedCamoAuthorizedWorkspaceService
     required CamoWorkspaceEnterpriseRequestBuilder requestBuilder,
     required CamoWorkspaceOperationPayloadStore payloadStore,
     required String Function() operationIdGenerator,
+    CamoVerifiedV2WorkspaceDecodeCoordinator? verifiedV2DecodeCoordinator,
   }) : _coordinator = coordinator,
        _requestBuilder = requestBuilder,
        _payloadStore = payloadStore,
-       _operationIdGenerator = operationIdGenerator;
+       _operationIdGenerator = operationIdGenerator,
+       _verifiedV2DecodeCoordinator = verifiedV2DecodeCoordinator;
 
   final CamoEnterpriseOperationCoordinator _coordinator;
   final CamoWorkspaceEnterpriseRequestBuilder _requestBuilder;
   final CamoWorkspaceOperationPayloadStore _payloadStore;
   final String Function() _operationIdGenerator;
+  final CamoVerifiedV2WorkspaceDecodeCoordinator? _verifiedV2DecodeCoordinator;
 
   @override
   Future<String> encode({
@@ -91,8 +95,20 @@ final class CoordinatorBackedCamoAuthorizedWorkspaceService
     try {
       final CamoEnterpriseOperationRequest request = await _requestBuilder
           .buildDecodeRequest(operationId: operationId, pairingId: pairingId);
+      final CamoVerifiedV2WorkspaceDecodeCoordinator? coordinator =
+          _verifiedV2DecodeCoordinator;
 
-      return await _coordinate(operationId: operationId, request: request);
+      if (coordinator == null) {
+        throw StateError(
+          'Verified V2 Standard UNCAMO coordinator is unavailable.',
+        );
+      }
+
+      return coordinator.decode(
+        requestId: request.requestId,
+        authorization: request.authorizationRequest,
+        encodedText: encodedText,
+      );
     } finally {
       _payloadStore.remove(operationId);
     }

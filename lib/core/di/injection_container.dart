@@ -1,3 +1,5 @@
+﻿import 'dart:typed_data';
+
 // ---------------------------------------------------------------------------
 // Imports
 // ---------------------------------------------------------------------------
@@ -21,6 +23,12 @@ import '../../core/crypto/encryption/camo_payload_formatter.dart';
 import '../../core/crypto/encryption/camo_secure_nonce_generator.dart';
 import '../../core/crypto/encryption/camo_secure_random.dart';
 import '../../core/crypto/encryption/camo_x25519_key_agreement.dart';
+import '../../core/crypto/encryption/camo_decode_key_material_provider.dart';
+import '../../core/crypto/encryption/default_camo_decode_key_material_provider.dart';
+import '../../core/crypto/encryption/camo_hkdf_final_key_derivation.dart';
+import '../../core/crypto/encryption/camo_standard_uncamo_decryptor.dart';
+import '../../core/crypto/encryption/camo_verified_v2_uncamo_runtime.dart';
+import '../../core/crypto/server_share/camo_server_share_validator.dart';
 import '../../core/crypto/keys/camo_remote_device_resolver.dart';
 import '../../core/crypto/keys/camo_remote_public_key_provider.dart';
 import '../../core/crypto/keys/firestore_remote_public_key_provider.dart';
@@ -79,6 +87,8 @@ import '../../features/policy/domain/repositories/camo_policy_evaluator.dart';
 import '../../features/policy/domain/usecases/evaluate_camo_policy_usecase.dart';
 
 import '../../core/authorization_gateway/data/repositories/fail_closed_camo_single_use_authorization_store.dart';
+import '../../core/authorization_gateway/data/repositories/camo_memory_verified_v2_permit_store.dart';
+import '../../core/authorization_gateway/domain/repositories/camo_verified_v2_permit_store.dart';
 import '../../core/authorization_gateway/data/security/camo_p256_der_signature_decoder.dart';
 import '../../core/authorization_gateway/data/security/camo_p256_signature_verification_primitive.dart';
 import '../../core/authorization_gateway/data/security/camo_pinned_authorization_public_key_v1.dart';
@@ -155,6 +165,7 @@ import '../../core/kms/domain/repositories/camo_kms_repository.dart';
 import '../../core/operation_coordinator/domain/services/default_camo_enterprise_operation_coordinator.dart';
 import '../../features/workspace/data/services/default_camo_workspace_enterprise_request_builder.dart';
 import '../../features/workspace/data/services/coordinator_backed_camo_authorized_workspace_service.dart';
+import '../../features/workspace/data/services/camo_verified_v2_workspace_decode_coordinator.dart';
 import '../../core/operation_coordinator/data/services/fail_closed_camo_enterprise_security_pipeline_ports.dart';
 import '../../core/operation_coordinator/domain/services/camo_enterprise_security_pipeline_ports.dart';
 import '../../core/operation_coordinator/domain/services/default_camo_enterprise_security_pipeline.dart';
@@ -493,11 +504,17 @@ Future<void> initDependencies() async {
       verifyContract: sl<CamoSignedAuthorizationContractV2Verifier>().verify,
     ),
   );
-
-  sl.registerLazySingleton<CamoV2AuthorizationCallableClient>(
-    () => CamoV2AuthorizationCallableClient(primitive: sl(), decoder: sl()),
+  sl.registerLazySingleton<CamoVerifiedV2PermitStore>(
+    CamoMemoryVerifiedV2PermitStore.new,
   );
 
+  sl.registerLazySingleton<CamoV2AuthorizationCallableClient>(
+    () => CamoV2AuthorizationCallableClient(
+      primitive: sl(),
+      decoder: sl(),
+      permitStore: sl(),
+    ),
+  );
   sl.registerLazySingleton<CamoAuthorizationTransportMapper>(
     DefaultCamoAuthorizationTransportMapper.new,
   );
@@ -580,6 +597,52 @@ Future<void> initDependencies() async {
     FailClosedCamoAuthorizationGateway.new,
   );
 
+  sl.registerLazySingleton<CamoDecodeKeyMaterialProvider>(
+    () => DefaultCamoDecodeKeyMaterialProvider(
+      authRepository: sl(),
+
+      pairingRepository: sl(),
+
+      deviceKeyManager: sl(),
+
+      remotePublicKeyProvider: sl(),
+
+      keyAgreement: sl(),
+    ),
+  );
+
+  sl.registerLazySingleton<CamoVerifiedV2UncamoRuntime>(
+    () => CamoVerifiedV2UncamoRuntime(
+      permitStore: sl(),
+
+      keyMaterialProvider: sl(),
+
+      decryptor: CamoStandardUncamoDecryptor(
+        serverShareValidator: const CamoServerShareValidator(),
+
+        finalKeyDerivation: const CamoHkdfFinalKeyDerivation(),
+
+        messageDecoder:
+            ({required String encodedText, required Uint8List key}) {
+              return sl<CamoMessageCryptoService>().decodeV2Only(
+                encodedText: encodedText,
+
+                key: key,
+              );
+            },
+      ),
+
+      clock: DateTime.now,
+    ),
+  );
+
+  sl.registerLazySingleton<CamoVerifiedV2WorkspaceDecodeCoordinator>(
+    () => CamoVerifiedV2WorkspaceDecodeCoordinator(
+      authorize: sl<CamoV2AuthorizationCallableClient>().authorize,
+      decrypt: sl<CamoVerifiedV2UncamoRuntime>().decrypt,
+    ),
+  );
+
   sl.registerLazySingleton<CamoWorkspaceOperationPayloadStore>(
     CamoMemoryWorkspaceOperationPayloadStore.new,
   );
@@ -592,6 +655,7 @@ Future<void> initDependencies() async {
     () => DefaultCamoAuthorizedOperationExecutor(
       payloadStore: sl(),
       cryptoPort: sl(),
+      verifiedV2UncamoRuntime: sl(),
       clock: DateTime.now,
     ),
   );
@@ -704,6 +768,7 @@ Future<void> initDependencies() async {
       payloadStore: sl(),
       operationIdGenerator:
           sl<CamoWorkspaceRequestIdGenerator>().generateOperationId,
+      verifiedV2DecodeCoordinator: sl(),
     ),
   );
   sl.registerLazySingleton<CamoAuthorizedWorkspaceService>(

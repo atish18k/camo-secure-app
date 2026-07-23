@@ -51,37 +51,44 @@ void main() {
     expect(payloadStore.take('operation-001'), isNull);
   });
 
-  test('returns authorized decode output from coordinator', () async {
-    final CamoMemoryWorkspaceOperationPayloadStore payloadStore =
-        CamoMemoryWorkspaceOperationPayloadStore();
+  test(
+    'fails closed when verified V2 decode coordinator is unavailable',
+    () async {
+      final CamoMemoryWorkspaceOperationPayloadStore payloadStore =
+          CamoMemoryWorkspaceOperationPayloadStore();
 
-    final CoordinatorBackedCamoAuthorizedWorkspaceService service =
-        CoordinatorBackedCamoAuthorizedWorkspaceService(
-          coordinator: _FakeCoordinator(
-            result: CamoSuccess<CamoEnterpriseOperationOutcome>(
-              CamoEnterpriseOperationOutcome(
-                operationId: 'operation-002',
-                stage: CamoEnterpriseOperationStage.completed,
-                securityDecision: CamoSecurityDecision.allow,
-                reasonCode: 'authorized',
-                completedAt: fixedTime,
-                resultReference: 'decoded-output',
+      final CoordinatorBackedCamoAuthorizedWorkspaceService service =
+          CoordinatorBackedCamoAuthorizedWorkspaceService(
+            coordinator: _FakeCoordinator(
+              result: CamoSuccess<CamoEnterpriseOperationOutcome>(
+                CamoEnterpriseOperationOutcome(
+                  operationId: 'operation-002',
+                  stage: CamoEnterpriseOperationStage.completed,
+                  securityDecision: CamoSecurityDecision.allow,
+                  reasonCode: 'authorized',
+                  completedAt: fixedTime,
+                  resultReference: 'decoded-output',
+                ),
               ),
             ),
+            requestBuilder: _FakeRequestBuilder(fixedTime),
+            payloadStore: payloadStore,
+            operationIdGenerator: () => 'operation-002',
+          );
+
+      await expectLater(
+        service.decode(pairingId: 'pairing-001', encodedText: 'encoded-input'),
+        throwsA(
+          isA<StateError>().having(
+            (StateError error) => error.message,
+            'message',
+            'Verified V2 Standard UNCAMO coordinator is unavailable.',
           ),
-          requestBuilder: _FakeRequestBuilder(fixedTime),
-          payloadStore: payloadStore,
-          operationIdGenerator: () => 'operation-002',
-        );
-
-    final String output = await service.decode(
-      pairingId: 'pairing-001',
-      encodedText: 'encoded-input',
-    );
-
-    expect(output, 'decoded-output');
-    expect(payloadStore.take('operation-002'), isNull);
-  });
+        ),
+      );
+      expect(payloadStore.take('operation-002'), isNull);
+    },
+  );
 
   test('removes sensitive payload when coordinator denies operation', () async {
     final CamoMemoryWorkspaceOperationPayloadStore payloadStore =

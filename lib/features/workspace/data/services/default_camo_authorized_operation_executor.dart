@@ -1,5 +1,6 @@
 // ignore_for_file: prefer_initializing_formals
 
+import 'package:camo/core/crypto/encryption/camo_verified_v2_uncamo_runtime.dart';
 import 'package:camo/core/operation_coordinator/domain/entities/camo_enterprise_operation_execution_context.dart';
 import 'package:camo/core/operation_coordinator/domain/entities/camo_enterprise_operation_outcome.dart';
 import 'package:camo/core/operation_coordinator/domain/entities/camo_enterprise_operation_stage.dart';
@@ -19,12 +20,15 @@ final class DefaultCamoAuthorizedOperationExecutor
     required CamoWorkspaceOperationPayloadStore payloadStore,
     required CamoWorkspaceCryptoPort cryptoPort,
     required DateTime Function() clock,
+    CamoVerifiedV2UncamoRuntime? verifiedV2UncamoRuntime,
   }) : _payloadStore = payloadStore,
        _cryptoPort = cryptoPort,
+       _verifiedV2UncamoRuntime = verifiedV2UncamoRuntime,
        _clock = clock;
 
   final CamoWorkspaceOperationPayloadStore _payloadStore;
   final CamoWorkspaceCryptoPort _cryptoPort;
+  final CamoVerifiedV2UncamoRuntime? _verifiedV2UncamoRuntime;
   final DateTime Function() _clock;
 
   @override
@@ -77,8 +81,30 @@ final class DefaultCamoAuthorizedOperationExecutor
           camouflageEnabled: payload.camouflageEnabled,
         );
       } else if (payload.operationType == CamoOperationType.decode) {
-        output = await _cryptoPort.decode(
-          pairingId: payload.pairingId,
+        final CamoVerifiedV2UncamoRuntime? runtime = _verifiedV2UncamoRuntime;
+        final authorization = context.request.authorizationRequest;
+        final String messageId = authorization.messageId?.trim() ?? '';
+        final String pairingId = authorization.pairId?.trim() ?? '';
+
+        if (runtime == null ||
+            !context.hasVerifiedV2Permit ||
+            messageId.isEmpty ||
+            pairingId.isEmpty ||
+            pairingId != payload.pairingId.trim()) {
+          return const CamoError<CamoEnterpriseOperationOutcome>(
+            CamoSecurityFailure(
+              code: 'verified_v2_uncamo_runtime_unavailable',
+              message:
+                  'Verified V2 Standard UNCAMO runtime is unavailable or unbound.',
+            ),
+          );
+        }
+
+        output = await runtime.decrypt(
+          requestId: context.request.requestId,
+          operationId: operationId,
+          messageId: messageId,
+          pairingId: pairingId,
           encodedText: payload.encodedText!,
         );
       } else {
