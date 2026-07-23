@@ -61,6 +61,49 @@ final class FirebaseCamoAdminCommercialRequestRepository
     );
   }
 
+  @override
+  Future<List<CamoActiveCommercialAccess>> listActiveAccess() async {
+    final HttpsCallableResult<Object?> result = await _functions
+        .httpsCallable('listActiveCommercialAccess')
+        .call<Object?>();
+
+    final Object? raw = result.data;
+    if (raw is! Map<Object?, Object?> || raw['access'] is! List<Object?>) {
+      throw const FormatException('Invalid active access response.');
+    }
+
+    return (raw['access'] as List<Object?>)
+        .map(_decodeActiveAccess)
+        .toList(growable: false);
+  }
+
+  @override
+  Future<CamoRevokedCommercialAccess> revokeAccess({
+    required String userId,
+  }) async {
+    final HttpsCallableResult<Object?> result = await _functions
+        .httpsCallable('revokeCommercialAccess')
+        .call<Object?>({'userId': userId});
+
+    final Object? raw = result.data;
+    if (raw is! Map<Object?, Object?> || raw['success'] != true) {
+      throw const FormatException('Invalid revoke response.');
+    }
+
+    final DateTime? revokedAt = DateTime.tryParse(
+      _requiredString(raw['revokedAt'], 'revokedAt'),
+    );
+    if (revokedAt == null) {
+      throw const FormatException('Invalid revoke timestamp.');
+    }
+
+    return CamoRevokedCommercialAccess(
+      userId: _requiredString(raw['userId'], 'userId'),
+      auditEventId: _requiredString(raw['auditEventId'], 'auditEventId'),
+      revokedAt: revokedAt,
+    );
+  }
+
   CamoPendingCommercialRequest _decodePendingRequest(Object? value) {
     if (value is! Map<Object?, Object?>) {
       throw const FormatException('Invalid pending request.');
@@ -77,6 +120,28 @@ final class FirebaseCamoAdminCommercialRequestRepository
       requestedAt: rawRequestedAt is String
           ? DateTime.tryParse(rawRequestedAt)
           : null,
+    );
+  }
+
+  CamoActiveCommercialAccess _decodeActiveAccess(Object? value) {
+    if (value is! Map<Object?, Object?>) {
+      throw const FormatException('Invalid active commercial access.');
+    }
+
+    final DateTime? expiresAt = DateTime.tryParse(
+      _requiredString(value['expiresAt'], 'expiresAt'),
+    );
+    if (expiresAt == null) {
+      throw const FormatException('Invalid active access expiry.');
+    }
+
+    return CamoActiveCommercialAccess(
+      userId: _requiredString(value['userId'], 'userId'),
+      userEmail: value['userEmail'] is String
+          ? (value['userEmail'] as String).trim()
+          : null,
+      planId: _requiredString(value['planId'], 'planId'),
+      expiresAt: expiresAt,
     );
   }
 

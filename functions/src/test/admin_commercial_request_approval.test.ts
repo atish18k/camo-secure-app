@@ -13,7 +13,7 @@ function approvalHandlerSource(): string {
     "export const approveCommercialAccessRequest = onCall",
   );
   const nextSection = source.indexOf(
-    "const authorizationOrchestrator =",
+    "export const listActiveCommercialAccess = onCall",
     approvalStart,
   );
 
@@ -126,3 +126,4 @@ test("client approval payload cannot override canonical grant facts", () => {
   assert.doesNotMatch(handler, /payload\.grantedEntitlements/);
   assert.doesNotMatch(handler, /payload\.expiresAt/);
 });
+

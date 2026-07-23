@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+﻿import { randomUUID } from "node:crypto";
 
 import { initializeApp } from "firebase-admin/app";
 import { FieldValue, Timestamp, getFirestore } from "firebase-admin/firestore";
@@ -73,6 +73,13 @@ type PendingCommercialRequestView = Readonly<{
   userEmail: string | null;
   status: "pending";
   requestedAt: string | null;
+}>;
+
+type ActiveCommercialAccessView = Readonly<{
+  userId: string;
+  userEmail: string | null;
+  planId: string;
+  expiresAt: string;
 }>;
 
 const allowedCommercialApprovalDurations = new Set<number>([1, 3, 7, 10]);
@@ -300,6 +307,164 @@ export const approveCommercialAccessRequest = onCall(
       userId: result.userId,
       durationDays,
       expiresAt: result.expiresAt,
+      auditEventId: auditRef.id,
+    });
+  },
+);
+
+export const listActiveCommercialAccess = onCall(
+  {
+    enforceAppCheck: true,
+    consumeAppCheckToken: true,
+  },
+  async (request) => {
+    assertLockedAdmin(request);
+
+    const usersSnapshot = await firestore.collection("users").limit(200).get();
+    const now = Timestamp.now();
+    const access: ActiveCommercialAccessView[] = [];
+
+    for (const userDoc of usersSnapshot.docs) {
+      const accessSnapshot = await userDoc.ref
+        .collection("commercialAccessV2")
+        .doc("current")
+        .get();
+
+      if (!accessSnapshot.exists) {
+        continue;
+      }
+
+      const data = accessSnapshot.data();
+      if (
+        data?.schemaVersion !== 2 ||
+        data.userId !== userDoc.id ||
+        data.licenseStatus !== "active" ||
+        data.subscriptionStatus !== "active" ||
+        data.billingState !== "paid" ||
+        !(data.expiresAt instanceof Timestamp) ||
+        now.toMillis() >= data.expiresAt.toMillis()
+      ) {
+        continue;
+      }
+
+      const userEmail =
+        typeof userDoc.data().email === "string"
+          ? userDoc.data().email
+          : null;
+
+      access.push(
+        Object.freeze({
+          userId: userDoc.id,
+          userEmail,
+          planId:
+            typeof data.planId === "string"
+              ? data.planId
+              : "camo_monthly_inr_199",
+          expiresAt: data.expiresAt.toDate().toISOString(),
+        }),
+      );
+    }
+
+    return Object.freeze({ access });
+  },
+);
+
+export const revokeCommercialAccess = onCall(
+  {
+    enforceAppCheck: true,
+    consumeAppCheckToken: true,
+  },
+  async (request) => {
+    const adminUid = assertLockedAdmin(request);
+
+    if (
+      typeof request.data !== "object" ||
+      request.data === null ||
+      Array.isArray(request.data)
+    ) {
+      throw new HttpsError("invalid-argument", "Revoke payload is invalid.");
+    }
+
+    const payload = request.data as Record<string, unknown>;
+    const userId = readCommercialRequestId(payload.userId);
+    const accessRef = firestore
+      .collection("users")
+      .doc(userId)
+      .collection("commercialAccessV2")
+      .doc("current");
+    const requestRef = firestore
+      .collection("commercialAccessRequestsV1")
+      .doc(userId);
+    const auditRef = firestore.collection("adminAuditEvents").doc();
+
+    const revokedAt = await firestore.runTransaction(async (transaction) => {
+      const accessSnapshot = await transaction.get(accessRef);
+      if (!accessSnapshot.exists) {
+        throw new HttpsError("not-found", "Active commercial access not found.");
+      }
+
+      const access = accessSnapshot.data();
+      if (
+        access?.schemaVersion !== 2 ||
+        access.userId !== userId ||
+        access.licenseStatus !== "active" ||
+        access.subscriptionStatus !== "active" ||
+        access.billingState !== "paid"
+      ) {
+        throw new HttpsError(
+          "failed-precondition",
+          "Commercial access is not active.",
+        );
+      }
+
+      const now = Timestamp.now();
+
+      transaction.set(
+        accessRef,
+        {
+          ...access,
+          licenseStatus: "revoked",
+          subscriptionStatus: "revoked",
+          billingState: "revoked",
+          revokedAt: now,
+          revokedByAdminUid: adminUid,
+          updatedAt: FieldValue.serverTimestamp(),
+        },
+        { merge: false },
+      );
+
+      transaction.set(
+        requestRef,
+        {
+          status: "revoked",
+          revokedAt: now,
+          revokedByAdminUid: adminUid,
+          updatedAt: FieldValue.serverTimestamp(),
+        },
+        { merge: true },
+      );
+
+      transaction.create(auditRef, {
+        schemaVersion: 1,
+        eventType: "commercial_access_revoked",
+        actorAdminUid: adminUid,
+        targetUserId: userId,
+        createdAt: FieldValue.serverTimestamp(),
+      });
+
+      return now.toDate().toISOString();
+    });
+
+    logger.info("Commercial access revoked.", {
+      auditEventId: auditRef.id,
+      actorAdminUid: adminUid,
+      targetUserId: userId,
+    });
+
+    return Object.freeze({
+      success: true,
+      userId,
+      revokedAt,
       auditEventId: auditRef.id,
     });
   },
@@ -556,3 +721,4 @@ export const provisionCanaryPair = onCall(
     }
   },
 );
+

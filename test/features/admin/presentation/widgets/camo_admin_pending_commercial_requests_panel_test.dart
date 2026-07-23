@@ -8,6 +8,18 @@ import 'package:camo/features/admin/presentation/widgets/'
 
 final class _FakeCommercialRequestRepository
     implements CamoAdminCommercialRequestRepository {
+  @override
+  Future<List<CamoActiveCommercialAccess>> listActiveAccess() async {
+    return const <CamoActiveCommercialAccess>[];
+  }
+
+  @override
+  Future<CamoRevokedCommercialAccess> revokeAccess({required String userId}) {
+    throw UnimplementedError(
+      'Pending commercial request tests do not exercise revoke access.',
+    );
+  }
+
   final List<int> approvedDurations = <int>[];
   final List<String> approvedRequestIds = <String>[];
 

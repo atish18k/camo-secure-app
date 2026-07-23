@@ -68,6 +68,7 @@ void main() {
   Widget buildSubject(CamoAdminDeviceRequestRepository repository) {
     return MaterialApp(
       home: CamoAdminConsoleScreen(
+        activeCommercialAccessPanel: const SizedBox.shrink(),
         pendingCommercialRequestsPanel: const Text('Commercial Access'),
         deviceRequestRepository: repository,
       ),

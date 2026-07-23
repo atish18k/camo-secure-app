@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../widgets/camo_admin_pending_commercial_requests_panel.dart';
 
+import '../widgets/camo_admin_active_commercial_access_panel.dart';
 import '../../../../app/routes.dart';
 import '../../../../core/di/injection_container.dart';
 import '../../../../core/errors/result.dart' as app_result;
@@ -19,8 +20,10 @@ import '../../domain/repositories/camo_admin_device_request_repository.dart';
 class CamoAdminConsoleScreen extends StatefulWidget {
   final Widget? pendingCommercialRequestsPanel;
 
+  final Widget? activeCommercialAccessPanel;
   const CamoAdminConsoleScreen({
     this.pendingCommercialRequestsPanel,
+    this.activeCommercialAccessPanel,
     super.key,
     this.deviceRequestRepository,
   });
@@ -249,7 +252,7 @@ class _CamoAdminConsoleScreenState extends State<CamoAdminConsoleScreen> {
     await showDialog<void>(
       context: context,
       builder: (BuildContext context) => AlertDialog(
-        title: Text('Active Devices Ã¢â‚¬â€ ${request.userEmail}'),
+        title: Text('Active Devices ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â ${request.userEmail}'),
         content: SizedBox(
           width: 600,
           child: devices.isEmpty
@@ -266,7 +269,7 @@ class _CamoAdminConsoleScreenState extends State<CamoAdminConsoleScreen> {
                           ),
                           title: Text(item.deviceId),
                           subtitle: Text(
-                            '${item.platform} Ã¢â‚¬Â¢ ${item.status}',
+                            '${item.platform} ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ ${item.status}',
                           ),
                         ),
                       )
@@ -320,38 +323,37 @@ class _CamoAdminConsoleScreenState extends State<CamoAdminConsoleScreen> {
     final String? previousDeviceId = await showDialog<String>(
       context: context,
       builder: (BuildContext context) => StatefulBuilder(
-        builder: (BuildContext context, StateSetter setDialogState) =>
-            AlertDialog(
-              title: const Text('Select old device to revoke'),
-              content: DropdownButtonFormField<String>(
-                initialValue: selectedDeviceId,
-                items: activeDevices
-                    .map(
-                      (CamoAdminDevice device) => DropdownMenuItem<String>(
-                        value: device.deviceId,
-                        child: Text(
-                          '${device.platform} Ã¢â‚¬â€ ${device.deviceId}',
-                        ),
-                      ),
-                    )
-                    .toList(growable: false),
-                onChanged: (String? value) {
-                  if (value != null) {
-                    setDialogState(() => selectedDeviceId = value);
-                  }
-                },
-              ),
-              actions: <Widget>[
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancel'),
-                ),
-                FilledButton(
-                  onPressed: () => Navigator.pop(context, selectedDeviceId),
-                  child: const Text('Continue'),
-                ),
-              ],
+        builder: (BuildContext context, StateSetter setDialogState) => AlertDialog(
+          title: const Text('Select old device to revoke'),
+          content: DropdownButtonFormField<String>(
+            initialValue: selectedDeviceId,
+            items: activeDevices
+                .map(
+                  (CamoAdminDevice device) => DropdownMenuItem<String>(
+                    value: device.deviceId,
+                    child: Text(
+                      '${device.platform} ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â ${device.deviceId}',
+                    ),
+                  ),
+                )
+                .toList(growable: false),
+            onChanged: (String? value) {
+              if (value != null) {
+                setDialogState(() => selectedDeviceId = value);
+              }
+            },
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
             ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, selectedDeviceId),
+              child: const Text('Continue'),
+            ),
+          ],
+        ),
       ),
     );
 
@@ -433,6 +435,9 @@ class _CamoAdminConsoleScreenState extends State<CamoAdminConsoleScreen> {
               // MP-030C remains separately bounded and owns commercial access.
               widget.pendingCommercialRequestsPanel ??
                   const CamoAdminPendingCommercialRequestsPanel(),
+              const SizedBox(height: CamoSpacing.md),
+              widget.activeCommercialAccessPanel ??
+                  const CamoAdminActiveCommercialAccessPanel(),
               const _BoundaryBanner(),
               const SizedBox(height: CamoSpacing.lg),
               _StatisticsGrid(
@@ -709,7 +714,7 @@ class _AdminLoadingState extends StatelessWidget {
           children: <Widget>[
             CircularProgressIndicator(),
             SizedBox(height: CamoSpacing.md),
-            Text('Loading pending device requestsÃ¢â‚¬Â¦'),
+            Text('Loading pending device requestsÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦'),
           ],
         ),
       ),

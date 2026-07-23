@@ -5,6 +5,10 @@ abstract interface class CamoAdminCommercialRequestRepository {
     required String requestId,
     required int durationDays,
   });
+
+  Future<List<CamoActiveCommercialAccess>> listActiveAccess();
+
+  Future<CamoRevokedCommercialAccess> revokeAccess({required String userId});
 }
 
 final class CamoPendingCommercialRequest {
@@ -37,4 +41,30 @@ final class CamoApprovedCommercialRequest {
   final int durationDays;
   final DateTime expiresAt;
   final String auditEventId;
+}
+
+final class CamoActiveCommercialAccess {
+  const CamoActiveCommercialAccess({
+    required this.userId,
+    required this.planId,
+    required this.expiresAt,
+    this.userEmail,
+  });
+
+  final String userId;
+  final String? userEmail;
+  final String planId;
+  final DateTime expiresAt;
+}
+
+final class CamoRevokedCommercialAccess {
+  const CamoRevokedCommercialAccess({
+    required this.userId,
+    required this.auditEventId,
+    required this.revokedAt,
+  });
+
+  final String userId;
+  final String auditEventId;
+  final DateTime revokedAt;
 }

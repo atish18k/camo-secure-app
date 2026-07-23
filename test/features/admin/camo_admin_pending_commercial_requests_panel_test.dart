@@ -4,6 +4,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 final class _FakeRepository implements CamoAdminCommercialRequestRepository {
+  @override
+  Future<List<CamoActiveCommercialAccess>> listActiveAccess() async {
+    return const <CamoActiveCommercialAccess>[];
+  }
+
+  @override
+  Future<CamoRevokedCommercialAccess> revokeAccess({required String userId}) {
+    throw UnimplementedError(
+      'Pending commercial request tests do not exercise revoke access.',
+    );
+  }
+
   int? approvedDays;
   String? approvedRequestId;
 

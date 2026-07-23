@@ -45,4 +45,15 @@ void main() {
     expect(source, contains("contains('baseEncoding')"));
     expect(source, contains("contains('baseDecoding')"));
   });
+
+  test('revoked commercial access fails closed immediately', () {
+    final String source = File(
+      'lib/features/policy/data/services/'
+      'firestore_camo_post_login_access_verifier.dart',
+    ).readAsStringSync();
+
+    expect(source, contains("licenseStatus != 'active'"));
+    expect(source, contains("subscriptionStatus != 'active'"));
+    expect(source, contains("billingState != 'paid'"));
+  });
 }

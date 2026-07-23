@@ -12,6 +12,22 @@ void main() {
       'lib/features/admin/data/repositories/'
       'firebase_camo_admin_commercial_request_repository.dart',
     ).readAsStringSync();
+
+    final int approvalRepositoryStart = repository.indexOf(
+      'Future<CamoApprovedCommercialRequest> approveRequest',
+    );
+    final int activeAccessRepositoryStart = repository.indexOf(
+      'Future<List<CamoActiveCommercialAccess>> listActiveAccess',
+      approvalRepositoryStart,
+    );
+
+    expect(approvalRepositoryStart, greaterThanOrEqualTo(0));
+    expect(activeAccessRepositoryStart, greaterThan(approvalRepositoryStart));
+
+    final String approvalRepository = repository.substring(
+      approvalRepositoryStart,
+      activeAccessRepositoryStart,
+    );
     final String backend = File('functions/src/index.ts').readAsStringSync();
 
     expect(
@@ -34,10 +50,10 @@ void main() {
       repository,
       contains("{'requestId': requestId, 'durationDays': durationDays}"),
     );
-    expect(repository, isNot(contains("'userId':")));
-    expect(repository, isNot(contains("'reason':")));
-    expect(repository, isNot(contains("'deviceAllowance':")));
-    expect(repository, isNot(contains("'grantedEntitlements':")));
+    expect(approvalRepository, isNot(contains("'userId':")));
+    expect(approvalRepository, isNot(contains("'reason':")));
+    expect(approvalRepository, isNot(contains("'deviceAllowance':")));
+    expect(approvalRepository, isNot(contains("'grantedEntitlements':")));
 
     expect(
       backend,
@@ -62,7 +78,7 @@ void main() {
       'export const approveCommercialAccessRequest = onCall',
     );
     final int nextCallableStart = backend.indexOf(
-      'const authorizationOrchestrator =',
+      'export const listActiveCommercialAccess = onCall',
       approvalStart,
     );
 
