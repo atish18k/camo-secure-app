@@ -2,7 +2,6 @@ import 'dart:typed_data';
 
 import 'package:camo/core/crypto/encryption/camo_aes_gcm_engine.dart';
 import 'package:camo/core/crypto/encryption/camo_message_crypto_service.dart';
-import 'package:camo/core/crypto/encryption/camo_payload_formatter.dart';
 import 'package:camo/core/crypto/encryption/camo_secure_nonce_generator.dart';
 import 'package:camo/core/crypto/encryption/camo_secure_random.dart';
 import 'package:camo/features/payload/data/parsers/camo_compact_payload_parser.dart';
@@ -15,16 +14,12 @@ void main() {
     cryptoEngine: CamoAesGcmEngine(),
     payloadSerializer: CamoCompactPayloadSerializer(),
     payloadParser: CamoCompactPayloadParser(),
-    payloadFormatter: CamoPayloadFormatter(),
   );
 
-  test('strict V2 decoder rejects legacy CM1 payload before parsing', () async {
+  test('strict V2 decoder rejects malformed non-V2 input', () async {
     await expectLater(
-      service.decodeV2Only(
-        encodedText: '${CamoPayloadFormatter.protocolPrefix}|legacy',
-        key: Uint8List(32),
-      ),
-      throwsStateError,
+      service.decodeV2Only(encodedText: 'not-v2!', key: Uint8List(32)),
+      throwsFormatException,
     );
   });
 

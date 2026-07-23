@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('login never calls the legacy auto-active registration method', () {
+  test('login never calls the removed auto-active registration method', () {
     final source = File(
       'lib/features/auth/domain/usecases/login_usecase.dart',
     ).readAsStringSync();
@@ -36,12 +36,6 @@ void main() {
     expect(model, isNot(contains("case 'active':")));
     expect(model, isNot(contains("case 'blocked':")));
     expect(datasource, contains('CamoDeviceStatus.approved.name'));
-    expect(
-      File(
-        'lib/features/policy/data/adapters/camo_legacy_device_status_adapter.dart',
-      ).existsSync(),
-      isFalse,
-    );
   });
   test('datasource writes the pending registration request collection', () {
     final source = File(

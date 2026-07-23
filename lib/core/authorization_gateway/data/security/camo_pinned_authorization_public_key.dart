@@ -2,8 +2,8 @@ import 'dart:convert';
 
 import 'package:cryptography/cryptography.dart';
 
-final class CamoPinnedAuthorizationPublicKeyV1 {
-  const CamoPinnedAuthorizationPublicKeyV1();
+final class CamoPinnedAuthorizationPublicKey {
+  const CamoPinnedAuthorizationPublicKey();
 
   static const String signingKeyId =
       'camo-b3cab:asia-south1:camo-prod-authz-kr:'

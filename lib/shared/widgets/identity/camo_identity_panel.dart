@@ -32,7 +32,7 @@ class CamoIdentityPanel extends StatelessWidget {
       decoration: BoxDecoration(
         color: CamoColors.surface,
         borderRadius: BorderRadius.circular(CamoRadius.lg),
-        boxShadow: CamoShadows.card,
+        boxShadow: CamoShadows.md,
         border: Border.all(color: CamoColors.primary.withValues(alpha: 0.28)),
       ),
       child: Row(

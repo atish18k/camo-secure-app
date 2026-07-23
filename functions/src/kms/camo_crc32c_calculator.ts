@@ -1,7 +1,7 @@
-import {
-  CamoCrc32cCalculator,
-} from "./cloud_kms_authorization_response_signer";
-
+export interface CamoCrc32cCalculator {
+  calculate(value: Uint8Array): string;
+  verify(value: Uint8Array, expectedCrc32c: string): boolean;
+}
 const reversedCastagnoliPolynomial = 0x82f63b78;
 
 function createCrc32cTable(): Readonly<Uint32Array> {

@@ -35,12 +35,10 @@ abstract final class CamoTheme {
       ),
 
       cardTheme: CardThemeData(
-        color: CamoColors.card,
+        color: CamoColors.surface,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(
-            CamoRadius.lg,
-          ),
+          borderRadius: BorderRadius.circular(CamoRadius.lg),
         ),
       ),
 
@@ -48,9 +46,7 @@ abstract final class CamoTheme {
         style: FilledButton.styleFrom(
           minimumSize: const Size.fromHeight(52),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(
-              CamoRadius.md,
-            ),
+            borderRadius: BorderRadius.circular(CamoRadius.md),
           ),
         ),
       ),
@@ -60,32 +56,22 @@ abstract final class CamoTheme {
         fillColor: CamoColors.inputBackground,
 
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(
-            CamoRadius.md,
-          ),
+          borderRadius: BorderRadius.circular(CamoRadius.md),
         ),
 
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(
-            CamoRadius.md,
-          ),
-          borderSide: const BorderSide(
-            color: CamoColors.border,
-          ),
+          borderRadius: BorderRadius.circular(CamoRadius.md),
+          borderSide: const BorderSide(color: CamoColors.border),
         ),
 
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(
-            CamoRadius.md,
-          ),
-          borderSide: const BorderSide(
-            color: CamoColors.primary,
-          ),
+          borderRadius: BorderRadius.circular(CamoRadius.md),
+          borderSide: const BorderSide(color: CamoColors.primary),
         ),
       ),
     );
   }
 
-  // Temporary compatibility until dark mode is implemented.
+  // Dark mode uses the locked light theme until its dedicated palette is implemented.
   static ThemeData get darkTheme => lightTheme;
 }

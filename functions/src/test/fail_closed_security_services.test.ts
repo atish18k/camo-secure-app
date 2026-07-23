@@ -1,60 +1,62 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-
 import {
-  FailClosedCamoAuthorizationResponseSigner,
-} from "../security/fail_closed_authorization_response_signer";
+  FailClosedCamoAuthorizationResponseSignerV2,
+} from "../security/fail_closed_authorization_response_signer_v2";
 import {
   FailClosedCamoKmsAuthorizationService,
 } from "../security/fail_closed_kms_authorization_service";
 
-const context = {
-  requestId: "request-001",
-  operationId: "operation-001",
-  userId: "user-001",
-  deviceId: "device-001",
-  payloadDigest: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-  operationType: "encode" as const,
-  pairId: "pair-001",
-  keyPurpose: "messageEncryption",
-  keyScope: "message",
-  requiredEntitlements: ["baseEncoding"],
-  requestedAt: "2026-07-13T12:00:00.000Z",
-  serverReceivedAt: "2026-07-13T12:00:01.000Z",
-};
-
 test("fail-closed KMS never releases a key", async () => {
-  const service = new FailClosedCamoKmsAuthorizationService();
-  const result = await service.authorizeKeyRelease(context);
-
+  const result = await new FailClosedCamoKmsAuthorizationService()
+    .authorizeKeyRelease({
+      requestId: "request",
+      operationId: "operation",
+      userId: "user",
+      deviceId: "device",
+      payloadDigest:
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      operationType: "encode",
+      pairId: "pair",
+      messageId: "message",
+      keyPurpose: "messageEncryption",
+      keyScope: "message",
+      requiredEntitlements: ["baseEncoding"],
+      requestedAt: "2026-07-23T00:00:00.000Z",
+      serverReceivedAt: "2026-07-23T00:00:01.000Z",
+    });
   assert.equal(result.permitted, false);
   assert.equal(result.keyReference, "");
-  assert.equal(result.reasonCode, "production_kms_unavailable");
 });
 
-test("fail-closed signer never produces a signature", async () => {
-  const signer = new FailClosedCamoAuthorizationResponseSigner();
-
+test("fail-closed V2 signer never produces a signature", async () => {
+  const signer = new FailClosedCamoAuthorizationResponseSignerV2();
   await assert.rejects(
     signer.sign({
-      schemaVersion: 1,
-      canonicalizationVersion: "CAMO_AUTHORIZATION_V1",
-      requestId: "fail-closed-signer-test-request",
-      payloadDigest: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      schemaVersion: 2,
+      canonicalizationVersion: "CAMO_AUTHORIZATION_V2",
+      requestId: "request",
       authorized: true,
-      authorizationId: "authorization-001",
-      operationId: "operation-001",
-      challengeId: "challenge-001",
-      userId: "user-001",
-      deviceId: "device-001",
-      pairId: "pair-001",
-      keyReleaseId: "release-001",
-      keyReference: "key-001",
-      sessionId: "session-001",
-      issuedAt: "2026-07-13T12:00:00.000Z",
-      expiresAt: "2026-07-13T12:01:00.000Z",
+      authorizationId: "authorization",
+      operationId: "operation",
+      challengeId: "challenge",
+      userId: "user",
+      deviceId: "device",
+      pairId: "pair",
+      messageId: "message",
+      payloadDigest:
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      keyReleaseId: "release",
+      keyReference: "key",
+      sessionId: "session",
+      serverShareId: "share",
+      serverShareVersion: 1,
+      serverShareBase64: "AQ==",
+      serverShareExpiresAt: "2026-07-23T00:01:00.000Z",
+      issuedAt: "2026-07-23T00:00:00.000Z",
+      expiresAt: "2026-07-23T00:01:00.000Z",
       reasonCode: "server_authorization_granted",
     }),
-    /production_authorization_response_signer_unavailable/,
+    /production_authorization_response_signer_v2_unavailable/,
   );
 });

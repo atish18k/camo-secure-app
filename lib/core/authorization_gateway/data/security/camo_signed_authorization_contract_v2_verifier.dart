@@ -5,7 +5,7 @@ import '../models/camo_signed_authorization_contract_v2.dart';
 import '../services/camo_signed_authorization_contract_v2_canonicalizer.dart';
 import 'camo_p256_der_signature_decoder.dart';
 import 'camo_p256_signature_verification_primitive.dart';
-import 'camo_pinned_authorization_public_key_v1.dart';
+import 'camo_pinned_authorization_public_key.dart';
 
 final class CamoSignedAuthorizationContractV2Verifier {
   const CamoSignedAuthorizationContractV2Verifier({
@@ -19,7 +19,7 @@ final class CamoSignedAuthorizationContractV2Verifier {
 
   final CamoSignedAuthorizationContractV2Canonicalizer canonicalizer;
   final CamoP256DerSignatureDecoder derDecoder;
-  final CamoPinnedAuthorizationPublicKeyV1 pinnedKey;
+  final CamoPinnedAuthorizationPublicKey pinnedKey;
   final CamoP256SignatureVerificationPrimitive primitive;
   final DateTime Function() clock;
   final Duration maximumFutureSkew;
@@ -29,14 +29,14 @@ final class CamoSignedAuthorizationContractV2Verifier {
   ) async {
     try {
       if (contract.signingKeyId !=
-          CamoPinnedAuthorizationPublicKeyV1.signingKeyId) {
+          CamoPinnedAuthorizationPublicKey.signingKeyId) {
         return const CamoAuthorizationSignatureVerificationDecision.denied(
           'authorization_v2_signing_key_not_pinned',
         );
       }
 
       if (contract.signatureAlgorithm !=
-          CamoPinnedAuthorizationPublicKeyV1.algorithm) {
+          CamoPinnedAuthorizationPublicKey.algorithm) {
         return const CamoAuthorizationSignatureVerificationDecision.denied(
           'authorization_v2_signature_algorithm_invalid',
         );

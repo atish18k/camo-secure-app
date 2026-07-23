@@ -57,7 +57,7 @@ void main() {
     expect(device.isApproved, isFalse);
   });
 
-  test('rejects legacy active and blocked statuses', () {
+  test('rejects unsupported active and blocked statuses', () {
     expect(() => parse(validMap(status: 'active')), throwsFormatException);
     expect(() => parse(validMap(status: 'blocked')), throwsFormatException);
   });

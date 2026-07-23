@@ -36,16 +36,13 @@ class CamoCard extends StatelessWidget {
       margin: margin,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: backgroundColor ?? CamoColors.card,
+        color: backgroundColor ?? CamoColors.surface,
         borderRadius: BorderRadius.circular(CamoRadius.lg),
         border: border,
-        boxShadow: CamoShadows.card,
+        boxShadow: CamoShadows.md,
       ),
       child: Padding(
-        padding: padding ??
-            const EdgeInsets.all(
-              CamoSpacing.md,
-            ),
+        padding: padding ?? const EdgeInsets.all(CamoSpacing.md),
         child: child,
       ),
     );

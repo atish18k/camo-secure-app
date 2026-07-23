@@ -60,12 +60,4 @@ abstract final class CamoColors {
   // ---------------------------------------------------------------------------
 
   static const Color inputBackground = Colors.white;
-
-  // ---------------------------------------------------------------------------
-  // Legacy Compatibility
-  // ---------------------------------------------------------------------------
-
-  static const Color card = surface;
-  static const Color white = Colors.white;
-  static const Color danger = error;
 }

@@ -9,9 +9,7 @@ import '../../../features/payload/domain/entities/camo_payload_packet.dart';
 import '../../../features/payload/domain/repositories/camo_payload_parser.dart';
 import '../../../features/payload/domain/repositories/camo_payload_serializer.dart';
 import 'camo_crypto_engine.dart';
-import 'camo_crypto_payload.dart';
 import 'camo_nonce_generator.dart';
-import 'camo_payload_formatter.dart';
 
 // ---------------------------------------------------------------------------
 // Message Crypto Service
@@ -21,14 +19,12 @@ class CamoMessageCryptoService {
   const CamoMessageCryptoService({
     required this.cryptoEngine,
     required this.nonceGenerator,
-    required this.payloadFormatter,
     required this.payloadSerializer,
     required this.payloadParser,
   });
 
   final CamoCryptoEngine cryptoEngine;
   final CamoNonceGenerator nonceGenerator;
-  final CamoPayloadFormatter payloadFormatter;
   final CamoPayloadSerializer payloadSerializer;
   final CamoPayloadParser payloadParser;
 
@@ -62,11 +58,12 @@ class CamoMessageCryptoService {
     required String encodedText,
     required Uint8List key,
   }) async {
-    if (encodedText.startsWith('${CamoPayloadFormatter.protocolPrefix}|')) {
-      return _decodeLegacy(encodedText: encodedText, key: key);
+    final String normalizedEncodedText = encodedText.trim();
+    if (normalizedEncodedText.isEmpty) {
+      throw StateError('Only strict CAMO V2 payloads are accepted.');
     }
 
-    return _decodeCompact(encodedText: encodedText, key: key);
+    return _decodeCompact(encodedText: normalizedEncodedText, key: key);
   }
 
   Future<String> _decodeCompact({
@@ -91,41 +88,7 @@ class CamoMessageCryptoService {
   Future<String> decodeV2Only({
     required String encodedText,
     required Uint8List key,
-  }) async {
-    final String normalizedEncodedText = encodedText.trim();
-
-    if (normalizedEncodedText.isEmpty ||
-        normalizedEncodedText.startsWith(
-          '${CamoPayloadFormatter.protocolPrefix}|',
-        )) {
-      throw StateError('Only strict CAMO V2 payloads are accepted.');
-    }
-
-    return decode(encodedText: normalizedEncodedText, key: key);
-  }
-
-  Future<String> _decodeLegacy({
-    required String encodedText,
-    required Uint8List key,
-  }) async {
-    final CamoCryptoPayload payload = payloadFormatter.decode(encodedText);
-
-    final Uint8List cipherText = base64Url.decode(payload.cipherText);
-    final Uint8List authenticationTag = base64Url.decode(
-      payload.authenticationTag,
-    );
-
-    final Uint8List encryptedBytes = Uint8List.fromList(<int>[
-      ...cipherText,
-      ...authenticationTag,
-    ]);
-
-    final Uint8List plainTextBytes = await cryptoEngine.decrypt(
-      cipherText: encryptedBytes,
-      key: key,
-      nonce: base64Url.decode(payload.nonce),
-    );
-
-    return utf8.decode(plainTextBytes);
+  }) {
+    return decode(encodedText: encodedText, key: key);
   }
 }

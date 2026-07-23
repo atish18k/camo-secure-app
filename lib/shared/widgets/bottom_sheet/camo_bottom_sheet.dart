@@ -22,7 +22,7 @@ class CamoBottomSheet extends StatelessWidget {
       top: false,
       child: Container(
         decoration: const BoxDecoration(
-          color: CamoColors.card,
+          color: CamoColors.surface,
           borderRadius: BorderRadius.vertical(
             top: Radius.circular(CamoRadius.xl),
           ),
@@ -51,10 +51,7 @@ class CamoBottomSheet extends StatelessWidget {
                 ),
                 const SizedBox(height: CamoSpacing.md),
               ],
-              Text(
-                title,
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
+              Text(title, style: Theme.of(context).textTheme.titleLarge),
               const SizedBox(height: CamoSpacing.lg),
               child,
             ],

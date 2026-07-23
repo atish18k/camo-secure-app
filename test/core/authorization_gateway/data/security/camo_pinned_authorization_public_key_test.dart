@@ -1,19 +1,19 @@
-import 'package:camo/core/authorization_gateway/data/security/camo_pinned_authorization_public_key_v1.dart';
+import 'package:camo/core/authorization_gateway/data/security/camo_pinned_authorization_public_key.dart';
 import 'package:cryptography/cryptography.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  const CamoPinnedAuthorizationPublicKeyV1 pinnedKey =
-      CamoPinnedAuthorizationPublicKeyV1();
+  const CamoPinnedAuthorizationPublicKey pinnedKey =
+      CamoPinnedAuthorizationPublicKey();
 
   test('pins exact KMS signing key version identity', () {
     expect(
-      CamoPinnedAuthorizationPublicKeyV1.signingKeyId,
+      CamoPinnedAuthorizationPublicKey.signingKeyId,
       'camo-b3cab:asia-south1:camo-prod-authz-kr:'
       'camo-operation-signing:1',
     );
 
-    expect(CamoPinnedAuthorizationPublicKeyV1.algorithm, 'EC_SIGN_P256_SHA256');
+    expect(CamoPinnedAuthorizationPublicKey.algorithm, 'EC_SIGN_P256_SHA256');
   });
 
   test('pins valid 32-byte P-256 coordinates', () {

@@ -15,7 +15,7 @@ import '../../../features/policy/domain/entities/camo_device_registry_entity.dar
 /// - the Crypto Facade
 /// - public-key decoding
 /// - Firestore implementation details
-/// - legacy profile-based key storage
+/// - profile-based key storage
 ///
 /// Implementations must:
 ///

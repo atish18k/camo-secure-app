@@ -3,12 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/camo_colors.dart';
 import '../../../core/theme/camo_radius.dart';
 
-enum CamoButtonVariant {
-  primary,
-  secondary,
-  outlined,
-  danger,
-}
+enum CamoButtonVariant { primary, secondary, outlined, danger }
 
 class CamoButton extends StatelessWidget {
   final String text;
@@ -84,7 +79,7 @@ class CamoButton extends StatelessWidget {
             onPressed: enabled ? onPressed : null,
             style: FilledButton.styleFrom(
               backgroundColor: CamoColors.primary,
-              foregroundColor: CamoColors.white,
+              foregroundColor: Colors.white,
               shape: shape,
             ),
             child: child,
@@ -128,8 +123,8 @@ class CamoButton extends StatelessWidget {
           child: FilledButton(
             onPressed: enabled ? onPressed : null,
             style: FilledButton.styleFrom(
-              backgroundColor: CamoColors.danger,
-              foregroundColor: CamoColors.white,
+              backgroundColor: CamoColors.error,
+              foregroundColor: Colors.white,
               shape: shape,
             ),
             child: child,

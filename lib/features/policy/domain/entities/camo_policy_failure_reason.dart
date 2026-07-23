@@ -5,7 +5,7 @@
 /// Describes why the CAMO Policy Engine denied an operation.
 ///
 /// Existing enum values must not be renamed or reordered after persistence
-/// begins. New reasons should be appended for backward compatibility.
+/// begins. New reasons should be appended to preserve stable policy codes.
 enum CamoPolicyFailureReason {
   authenticationRequired,
   deviceMismatch,

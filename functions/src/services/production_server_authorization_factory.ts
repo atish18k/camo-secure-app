@@ -21,12 +21,21 @@ import {
   createCamoCloudKmsProductionAdapters,
 } from "../kms/cloud_kms_production_adapter_factory";
 import {
-  CamoServerAuthorizationOrchestrator,
-} from "./server_authorization_orchestrator";
-import {FirestoreCamoMessagePolicyStoreV2} from "../infrastructure/firestore_camo_message_policy_store_v2";
-import {CamoMessagePolicyV2LifecycleService} from "./message_policy_v2_lifecycle_service";
-import {CamoServerAuthorizer} from "./authorized_message_policy_service";
-import {AuthorizedMessagePolicyV2Service} from "./authorized_message_policy_v2_service";
+  FirestoreCamoMessagePolicyStoreV2,
+} from "../infrastructure/firestore_camo_message_policy_store_v2";
+import {
+  CamoMessagePolicyV2LifecycleService,
+} from "./message_policy_v2_lifecycle_service";
+import {
+  AuthorizedMessagePolicyV2Service,
+} from "./authorized_message_policy_v2_service";
+import {
+  CamoServerAuthorizationOrchestratorV2,
+  CamoServerAuthorizerV2,
+} from "./server_authorization_orchestrator_v2";
+import {
+  NodeCryptoCamoServerShareGenerator,
+} from "../security/server_share_generator";
 import {
   FirestoreCamoDeviceAuthorizationPort,
 } from "../validators/firestore_device_authorization_port";
@@ -39,7 +48,6 @@ import {
 import {
   FirestoreCamoMessageLifecycleAuthorizationPort,
 } from "../validators/firestore_message_lifecycle_authorization_port";
-
 import {
   FirestoreCamoPolicyAuthorizationPort,
 } from "../validators/firestore_policy_authorization_port";
@@ -60,60 +68,48 @@ export interface CamoProductionServerAuthorizationFactoryOptions {
 
 export function createCamoProductionServerAuthorizationOrchestrator(
   options: CamoProductionServerAuthorizationFactoryOptions,
-): CamoServerAuthorizer {
+): CamoServerAuthorizerV2 {
   const clock = options.clock ?? (() => new Date());
-
-  const kmsAdapters =
-    createCamoCloudKmsProductionAdapters({
-      keyVersionName:
-        camoProductionSecurityConfig.kmsKeyVersionName,
-      crc32c:
-        new DefaultCamoCrc32cCalculator(),
-      client: options.kmsClient,
-    });
-
-  const reader =
-    new FirebaseAdminCamoAuthorizationDocumentReader(
-      options.firestore,
-    );
-
-  const orchestrator = new CamoServerAuthorizationOrchestrator({
+  const kmsAdapters = createCamoCloudKmsProductionAdapters({
+    keyVersionName: camoProductionSecurityConfig.kmsKeyVersionName,
+    crc32c: new DefaultCamoCrc32cCalculator(),
+    client: options.kmsClient,
+  });
+  const reader = new FirebaseAdminCamoAuthorizationDocumentReader(
+    options.firestore,
+  );
+  const orchestrator = new CamoServerAuthorizationOrchestratorV2({
     userPort: new FirestoreCamoUserAuthorizationPort(reader),
     devicePort: new FirestoreCamoDeviceAuthorizationPort(reader),
     pairPort: new FirestoreCamoPairAuthorizationPort(reader),
     messageLifecyclePort:
-      new FirestoreCamoMessageLifecycleAuthorizationPort(
-        reader,
-        clock,
-      ),
+      new FirestoreCamoMessageLifecycleAuthorizationPort(reader, clock),
     policyPort: new FirestoreCamoPolicyAuthorizationPort(reader),
     riskPort: new FirestoreCamoRiskAuthorizationPort(reader, clock),
     entitlementPort:
-      new FirestoreCamoEntitlementAuthorizationPortV2(
-        reader,
-        clock,
-      ),
-    kmsPort:
-      kmsAdapters.keyAuthorizationService,
+      new FirestoreCamoEntitlementAuthorizationPortV2(reader, clock),
+    kmsPort: kmsAdapters.keyAuthorizationService,
     replayStore: new FirestoreCamoAuthorizationReplayStore(
       options.firestore,
       "enterpriseAuthorizationConsumptions",
       clock,
     ),
     signer: kmsAdapters.signer,
+    serverShareGenerator: new NodeCryptoCamoServerShareGenerator(),
     idGenerator: options.idGenerator,
     clock,
   });
 
   if (options.messagePolicyMutationEnabled !== true) return orchestrator;
-
   return new AuthorizedMessagePolicyV2Service(
     orchestrator,
     new CamoMessagePolicyV2LifecycleService(
       new FirestoreCamoMessagePolicyStoreV2(options.firestore),
       clock,
     ),
-    {isMessagePolicyMutationEnabled: () =>
-      options.messagePolicyMutationEnabled === true},
+    {
+      isMessagePolicyMutationEnabled: () =>
+        options.messagePolicyMutationEnabled === true,
+    },
   );
 }

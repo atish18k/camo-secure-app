@@ -45,7 +45,7 @@ class CamoWorkspaceBox extends StatelessWidget {
       decoration: BoxDecoration(
         color: CamoColors.surface,
         borderRadius: BorderRadius.circular(CamoRadius.xl),
-        boxShadow: CamoShadows.card,
+        boxShadow: CamoShadows.md,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

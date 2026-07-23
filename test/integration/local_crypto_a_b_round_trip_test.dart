@@ -18,7 +18,7 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   const String userAId = 'camo-test-user-a-atish18k';
   const String userBId = 'camo-test-user-b-samaratish';
-  const String pairingId = 'camo-local-test-pair-a-b-v1';
+  const String pairingId = 'camo-local-test-pair-a-b-current';
 
   final X25519 x25519 = X25519();
   final AesGcm aesGcm = AesGcm.with256bits();

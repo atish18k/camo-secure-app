@@ -6,9 +6,11 @@ import {
   CamoCloudKmsClient,
 } from "./camo_cloud_kms_client";
 import {
-  CloudKmsCamoAuthorizationResponseSigner,
   CamoCrc32cCalculator,
-} from "./cloud_kms_authorization_response_signer";
+} from "./camo_crc32c_calculator";
+import {
+  CloudKmsCamoAuthorizationResponseSignerV2,
+} from "./cloud_kms_authorization_response_signer_v2";
 import {
   CloudKmsCamoKeyReferenceAuthorizationService,
 } from "./cloud_kms_key_reference_authorization_service";
@@ -23,17 +25,12 @@ import {
 } from "./google_cloud_kms_client";
 
 export interface CamoCloudKmsProductionAdapters {
-  readonly signer:
-    CloudKmsCamoAuthorizationResponseSigner;
-
+  readonly signer: CloudKmsCamoAuthorizationResponseSignerV2;
   readonly keyAuthorizationService:
     CloudKmsCamoKeyReferenceAuthorizationService;
-
   readonly publicKeyMetadataProvider:
     CloudKmsCamoPublicKeyMetadataProvider;
-
-  readonly inspector:
-    CamoCloudKmsKeyVersionInspector;
+  readonly inspector: CamoCloudKmsKeyVersionInspector;
 }
 
 export interface CamoCloudKmsProductionAdapterOptions {
@@ -44,40 +41,28 @@ export interface CamoCloudKmsProductionAdapterOptions {
 }
 
 export function createCamoCloudKmsProductionAdapters(
-  options:
-    CamoCloudKmsProductionAdapterOptions,
+  options: CamoCloudKmsProductionAdapterOptions,
 ): CamoCloudKmsProductionAdapters {
-  const client =
-    options.client ??
-    new GoogleCloudCamoKmsClient();
-
-  const inspector =
-    new CamoCloudKmsKeyVersionInspector(
-      client,
-    );
+  const client = options.client ?? new GoogleCloudCamoKmsClient();
+  const inspector = new CamoCloudKmsKeyVersionInspector(client);
 
   return Object.freeze({
-    signer:
-      new CloudKmsCamoAuthorizationResponseSigner(
-        client,
-        options.keyVersionName,
-        options.crc32c,
-      ),
-
+    signer: new CloudKmsCamoAuthorizationResponseSignerV2(
+      client,
+      options.keyVersionName,
+      options.crc32c,
+    ),
     keyAuthorizationService:
       new CloudKmsCamoKeyReferenceAuthorizationService(
         inspector,
         options.keyVersionName,
-        options.releaseIdGenerator ??
-          randomUUID,
+        options.releaseIdGenerator ?? randomUUID,
       ),
-
     publicKeyMetadataProvider:
       new CloudKmsCamoPublicKeyMetadataProvider(
         client,
         options.crc32c,
       ),
-
     inspector,
   });
 }

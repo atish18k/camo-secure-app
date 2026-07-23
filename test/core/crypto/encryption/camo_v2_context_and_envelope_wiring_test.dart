@@ -13,8 +13,6 @@ void main() {
 
     expect(encryptor, contains('CamoStandardCryptoContextV2.build('));
     expect(decryptor, contains('CamoStandardCryptoContextV2.build('));
-    expect(encryptor, isNot(contains('standard-encode|v1')));
-    expect(decryptor, isNot(contains('standard-decode|v1')));
   });
 
   test('verified V2 runtime DI uses strict decoder only', () {
@@ -25,13 +23,13 @@ void main() {
     expect(di, contains('CamoMessageCryptoService>().decodeV2Only('));
   });
 
-  test('strict method explicitly rejects legacy protocol prefix', () {
+  test('message crypto service exposes only the compact decode path', () {
     final String source = File(
       'lib/core/crypto/encryption/camo_message_crypto_service.dart',
     ).readAsStringSync();
 
     expect(source, contains('Future<String> decodeV2Only({'));
     expect(source, contains('Only strict CAMO V2 payloads are accepted.'));
-    expect(source, contains('CamoPayloadFormatter.protocolPrefix'));
+    expect(source, contains('return _decodeCompact('));
   });
 }

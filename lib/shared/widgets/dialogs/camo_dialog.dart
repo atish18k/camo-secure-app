@@ -5,12 +5,7 @@ import '../../../core/theme/camo_radius.dart';
 import '../../../core/theme/camo_spacing.dart';
 import '../button/camo_button.dart';
 
-enum CamoDialogType {
-  info,
-  success,
-  warning,
-  danger,
-}
+enum CamoDialogType { info, success, warning, danger }
 
 class CamoDialog extends StatelessWidget {
   const CamoDialog({
@@ -41,7 +36,7 @@ class CamoDialog extends StatelessWidget {
       case CamoDialogType.warning:
         return Colors.orange;
       case CamoDialogType.danger:
-        return CamoColors.danger;
+        return CamoColors.error;
     }
   }
 
@@ -71,7 +66,7 @@ class CamoDialog extends StatelessWidget {
           );
 
     return Dialog(
-      backgroundColor: CamoColors.card,
+      backgroundColor: CamoColors.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(CamoRadius.xl),
       ),
@@ -80,11 +75,7 @@ class CamoDialog extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              _icon,
-              color: _accentColor,
-              size: 42,
-            ),
+            Icon(_icon, color: _accentColor, size: 42),
             const SizedBox(height: CamoSpacing.md),
             Text(
               title,
@@ -95,9 +86,9 @@ class CamoDialog extends StatelessWidget {
             Text(
               message,
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: CamoColors.textSecondary,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: CamoColors.textSecondary),
             ),
             const SizedBox(height: CamoSpacing.lg),
             Row(

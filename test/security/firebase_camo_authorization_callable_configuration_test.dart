@@ -34,7 +34,7 @@ void main() {
   test('Firebase exception details are not logged or returned', () {
     final String source = File(
       'lib/core/authorization_gateway/data/services/'
-      'camo_authorization_callable_client.dart',
+      'camo_v2_authorization_callable_client.dart',
     ).readAsStringSync();
 
     expect(source, isNot(contains('.details')));

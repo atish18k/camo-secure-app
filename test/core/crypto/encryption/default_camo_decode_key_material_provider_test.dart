@@ -52,14 +52,17 @@ void main() {
     expect(source, contains('salt = Uint8List.fromList(salt)'));
   });
 
-  test('provider does not invoke legacy decode or conversation-key cache', () {
-    final String source = File(
-      'lib/core/crypto/encryption/'
-      'default_camo_decode_key_material_provider.dart',
-    ).readAsStringSync();
+  test(
+    'provider does not invoke superseded decode or conversation-key cache',
+    () {
+      final String source = File(
+        'lib/core/crypto/encryption/'
+        'default_camo_decode_key_material_provider.dart',
+      ).readAsStringSync();
 
-    expect(source, isNot(contains('decodeForPair')));
-    expect(source, isNot(contains('keyCache')));
-    expect(source, isNot(contains('deriveKey(')));
-  });
+      expect(source, isNot(contains('decodeForPair')));
+      expect(source, isNot(contains('keyCache')));
+      expect(source, isNot(contains('deriveKey(')));
+    },
+  );
 }

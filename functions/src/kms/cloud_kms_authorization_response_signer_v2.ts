@@ -17,7 +17,7 @@ import {
 } from "./camo_cloud_kms_client";
 import {
   CamoCrc32cCalculator,
-} from "./cloud_kms_authorization_response_signer";
+} from "./camo_crc32c_calculator";
 import {
   cloudKmsSigningKeyId,
   normalizeCloudKmsKeyVersionName,

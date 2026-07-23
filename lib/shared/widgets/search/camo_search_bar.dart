@@ -36,8 +36,7 @@ class CamoSearchBar extends StatelessWidget {
       decoration: InputDecoration(
         hintText: hintText,
         prefixIcon: const Icon(Icons.search),
-        suffixIcon: controller != null &&
-                controller!.text.isNotEmpty
+        suffixIcon: controller != null && controller!.text.isNotEmpty
             ? IconButton(
                 icon: const Icon(Icons.clear),
                 onPressed: () {
@@ -47,31 +46,22 @@ class CamoSearchBar extends StatelessWidget {
               )
             : null,
         filled: true,
-        fillColor: CamoColors.card,
+        fillColor: CamoColors.surface,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: CamoSpacing.md,
           vertical: CamoSpacing.sm,
         ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(
-            CamoRadius.lg,
-          ),
+          borderRadius: BorderRadius.circular(CamoRadius.lg),
           borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(
-            CamoRadius.lg,
-          ),
+          borderRadius: BorderRadius.circular(CamoRadius.lg),
           borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(
-            CamoRadius.lg,
-          ),
-          borderSide: BorderSide(
-            color: CamoColors.primary,
-            width: 1.5,
-          ),
+          borderRadius: BorderRadius.circular(CamoRadius.lg),
+          borderSide: BorderSide(color: CamoColors.primary, width: 1.5),
         ),
       ),
     );

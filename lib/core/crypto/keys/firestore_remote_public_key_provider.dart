@@ -21,7 +21,7 @@ import 'camo_remote_public_key_provider.dart';
 ///
 /// Security guarantees:
 ///
-/// - uses Device Registry state rather than legacy profile crypto metadata
+/// - uses canonical Device Registry state
 /// - accepts active trusted devices selected by the resolver only
 /// - validates Base64 encoding
 /// - validates the X25519 public-key length

@@ -40,6 +40,12 @@ export interface CamoSignedAuthorizationResponseV2
   readonly signature: string;
 }
 
+export interface CamoAuthorizationExecutionResultV2 {
+  readonly authorized: boolean;
+  readonly reasonCode: string;
+  readonly signedResponse?: CamoSignedAuthorizationResponseV2;
+}
+
 export interface CamoGeneratedServerShareV1 {
   readonly shareId: string;
   readonly operationId: string;

@@ -27,7 +27,7 @@ void main() {
     expect(source, contains('encodedText: payload.encodedText!'));
   });
 
-  test('decode branch has no legacy crypto-port fallback', () {
+  test('decode branch has no alternate crypto-port path', () {
     final String source = File(
       'lib/features/workspace/data/services/'
       'default_camo_authorized_operation_executor.dart',
